@@ -1,0 +1,153 @@
+/* Navbar Component Styles */
+.navbar-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #e95a49 0%, #c94138 100%);
+  color: white;
+  padding: 2rem 0;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-header {
+  padding: 0 2rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 2rem;
+}
+
+.navbar-logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.navbar-logo-text {
+  margin: 0 0.25rem;
+}
+
+.navbar-logo-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.navbar-nav {
+  padding: 0 1rem;
+}
+
+.navbar-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: inherit;
+}
+
+.navbar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.navbar-nav-item.active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(4px);
+}
+
+.navbar-nav-item:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .navbar-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 1rem 0;
+  }
+  
+  .navbar-header {
+    padding: 0 1rem 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .navbar-nav {
+    padding: 0 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .navbar-nav-item {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+    margin-bottom: 0;
+    justify-content: center;
+    font-size: 0.875rem;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .navbar-nav-item span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-nav-item {
+    min-width: calc(33.333% - 0.33rem);
+  }
+}
+
+/* Tablet adjustments */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .navbar-sidebar {
+    width: 240px;
+  }
+  
+  .navbar-header {
+    padding: 0 1.5rem 1.5rem;
+  }
+  
+  .navbar-logo {
+    font-size: 1.25rem;
+  }
+  
+  .navbar-nav-item {
+    font-size: 0.9rem;
+    padding: 0.75rem 0.875rem;
+  }
+}
+
+/* Smooth scrollbar for webkit browsers */
+.navbar-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.navbar-sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.navbar-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
