@@ -37,11 +37,11 @@ function Analytics() {
     ];
 
     const quizPerformanceData = [
-        { name: 'JavaScript Basics', attempts: 234, avgScore: 82, completion: 89 },
-        { name: 'React Fundamentals', attempts: 156, avgScore: 78, completion: 85 },
+        { name: 'JavaScript', attempts: 234, avgScore: 82, completion: 89 },
+        { name: 'React', attempts: 156, avgScore: 78, completion: 85 },
         { name: 'CSS Advanced', attempts: 189, avgScore: 74, completion: 76 },
         { name: 'Node.js Basics', attempts: 98, avgScore: 86, completion: 92 },
-        { name: 'Database Design', attempts: 145, avgScore: 71, completion: 68 }
+        { name: 'Database', attempts: 145, avgScore: 71, completion: 68 }
     ];
 
     const difficultyDistribution = [

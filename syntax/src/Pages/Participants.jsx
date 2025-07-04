@@ -172,7 +172,7 @@ function Participants() {
                 <div className="participants-stats-overview">
                     <div className="participant-stat-card">
                         <div className="stat-icon-wrapper active-icon">
-                            <UserCheck className="stat-icon" />
+                            <UserCheck className="participant-stat-icon" />
                         </div>
                         <div className="stat-content">
                             <h3>Active Users</h3>
@@ -182,7 +182,7 @@ function Participants() {
 
                     <div className="participant-stat-card">
                         <div className="stat-icon-wrapper total-icon">
-                            <Award className="stat-icon" />
+                            <Award className="participant-stat-icon" />
                         </div>
                         <div className="stat-content">
                             <h3>Total Participants</h3>
@@ -192,7 +192,7 @@ function Participants() {
 
                     <div className="participant-stat-card">
                         <div className="stat-icon-wrapper inactive-icon">
-                            <UserX className="stat-icon" />
+                            <UserX className="participant-stat-icon" />
                         </div>
                         <div className="stat-content">
                             <h3>Inactive Users</h3>
@@ -342,7 +342,7 @@ function Participants() {
                                 </div>
 
                                 <div className="participant-actions">
-                                    <button className="action-btn menu-btn" style={{width: '50px', marginRight: '40px'}}>
+                                    <button className="participant-action-btn menu-btn" style={{width: '50px', marginRight: '40px'}}>
                                         View
                                     </button>
                                 </div>

@@ -13,11 +13,25 @@ import {
   Activity
 } from 'lucide-react';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../Styles/PageStyles/AdminDashboard.css';
 import AdminNavbar from '../Components/AdminNavbar';
 
 function AdminDashboard() {
+
+  useEffect(() => {
+    authCheck();
+  }, []);
+
+  async function authCheck() {
+    const res = await Axis3DIcon.get('http:..localhost:5000/api/auth-verify', {
+      headers: {
+        Authorization: 'Bearer' + ThermometerSnowflakeIcon,
+      },
+    });
+    console.log(res.data);
+  }
+
   const [activeTab, setActiveTab] = useState('home');
 
   const sidebarItems = [

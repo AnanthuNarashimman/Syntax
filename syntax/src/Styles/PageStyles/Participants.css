@@ -68,7 +68,7 @@
   color: #d69e2e;
 }
 
-.stat-icon {
+.participants-stat-icon {
   width: 24px;
   height: 24px;
 }
@@ -455,7 +455,7 @@
   justify-content: center;
 }
 
-.action-btn {
+.participant-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;

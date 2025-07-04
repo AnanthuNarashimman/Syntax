@@ -6,6 +6,7 @@ import CreateContest from "./Pages/CreateContest.jsx";
 import ManageContest from "./Pages/ManageContest.jsx";
 import Participants from "./Pages/Participants.jsx";
 import Analytics from "./Pages/Analytics.jsx";
+import AdminProfile from "./Pages/AdminProfile.jsx";
 
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -22,6 +23,7 @@ function App() {
         <Route path="/manage-contest" element={<ManageContest />} />
         <Route path="/manage-participants" element={<Participants />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/admin-profile" element={<AdminProfile />} />
        </Routes>
     </Router>
   )
