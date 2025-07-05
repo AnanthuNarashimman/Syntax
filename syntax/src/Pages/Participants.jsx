@@ -10,10 +10,27 @@ import {
 import { useState } from 'react';
 import AdminNavbar from "../Components/AdminNavbar";
 import '../Styles/PageStyles/Participants.css';
+import { useNavigate } from 'react-router-dom';
 
 function Participants() {
 
-    const [activeTab, setActiveTab] = useState('participants');
+    const [activeTab, setActiveTabState] = useState('participants');
+    const navigate = useNavigate();
+    const setActiveTab = (tab) => {
+        setActiveTabState(tab);
+        // Map tab id to route
+        const tabRoutes = {
+            home: '/admin-dashboard',
+            create: '/create-contest',
+            manage: '/manage-contest',
+            participants: '/manage-participants',
+            analytics: '/analytics',
+            profile: '/admin-profile',
+        };
+        if (tabRoutes[tab]) {
+            navigate(tabRoutes[tab]);
+        }
+    };
 
     const sidebarItems = [
         { id: 'home', label: 'Dashboard', icon: Home },

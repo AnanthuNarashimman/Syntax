@@ -16,6 +16,7 @@ import {
 import { useState, useEffect } from 'react';
 import '../Styles/PageStyles/AdminDashboard.css';
 import AdminNavbar from '../Components/AdminNavbar';
+import { useNavigate } from 'react-router-dom';
 
 function AdminDashboard() {
 
@@ -32,7 +33,23 @@ function AdminDashboard() {
     console.log(res.data);
   }
 
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTabState] = useState('home');
+  const navigate = useNavigate();
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    // Map tab id to route
+    const tabRoutes = {
+      home: '/admin-dashboard',
+      create: '/create-contest',
+      manage: '/manage-contest',
+      participants: '/manage-participants',
+      analytics: '/analytics',
+      profile: '/admin-profile',
+    };
+    if (tabRoutes[tab]) {
+      navigate(tabRoutes[tab]);
+    }
+  };
 
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: Home },

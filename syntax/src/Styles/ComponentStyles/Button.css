@@ -128,3 +128,28 @@
     padding: 0;
   }
   
+  .neat-logout-btn {
+    background-color: #e74c3c;
+    color: #fff;
+    padding: 10px 28px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(231,76,60,0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    margin: 0;
+  }
+  
+  .neat-logout-btn:hover:not(:disabled) {
+    background-color: #c0392b;
+    box-shadow: 0 4px 16px rgba(231,76,60,0.15);
+  }
+  
+  .neat-logout-btn:disabled {
+    background-color: #ccc;
+    color: #fff;
+    cursor: not-allowed;
+  }
+  

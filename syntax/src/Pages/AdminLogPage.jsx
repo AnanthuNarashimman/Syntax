@@ -46,14 +46,6 @@ function AdminLogPage() {
         setSuccessMessage('');
     };
 
-    function focus(e) {
-        e.target.parentElement.querySelector('label').classList.add('active');
-    }
-
-    function notFocus(e) {
-        e.target.parentElement.querySelector('label').classList.remove('active');
-    }
-
     const handleLogin = async (e) => {
         e.preventDefault();
 
@@ -146,7 +138,7 @@ function AdminLogPage() {
                     </div>
 
                     <div className="form-group">
-                        <label>{loginData.emailLabel}</label>
+                        <label className={formData.email ? "active" : ""}>{loginData.emailLabel}</label>
                         <input
                             type="text"
                             name="email"
@@ -154,22 +146,20 @@ function AdminLogPage() {
                             onChange={handleInputChange}
                             className="input-field"
                             required
-                            onFocus={focus}
-                            onBlur={notFocus}
+                            placeholder=""
                         />
                     </div>
 
                     <div className="form-group">
-                        <label className="passwordLabel">{loginData.passwordLabel}</label>
+                        <label className={`passwordLabel${formData.password ? " active" : ""}`}>{loginData.passwordLabel}</label>
                         <input
                             type="password"
                             name="password"
                             value={formData.password}
                             onChange={handleInputChange}
                             className="input-field"
-                            onFocus={focus}
-                            onBlur={notFocus}
                             required
+                            placeholder=""
                         />
                         <div className="forgot-password">{loginData.forgotPassword}</div>
                     </div>
@@ -187,16 +177,6 @@ function AdminLogPage() {
                             {loginData.createAccount}
                         </span>
                     </div>
-
-                    {/* Temporary Logout Button for testing */}
-                    <Button
-                        className="logout-button"
-                        onClick={handleLogout}
-                        disabled={loading}
-                        style={{ marginTop: '20px', backgroundColor: '#dc3545', color: 'white' }}
-                    >
-                        {loading ? 'Logging Out...' : 'Logout'}
-                    </Button>
                 </form>
             </div>
         </div>

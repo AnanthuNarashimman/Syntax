@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import '../Styles/ComponentStyles/AdminNavbar.css';
+import { Button } from './Button';
 
 function AdminNavbar({ activeTab, onTabChange, sidebarItems = [] }) {
   const defaultSidebarItems = [
@@ -46,6 +47,7 @@ function AdminNavbar({ activeTab, onTabChange, sidebarItems = [] }) {
             </button>
           );
         })}
+        <Button className="navbar-logout-btn" onClick={() => window.location.href = '/'}>Logout</Button>
       </nav>
     </div>
   );

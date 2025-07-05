@@ -273,6 +273,26 @@
   border: 1px solid #f1aeb5;
 }
 
+.message-top-right {
+  position: absolute;
+  top: 10;
+  right: 0;
+  margin: 24px 24px 0 0;
+  z-index: 10;
+  min-width: 280px;
+  max-width: 350px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.message-inline {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 16px;
+  margin-top: 0;
+  position: static;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .profilePage {

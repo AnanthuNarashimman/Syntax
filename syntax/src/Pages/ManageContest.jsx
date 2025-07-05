@@ -1,4 +1,3 @@
-
 import {
     Home,
     Plus,
@@ -13,12 +12,29 @@ import {
 import { useState } from 'react';
 import AdminNavbar from "../Components/AdminNavbar";
 import '../Styles/PageStyles/ManageContest.css';
+import { useNavigate } from 'react-router-dom';
 
 function ManageContest() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const [activeTab, setActiveTab] = useState('manage');
+    const [activeTab, setActiveTabState] = useState('manage');
+    const navigate = useNavigate();
+    const setActiveTab = (tab) => {
+        setActiveTabState(tab);
+        // Map tab id to route
+        const tabRoutes = {
+            home: '/admin-dashboard',
+            create: '/create-contest',
+            manage: '/manage-contest',
+            participants: '/manage-participants',
+            analytics: '/analytics',
+            profile: '/admin-profile',
+        };
+        if (tabRoutes[tab]) {
+            navigate(tabRoutes[tab]);
+        }
+    };
 
     const sidebarItems = [
         { id: 'home', label: 'Dashboard', icon: Home },

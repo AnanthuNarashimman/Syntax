@@ -1,13 +1,14 @@
 import '../Styles/PageStyles/AdminProfile.css';
 import { User, Home, Plus, Settings, Users, TrendingUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminNavbar from '../Components/AdminNavbar';
-import { useEffect } from 'react';
+import { Button } from '../Components/Button';
+import { useNavigate } from 'react-router-dom';
 
 
 function AdminProfile() {
 
-    const [activeTab, setActiveTab] = useState('profile');
+    const [activeTab, setActiveTabState] = useState('profile');
 
     const sidebarItems = [
         { id: 'home', label: 'Dashboard', icon: Home },
@@ -32,6 +33,11 @@ function AdminProfile() {
     const [userName, setUserName] = useState('Fetching...');
     const [userMail, setUserMail] = useState('Fetching...');
     const [passwordPlaceholder, setPasswordPlaceholder] = useState('Fetching...');
+
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         fetchProfile();
@@ -138,7 +144,7 @@ function AdminProfile() {
         }
 
         const data = await response.json();
-        console.log(data);
+        setMessage(data.message || "Password updated successfully!");
     } catch(err) {
         console.log(err.message);
     }
@@ -149,7 +155,6 @@ function AdminProfile() {
         setConfirmPassword('');
         setIsEditing(false);
         setIsPasswordVerified(false);
-        setTimeout(() => setMessage(''), 3000);
     };
 
     const handleCancel = () => {
@@ -159,6 +164,51 @@ function AdminProfile() {
         setIsEditing(false);
         setIsPasswordVerified(false);
         setMessage('');
+    };
+
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => setMessage(''), 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
+
+    const handleLogout = async () => {
+        setLoading(true);
+        setError('');
+        setSuccessMessage('');
+        try {
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+            }
+            setSuccessMessage('Logged out successfully!');
+            navigate('/');
+        } catch (err) {
+            setError(err.message || 'An unexpected error occurred during logout.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const setActiveTab = (tab) => {
+        setActiveTabState(tab);
+        // Map tab id to route
+        const tabRoutes = {
+            home: '/admin-dashboard',
+            create: '/create-contest',
+            manage: '/manage-contest',
+            participants: '/manage-participants',
+            analytics: '/analytics',
+            profile: '/admin-profile',
+        };
+        if (tabRoutes[tab]) {
+            navigate(tabRoutes[tab]);
+        }
     };
 
     return (
@@ -210,8 +260,14 @@ function AdminProfile() {
                     </div>
 
                     <div className="profileCard">
-                        <div className="cardHeader">
+                        <div className="cardHeader" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <h2>Security Settings</h2>
+                            {/* Message near Security Settings title */}
+                            {message && (
+                                <div className={`message message-inline ${message.includes('successfully') || message.includes('verified') ? 'success' : 'error'}`} style={{ marginLeft: '16px', minWidth: 0 }}>
+                                    {message}
+                                </div>
+                            )}
                         </div>
 
                         <div className="cardBody">
@@ -328,12 +384,6 @@ function AdminProfile() {
                             )}
                         </div>
                     </div>
-
-                    {message && (
-                        <div className={`message ${message.includes('successfully') || message.includes('verified') ? 'success' : 'error'}`}>
-                            {message}
-                        </div>
-                    )}
                 </div>
             </div>
         </>

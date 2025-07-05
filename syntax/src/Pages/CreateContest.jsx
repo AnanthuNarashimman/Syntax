@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import '../Styles/PageStyles/CreateContest.css';
 import AdminNavbar from "../Components/AdminNavbar";
+import { useNavigate } from 'react-router-dom';
 
 import Create from '../assets/Images/Create.svg';
 
@@ -23,7 +24,8 @@ function CreateContest() {
   const [selectedType, setSelectedType] = useState('');
   const [selectedMode, setSelectedMode] = useState('');
 
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTabState] = useState('create');
+  const navigate = useNavigate();
 
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -33,6 +35,22 @@ function CreateContest() {
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'profile', label: 'Profile', icon: User }
   ];
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    // Map tab id to route
+    const tabRoutes = {
+      home: '/admin-dashboard',
+      create: '/create-contest',
+      manage: '/manage-contest',
+      participants: '/manage-participants',
+      analytics: '/analytics',
+      profile: '/admin-profile',
+    };
+    if (tabRoutes[tab]) {
+      navigate(tabRoutes[tab]);
+    }
+  };
 
   const handleTypeSelection = (type) => {
     setSelectedType(type);
