@@ -7,9 +7,11 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
+const security_key = process.env.SECURITY_KEY
+
 // --- 2. Firebase Admin SDK Initialization ---
 const admin = require('firebase-admin');
-const serviceAccount = require('./syntax-477e1-firebase-adminsdk-fbsvc-808b90a2ab.json');
+const serviceAccount = require(security_key);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
