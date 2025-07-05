@@ -197,7 +197,6 @@ function AdminProfile() {
 
     const setActiveTab = (tab) => {
         setActiveTabState(tab);
-        // Map tab id to route
         const tabRoutes = {
             home: '/admin-dashboard',
             create: '/create-contest',

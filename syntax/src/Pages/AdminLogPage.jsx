@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import '../Styles/PageStyles/AdminLogPage.css';
 import { Button } from "../Components/Button.jsx";
+import CustomAlert from "../Components/CustomAlert.jsx"; // Import the CustomAlert component
 
 function AdminLogPage() {
     const navigate = useNavigate();
@@ -71,7 +72,10 @@ function AdminLogPage() {
             setSuccessMessage(data.message || 'Login successful!');
             console.log('Login successful:', data);
 
-            navigate('/admin-dashboard');
+            // Auto-redirect after showing success message
+            setTimeout(() => {
+                navigate('/admin-dashboard');
+            }, 2000);
 
         } catch (err) {
             console.error('Login failed:', err.message);
@@ -81,7 +85,6 @@ function AdminLogPage() {
         }
     };
 
-    // --- NEW LOGOUT FUNCTION ---
     const handleLogout = async () => {
         setLoading(true);
         setError('');
@@ -101,7 +104,10 @@ function AdminLogPage() {
             setSuccessMessage('Logged out successfully!');
             console.log('Logged out successfully.');
 
-            navigate('/');
+            // Auto-redirect after showing success message
+            setTimeout(() => {
+                navigate('/');
+            }, 2000);
 
         } catch (err) {
             console.error('Logout failed:', err.message);
@@ -111,6 +117,10 @@ function AdminLogPage() {
         }
     };
 
+    const handleCloseAlert = () => {
+        setError('');
+        setSuccessMessage('');
+    };
 
     return (
         <div className="desktop-container">
@@ -164,9 +174,6 @@ function AdminLogPage() {
                         <div className="forgot-password">{loginData.forgotPassword}</div>
                     </div>
 
-                    {error && <div className="error-message" style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
-                    {successMessage && <div className="success-message" style={{ color: 'green', marginTop: '10px' }}>{successMessage}</div>}
-
                     <Button className="login-button" type="submit" disabled={loading}>
                         {loading ? 'Logging In...' : loginData.loginButton}
                     </Button>
@@ -179,6 +186,22 @@ function AdminLogPage() {
                     </div>
                 </form>
             </div>
+
+            {/* Custom Alert Component */}
+            {error && (
+                <CustomAlert
+                    message={error}
+                    type="error"
+                    onClose={handleCloseAlert}
+                />
+            )}
+            {successMessage && (
+                <CustomAlert
+                    message={successMessage}
+                    type="success"
+                    onClose={handleCloseAlert}
+                />
+            )}
         </div>
     );
 }
