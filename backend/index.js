@@ -357,8 +357,249 @@ app.post('/api/update/pass-update', async (req, res) => {
     }
 });
 
+// --- 8. Contest Management APIs ---
 
-// --- 8. Start the Express Server ---
+app.post('/api/admin/create-contest', requireAdminAuth, async (req, res) => {
+    try {
+        const {
+            contestTitle,
+            contestDescription,
+            duration,
+            numberOfPrograms,
+            pointsPerProgram,
+            questions,
+            testCases
+        } = req.body;
+
+        // Validation
+        if (!contestTitle || !contestDescription || !duration || !numberOfPrograms || !pointsPerProgram) {
+            return res.status(400).json({
+                message: 'Missing required fields: contestTitle, contestDescription, duration, numberOfPrograms, pointsPerProgram'
+            });
+        }
+
+        if (!Array.isArray(questions) || questions.length === 0) {
+            return res.status(400).json({
+                message: 'Questions array is required and must not be empty'
+            });
+        }
+
+        if (!Array.isArray(testCases) || testCases.length === 0) {
+            return res.status(400).json({
+                message: 'Test cases array is required and must not be empty'
+            });
+        }
+
+        // Validate questions structure
+        for (let i = 0; i < questions.length; i++) {
+            const question = questions[i];
+            if (!question.title || !question.description || !question.difficulty) {
+                return res.status(400).json({
+                    message: `Question ${i + 1} is missing required fields: title, description, difficulty`
+                });
+            }
+        }
+
+        // Validate test cases structure
+        for (let i = 0; i < testCases.length; i++) {
+            const testCase = testCases[i];
+            if (!testCase.questionId || !testCase.input || !testCase.expectedOutput) {
+                return res.status(400).json({
+                    message: `Test case ${i + 1} is missing required fields: questionId, input, expectedOutput`
+                });
+            }
+        }
+
+        // Create contest document
+        const contestData = {
+            contestTitle,
+            contestDescription,
+            duration: parseInt(duration),
+            numberOfPrograms: parseInt(numberOfPrograms),
+            pointsPerProgram: parseInt(pointsPerProgram),
+            questions,
+            testCases,
+            createdBy: req.user.userId,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'draft', // draft, published, active, completed
+            participants: [],
+            submissions: []
+        };
+
+        // Save to Firestore
+        const contestRef = await db.collection('contests').add(contestData);
+        
+        // Get the created contest with its ID
+        const createdContest = await contestRef.get();
+        
+        res.status(201).json({
+            message: 'Contest created successfully!',
+            contestId: contestRef.id,
+            contest: {
+                id: contestRef.id,
+                ...createdContest.data()
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating contest:', error);
+        res.status(500).json({
+            message: 'Failed to create contest. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+app.get('/api/admin/contests', requireAdminAuth, async (req, res) => {
+    try {
+        const contestsSnapshot = await db.collection('contests')
+            .where('createdBy', '==', req.user.userId)
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const contests = [];
+        contestsSnapshot.forEach(doc => {
+            contests.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        res.status(200).json({
+            message: 'Contests retrieved successfully!',
+            contests
+        });
+
+    } catch (error) {
+        console.error('Error fetching contests:', error);
+        res.status(500).json({
+            message: 'Failed to fetch contests. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+app.get('/api/admin/contests/:contestId', requireAdminAuth, async (req, res) => {
+    try {
+        const { contestId } = req.params;
+        
+        const contestDoc = await db.collection('contests').doc(contestId).get();
+        
+        if (!contestDoc.exists) {
+            return res.status(404).json({
+                message: 'Contest not found'
+            });
+        }
+
+        // Check if the contest belongs to the authenticated admin
+        const contestData = contestDoc.data();
+        if (contestData.createdBy !== req.user.userId) {
+            return res.status(403).json({
+                message: 'Access denied: You can only view contests you created'
+            });
+        }
+
+        res.status(200).json({
+            message: 'Contest retrieved successfully!',
+            contest: {
+                id: contestDoc.id,
+                ...contestData
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching contest:', error);
+        res.status(500).json({
+            message: 'Failed to fetch contest. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+app.put('/api/admin/contests/:contestId', requireAdminAuth, async (req, res) => {
+    try {
+        const { contestId } = req.params;
+        const updateData = req.body;
+
+        // Remove fields that shouldn't be updated
+        delete updateData.createdBy;
+        delete updateData.createdAt;
+        delete updateData.id;
+
+        // Add updated timestamp
+        updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+
+        const contestRef = db.collection('contests').doc(contestId);
+        const contestDoc = await contestRef.get();
+
+        if (!contestDoc.exists) {
+            return res.status(404).json({
+                message: 'Contest not found'
+            });
+        }
+
+        // Check if the contest belongs to the authenticated admin
+        const contestData = contestDoc.data();
+        if (contestData.createdBy !== req.user.userId) {
+            return res.status(403).json({
+                message: 'Access denied: You can only update contests you created'
+            });
+        }
+
+        await contestRef.update(updateData);
+
+        res.status(200).json({
+            message: 'Contest updated successfully!',
+            contestId
+        });
+
+    } catch (error) {
+        console.error('Error updating contest:', error);
+        res.status(500).json({
+            message: 'Failed to update contest. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+app.delete('/api/admin/contests/:contestId', requireAdminAuth, async (req, res) => {
+    try {
+        const { contestId } = req.params;
+
+        const contestRef = db.collection('contests').doc(contestId);
+        const contestDoc = await contestRef.get();
+
+        if (!contestDoc.exists) {
+            return res.status(404).json({
+                message: 'Contest not found'
+            });
+        }
+
+        // Check if the contest belongs to the authenticated admin
+        const contestData = contestDoc.data();
+        if (contestData.createdBy !== req.user.userId) {
+            return res.status(403).json({
+                message: 'Access denied: You can only delete contests you created'
+            });
+        }
+
+        await contestRef.delete();
+
+        res.status(200).json({
+            message: 'Contest deleted successfully!',
+            contestId
+        });
+
+    } catch (error) {
+        console.error('Error deleting contest:', error);
+        res.status(500).json({
+            message: 'Failed to delete contest. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+// --- 9. Start the Express Server ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

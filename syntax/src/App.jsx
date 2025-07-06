@@ -9,12 +9,13 @@ import Analytics from "./Pages/Analytics.jsx";
 import AdminProfile from "./Pages/AdminProfile.jsx";
 
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Navigate to="/student-login" replace />} />
         <Route path="/student-login" element={<StudentLogPage />} />
         <Route path="/admin-login" element={<AdminLogPage />} />
         <Route path="/super-login" element={<SuperAdminLogPage />} />
@@ -24,6 +25,7 @@ function App() {
         <Route path="/manage-participants" element={<Participants />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
+        <Route path="*" element={<Navigate to="/student-login" replace />} />
        </Routes>
     </Router>
   )
