@@ -326,6 +326,10 @@
   height: auto;
 }
 
+p {
+  margin-bottom: 30px !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .create-contest {

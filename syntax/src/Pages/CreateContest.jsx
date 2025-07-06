@@ -23,6 +23,11 @@ function CreateContest() {
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState('');
   const [selectedMode, setSelectedMode] = useState('');
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    topicsCovered: ''
+  });
 
   const [activeTab, setActiveTabState] = useState('create');
   const navigate = useNavigate();
@@ -82,6 +87,39 @@ function CreateContest() {
     }
   };
 
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleCreate = () => {
+    // Validate form data
+    if (!formData.title.trim() || !formData.description.trim() || !formData.topicsCovered.trim()) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Store form data (you can use context or pass as state)
+    localStorage.setItem('contestFormData', JSON.stringify({
+      ...formData,
+      type: selectedType,
+      mode: selectedMode
+    }));
+
+    // Navigate based on contest type
+    if (selectedType === 'quiz') {
+      navigate('/create-quiz-questions');
+    } else if (selectedType === 'contest') {
+      navigate('/create-contest-questions');
+    } else if (selectedType === 'article') {
+      // Handle article creation
+      alert('Article created successfully!');
+      // Reset form or navigate to manage page
+    }
+  };
+
   const renderStepOne = () => (
     <div className="step-container">
       <h2 className="step-title">Choose Contest Type</h2>
@@ -107,7 +145,7 @@ function CreateContest() {
         >
           <div className="option-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.7893 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -204,53 +242,36 @@ function CreateContest() {
       <div className="form-container">
         <div className="form-group">
           <p htmlFor="title">Title</p>
-          <input type="text" id="title" placeholder="Enter title" />
+          <input 
+            type="text" 
+            id="title" 
+            placeholder="Enter title" 
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+          />
         </div>
 
         <div className="form-group">
           <p htmlFor="description">Description</p>
-          <textarea id="description" rows="4" placeholder="Enter description"></textarea>
+          <textarea 
+            id="description" 
+            rows="4" 
+            placeholder="Enter description"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+          ></textarea>
         </div>
 
-        {selectedType !== 'article' && (
-          <>
-            <div className="form-row">
-              <div className="form-group">
-                <p className="p" htmlFor="duration">Duration (minutes)</p>
-                <input 
-                  type="number" 
-                  id="duration" 
-                  placeholder="60" 
-                  disabled={selectedMode === 'practice'}
-                />
-              </div>
-              <div className="form-group">
-                <p className="p" htmlFor="points">Points per question</p>
-                <input type="number" id="points" placeholder="100" />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <p className="p" htmlFor="attempts">Max Attempts</p>
-                <input 
-                  type="number" 
-                  id="attempts" 
-                  placeholder={selectedMode === 'practice' ? "Unlimited" : "3"} 
-                />
-              </div>
-              <div className="form-group">
-                <p htmlFor="difficulty">Difficulty</p>
-                <select id="difficulty">
-                  <option value="">Select difficulty</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-            </div>
-          </>
-        )}
+        <div className="form-group">
+          <p htmlFor="topicsCovered">Topics Covered</p>
+          <textarea 
+            id="topicsCovered" 
+            rows="3" 
+            placeholder="Enter topics covered (separated by commas)"
+            value={formData.topicsCovered}
+            onChange={(e) => handleInputChange('topicsCovered', e.target.value)}
+          ></textarea>
+        </div>
 
         {selectedType === 'article' && (
           <div className="form-group">
@@ -269,7 +290,7 @@ function CreateContest() {
             </svg>
             Back
           </button>
-          <button className="create-button">
+          <button className="create-button" onClick={handleCreate}>
             Create {selectedType === 'article' ? 'Article' : selectedType === 'quiz' ? 'Quiz' : 'Contest'}
           </button>
         </div>
