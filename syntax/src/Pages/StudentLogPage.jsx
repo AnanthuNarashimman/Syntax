@@ -4,6 +4,7 @@ import { Button } from "../Components/Button.jsx";
 import '../Styles/PageStyles/StudentLogPage.css';
 
 export const StudentLogPage = () => {
+  const navigate = useNavigate();
   const loginData = {
     title: "Student Login",
     heading: "Login to your Account",

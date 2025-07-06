@@ -11,12 +11,13 @@ import CreateQuizQuestions from "./Pages/CreateQuizQuestions.jsx";
 import CreateContestQuestions from "./Pages/CreateContestQuestions.jsx";
 
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Navigate to="/student-login" replace />} />
         <Route path="/student-login" element={<StudentLogPage />} />
         <Route path="/admin-login" element={<AdminLogPage />} />
         <Route path="/super-login" element={<SuperAdminLogPage />} />
@@ -26,8 +27,12 @@ function App() {
         <Route path="/manage-participants" element={<Participants />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
+<<<<<<< HEAD
         <Route path="/create-quiz-questions" element={<CreateQuizQuestions />} />
         <Route path="/create-contest-questions" element={<CreateContestQuestions />} />
+=======
+        <Route path="*" element={<Navigate to="/student-login" replace />} />
+>>>>>>> 5f5678a6cbaf49207d54fcdd87efed6e64ea42b9
        </Routes>
     </Router>
   )
