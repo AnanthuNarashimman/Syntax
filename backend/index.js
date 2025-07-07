@@ -361,90 +361,146 @@ app.post('/api/update/pass-update', async (req, res) => {
 
 app.post('/api/admin/create-contest', requireAdminAuth, async (req, res) => {
     try {
+        // Destructure top-level contest metadata from req.body
+        // Note: 'questions' from frontend is an object keyed by number (e.g., {1: {...}, 2: {...}})
         const {
             contestTitle,
             contestDescription,
-            duration,
-            numberOfPrograms,
-            pointsPerProgram,
-            questions,
-            testCases
+            duration, // This is `durationMinutes` in our target structure
+            numberOfQuestions, // From frontend, corresponds to `numberOfPrograms` in your original backend
+            pointsPerProgram,  // Default points for each problem
+            questions,         // This is the object of questions from your frontend state
+            selectedLanguage   // From frontend, applies to all problems
         } = req.body;
 
-        // Validation
-        if (!contestTitle || !contestDescription || !duration || !numberOfPrograms || !pointsPerProgram) {
+        // --- 1. Basic Validation of Top-Level Fields ---
+        if (!contestTitle || !contestDescription || !duration || !numberOfQuestions || !pointsPerProgram || !selectedLanguage) {
             return res.status(400).json({
-                message: 'Missing required fields: contestTitle, contestDescription, duration, numberOfPrograms, pointsPerProgram'
+                message: 'Missing required contest setup fields: title, description, duration, number of questions, points per program, or selected language.'
             });
         }
 
-        if (!Array.isArray(questions) || questions.length === 0) {
-            return res.status(400).json({
-                message: 'Questions array is required and must not be empty'
-            });
+        const parsedNumberOfQuestions = parseInt(numberOfQuestions);
+        if (isNaN(parsedNumberOfQuestions) || parsedNumberOfQuestions <= 0) {
+            return res.status(400).json({ message: 'Number of questions must be a positive integer.' });
         }
 
-        if (!Array.isArray(testCases) || testCases.length === 0) {
-            return res.status(400).json({
-                message: 'Test cases array is required and must not be empty'
-            });
+        if (Object.keys(questions).length !== parsedNumberOfQuestions) {
+            return res.status(400).json({ message: 'Number of questions provided does not match the configured count.' });
         }
 
-        // Validate questions structure
-        for (let i = 0; i < questions.length; i++) {
-            const question = questions[i];
-            if (!question.title || !question.description || !question.difficulty) {
+        // --- 2. Transform and Validate Questions Array ---
+        const problems = [];
+        for (let i = 1; i <= parsedNumberOfQuestions; i++) {
+            const questionData = questions[i]; // Get the question object by its number key
+
+            // Validate individual question structure from frontend
+            if (!questionData || !questionData.problem || !questionData.example || !Array.isArray(questionData.testCases) || questionData.testCases.length === 0) {
                 return res.status(400).json({
-                    message: `Question ${i + 1} is missing required fields: title, description, difficulty`
+                    message: `Problem ${i} is incomplete. Missing problem statement, example, or test cases.`
                 });
             }
-        }
 
-        // Validate test cases structure
-        for (let i = 0; i < testCases.length; i++) {
-            const testCase = testCases[i];
-            if (!testCase.questionId || !testCase.input || !testCase.expectedOutput) {
-                return res.status(400).json({
-                    message: `Test case ${i + 1} is missing required fields: questionId, input, expectedOutput`
-                });
+            if (!questionData.example.input || !questionData.example.output) {
+                return res.status(400).json({ message: `Problem ${i} example is incomplete (missing input or output).` });
             }
+
+            for (let j = 0; j < questionData.testCases.length; j++) {
+                const tc = questionData.testCases[j];
+                if (!tc.input || !tc.output) {
+                    return res.status(400).json({ message: `Problem ${i}, Test Case ${j + 1} is incomplete (missing input or output).` });
+                }
+            }
+
+            // Construct the full problem object for Firestore
+            problems.push({
+                contestProblemCode: String.fromCharCode(64 + i), // A, B, C, ...
+                points: parseInt(pointsPerProgram), // Use pointsPerProgram for all, or add input for per-problem points
+                questionId: `cp_${contestTitle.replace(/\s/g, '_').toLowerCase()}_${i}_${Date.now()}`, // Generate a unique ID for the problem
+
+                // Core Question Data (defaults/placeholders for fields not from frontend yet)
+                title: `Problem ${String.fromCharCode(64 + i)}: ${questionData.problem.split('\n')[0].substring(0, 50)}...`, // Take first line of problem as title
+                description: questionData.problem, // Full problem statement from frontend
+                difficulty: "Medium", // Placeholder: Frontend needs to collect this
+                topicsCovered: [], // Placeholder: Frontend needs to collect this
+                estimatedTimeMinutes: 20, // Placeholder: Frontend needs to collect this
+                languagesSupported: selectedLanguage === 'both' ? ['python', 'java'] : [selectedLanguage], // Use selectedLanguage
+
+                problemDetails: {
+                    inputFormat: "See examples.", // Placeholder: Frontend needs to collect this
+                    outputFormat: "See examples.", // Placeholder: Frontend needs to collect this
+                    constraints: [], // Placeholder: Frontend needs to collect this
+                    hint: "" // Placeholder: Frontend needs to collect this
+                },
+                starterCode: { // Placeholder: Frontend needs to collect this
+                    python: "",
+                    java: "",
+                    javascript: "",
+                    cpp: ""
+                },
+
+                examples: [
+                    {
+                        input: questionData.example.input,
+                        output: questionData.example.output,
+                        explanation: "" // Placeholder: Frontend needs to collect this
+                    }
+                ],
+
+                testCases: questionData.testCases.map((tc, idx) => ({
+                    testCaseId: `tc_${i}_${idx}`, // Unique ID for test case
+                    input: tc.input,
+                    expectedOutput: tc.output,
+                    isHidden: true, // Assuming all collected test cases are hidden for judging
+                    description: `Test Case ${idx + 1} for Problem ${String.fromCharCode(64 + i)}`
+                })),
+
+                timeLimitMs: 1000, // Placeholder: Frontend needs to collect this
+                memoryLimitMb: 256 // Placeholder: Frontend needs to collect this
+            });
         }
 
-        // Create contest document
+        // --- 3. Assemble Final Contest Document ---
         const contestData = {
             contestTitle,
             contestDescription,
-            duration: parseInt(duration),
-            numberOfPrograms: parseInt(numberOfPrograms),
+            durationMinutes: parseInt(duration), // Renamed for clarity
+            numberOfPrograms: parsedNumberOfQuestions, // Renamed for clarity
             pointsPerProgram: parseInt(pointsPerProgram),
-            questions,
-            testCases,
-            createdBy: req.user.userId,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            status: 'draft', // draft, published, active, completed
+            problems: problems, // The array of fully embedded problem objects
+            
+            // Meta data for the contest
+            status: 'draft', // Initial status
             participants: [],
-            submissions: []
+            submissions: [],
+            organizer: 'Syntax', // You can make this dynamic
+            rules: 'Code on your own', // You can make this dynamic
+            bannerImageUrl: '', // Placeholder: if you add this to frontend
+            leaderboardEnabled: true, // Default
+            contestType: 'Individual', // Default
+
+            // Audit fields
+            createdBy: req.user.userId, // From your auth middleware
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
-        // Save to Firestore
+        // --- 4. Save to Firestore ---
         const contestRef = await db.collection('contests').add(contestData);
-        
-        // Get the created contest with its ID
-        const createdContest = await contestRef.get();
-        
+
         res.status(201).json({
             message: 'Contest created successfully!',
             contestId: contestRef.id,
             contest: {
                 id: contestRef.id,
-                ...createdContest.data()
+                ...contestData // Send back the structured data
             }
         });
 
     } catch (error) {
         console.error('Error creating contest:', error);
         res.status(500).json({
-            message: 'Failed to create contest. Please try again.',
+            message: 'Failed to create contest. Please check server logs.',
             error: error.message
         });
     }

@@ -26,7 +26,9 @@ function CreateContest() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    topicsCovered: ''
+    topicsCovered: '',
+    duration: '', // Added
+    pointsPerProgram: '' // Added
   });
 
   const [activeTab, setActiveTabState] = useState('create');
@@ -96,7 +98,7 @@ function CreateContest() {
 
   const handleCreate = () => {
     // Validate form data
-    if (!formData.title.trim() || !formData.description.trim() || !formData.topicsCovered.trim()) {
+    if (!formData.title.trim() || !formData.description.trim() || !formData.topicsCovered.trim() || !formData.duration.trim() || !formData.pointsPerProgram.trim()) {
       alert('Please fill in all required fields');
       return;
     }
@@ -105,7 +107,8 @@ function CreateContest() {
     localStorage.setItem('contestFormData', JSON.stringify({
       ...formData,
       type: selectedType,
-      mode: selectedMode
+      mode: selectedMode,
+      contestType: selectedMode // Save as contestType for backend
     }));
 
     // Navigate based on contest type
@@ -272,6 +275,34 @@ function CreateContest() {
             onChange={(e) => handleInputChange('topicsCovered', e.target.value)}
           ></textarea>
         </div>
+
+        {/* New fields for duration and pointsPerProgram */}
+        {selectedType !== 'article' && (
+          <>
+            <div className="form-group">
+              <p htmlFor="duration">Duration (minutes)</p>
+              <input
+                type="number"
+                id="duration"
+                placeholder="Enter duration in minutes"
+                value={formData.duration}
+                onChange={(e) => handleInputChange('duration', e.target.value)}
+                min="1"
+              />
+            </div>
+            <div className="form-group">
+              <p htmlFor="pointsPerProgram">Points per Problem</p>
+              <input
+                type="number"
+                id="pointsPerProgram"
+                placeholder="Enter points per problem"
+                value={formData.pointsPerProgram}
+                onChange={(e) => handleInputChange('pointsPerProgram', e.target.value)}
+                min="1"
+              />
+            </div>
+          </>
+        )}
 
         {selectedType === 'article' && (
           <div className="form-group">

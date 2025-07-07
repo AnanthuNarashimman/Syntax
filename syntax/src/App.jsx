@@ -27,12 +27,9 @@ function App() {
         <Route path="/manage-participants" element={<Participants />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
-<<<<<<< HEAD
         <Route path="/create-quiz-questions" element={<CreateQuizQuestions />} />
         <Route path="/create-contest-questions" element={<CreateContestQuestions />} />
-=======
         <Route path="*" element={<Navigate to="/student-login" replace />} />
->>>>>>> 5f5678a6cbaf49207d54fcdd87efed6e64ea42b9
        </Routes>
     </Router>
   )

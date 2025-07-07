@@ -62,7 +62,15 @@ function CreateContestQuestions() {
       initialQuestions[i] = {
         problem: '',
         testCases: [{ input: '', output: '' }],
-        example: { input: '', output: '' }
+        example: { input: '', output: '' },
+        problemDetails: {
+          inputFormat: '',
+          outputFormat: ''
+        },
+        starterCode: {
+          python: 'print("hello world")',
+          java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello world");\n    }\n}'
+        }
       };
     }
     setQuestions(initialQuestions);
@@ -75,6 +83,33 @@ function CreateContestQuestions() {
       [currentQuestion]: {
         ...prev[currentQuestion],
         [field]: value
+      }
+    }));
+  };
+
+  // New handlers for input/output format and starter code
+  const handleProblemDetailsChange = (field, value) => {
+    setQuestions(prev => ({
+      ...prev,
+      [currentQuestion]: {
+        ...prev[currentQuestion],
+        problemDetails: {
+          ...prev[currentQuestion]?.problemDetails,
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const handleStarterCodeChange = (lang, value) => {
+    setQuestions(prev => ({
+      ...prev,
+      [currentQuestion]: {
+        ...prev[currentQuestion],
+        starterCode: {
+          ...prev[currentQuestion]?.starterCode,
+          [lang]: value
+        }
       }
     }));
   };
@@ -143,26 +178,95 @@ function CreateContestQuestions() {
     }
   };
 
-  const handleSaveContest = () => {
+  const handleSaveContest = async () => {
     // Validate all questions
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
-      if (!questions[i].problem.trim()) {
-        alert(`Please complete question ${i}`);
-        return;
-      }
+        if (!questions[i].problem.trim()) {
+            alert(`Please complete question ${i}`);
+            return;
+        }
+        if (!questions[i].example.input.trim() || !questions[i].example.output.trim()) {
+            alert(`Please complete example for question ${i}`);
+            return;
+        }
+        if (questions[i].testCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+            alert(`Please complete all test cases for question ${i}`);
+            return;
+        }
     }
+
+    // Get contest general data from localStorage
+    let contestGeneralData = {};
     
-    // Save contest data
-    const contestData = {
-      ...JSON.parse(localStorage.getItem('contestFormData') || '{}'),
-      numberOfQuestions,
-      selectedLanguage,
-      questions
+    try {
+        const stored = localStorage.getItem('contestFormData');
+        if (stored) {
+            contestGeneralData = JSON.parse(stored);
+            console.log('Found contest data in localStorage:', contestGeneralData);
+        } else {
+            throw new Error('No contest data found in localStorage');
+        }
+    } catch (e) {
+        alert('Contest general information not found. Please go back and fill in the contest details first.');
+        console.error('Error retrieving contest data:', e);
+        console.log('Available localStorage keys:', Object.keys(localStorage));
+        return;
+    }
+
+    // Check if we have the required data using the correct field names
+    if (!contestGeneralData.title || !contestGeneralData.description) {
+        alert('Contest title and description not found. Please go back and fill in the contest details first.');
+        console.error('Missing required contest data. Available data:', contestGeneralData);
+        return;
+    }
+
+    // Assemble the data to send to the backend using correct field names
+    const dataToSend = {
+        contestTitle: contestGeneralData.title,
+        contestDescription: contestGeneralData.description,
+        duration: contestGeneralData.duration, // Added
+        pointsPerProgram: contestGeneralData.pointsPerProgram, // Added
+        mode: contestGeneralData.mode,
+        type: contestGeneralData.type,
+        topicsCovered: contestGeneralData.topicsCovered,
+        numberOfQuestions: parseInt(numberOfQuestions),
+        selectedLanguage: selectedLanguage,
+        questions: questions
     };
-    
-    localStorage.setItem('completeContestData', JSON.stringify(contestData));
-    alert('Contest created successfully!');
-    navigate('/manage-contest');
+
+    console.log('Data being sent to API:', dataToSend);
+
+    try {
+        const response = await fetch('/api/admin/create-contest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Add your authorization header here if needed
+                // 'Authorization': `Bearer ${yourAuthToken}`
+            },
+            body: JSON.stringify(dataToSend)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(`Failed to create contest: ${errorData.message || 'Unknown error'}`);
+            console.error('API Error:', errorData);
+            return;
+        }
+
+        const result = await response.json();
+        alert('Contest created successfully!');
+        console.log('Contest creation success:', result);
+        
+        // Clear localStorage
+        localStorage.removeItem('contestFormData');
+        
+        navigate('/manage-contest');
+
+    } catch (error) {
+        console.error('Network or unexpected error:', error);
+        alert('An unexpected error occurred while saving the contest. Please check the console for details.');
+    }
   };
 
   const renderConfigStep = () => (
@@ -299,6 +403,61 @@ function CreateContestQuestions() {
                 placeholder="Expected output..."
                 value={questions[currentQuestion]?.example?.output || ''}
                 onChange={(e) => handleExampleChange('output', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Input/Output Format Section */}
+        <div className="io-format-section">
+          <h3>
+            <Code size={16} />
+            Input/Output Format
+          </h3>
+          <div className="io-format-grid">
+            <div className="form-group">
+              <p className="label">Input Format</p>
+              <textarea
+                rows="2"
+                placeholder="Describe the input format..."
+                value={questions[currentQuestion]?.problemDetails?.inputFormat || ''}
+                onChange={e => handleProblemDetailsChange('inputFormat', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <p className="label">Output Format</p>
+              <textarea
+                rows="2"
+                placeholder="Describe the output format..."
+                value={questions[currentQuestion]?.problemDetails?.outputFormat || ''}
+                onChange={e => handleProblemDetailsChange('outputFormat', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        {/* Starter Code Section */}
+        <div className="starter-code-section">
+          <h3>
+            <Code size={16} />
+            Sample Code ("Hello World")
+          </h3>
+          <div className="starter-code-grid">
+            <div className="form-group">
+              <p className="label">Python</p>
+              <textarea
+                rows="3"
+                placeholder="Python starter code..."
+                value={questions[currentQuestion]?.starterCode?.python || ''}
+                onChange={e => handleStarterCodeChange('python', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <p className="label">Java</p>
+              <textarea
+                rows="5"
+                placeholder="Java starter code..."
+                value={questions[currentQuestion]?.starterCode?.java || ''}
+                onChange={e => handleStarterCodeChange('java', e.target.value)}
               />
             </div>
           </div>
