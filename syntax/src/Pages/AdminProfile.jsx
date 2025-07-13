@@ -212,11 +212,7 @@ function AdminProfile() {
 
     return (
         <>
-            <AdminNavbar
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                sidebarItems={sidebarItems}
-            />
+                <AdminNavbar />
             <div className="profilePage">
                 <div className="profileHeader">
                     <h1>Admin Profile</h1>

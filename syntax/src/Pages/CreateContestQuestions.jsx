@@ -16,6 +16,8 @@ import {
 import '../Styles/PageStyles/CreateContestQuestions.css';
 import AdminNavbar from "../Components/AdminNavbar";
 import { useNavigate } from 'react-router-dom';
+import { useContestContext } from '../contexts/ContestContext';
+import { useAlert } from '../contexts/AlertContext';
 
 function CreateContestQuestions() {
   const [step, setStep] = useState(1);
@@ -25,6 +27,8 @@ function CreateContestQuestions() {
   const [questions, setQuestions] = useState({});
   const [activeTab, setActiveTabState] = useState('create');
   const navigate = useNavigate();
+  const { addNewEvent } = useContestContext();
+  const { showError, showSuccess } = useAlert();
 
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -52,7 +56,7 @@ function CreateContestQuestions() {
 
   const handleConfigSubmit = () => {
     if (!numberOfQuestions || !selectedLanguage) {
-      alert('Please select both number of questions and language');
+      showError('Please select both number of questions and language');
       return;
     }
     
@@ -163,7 +167,29 @@ function CreateContestQuestions() {
 
   const handleNext = () => {
     if (!questions[currentQuestion].problem.trim()) {
-      alert('Please enter the problem statement');
+      showError('Please enter the problem statement');
+      return;
+    }
+    
+    // Validate input/output formats
+    if (!questions[currentQuestion].problemDetails?.inputFormat?.trim()) {
+      showError('Please enter the input format');
+      return;
+    }
+    
+    if (!questions[currentQuestion].problemDetails?.outputFormat?.trim()) {
+      showError('Please enter the output format');
+      return;
+    }
+    
+    // Validate starter code
+    if (!questions[currentQuestion].starterCode?.python?.trim()) {
+      showError('Please enter Python starter code');
+      return;
+    }
+    
+    if (!questions[currentQuestion].starterCode?.java?.trim()) {
+      showError('Please enter Java starter code');
       return;
     }
     
@@ -182,15 +208,31 @@ function CreateContestQuestions() {
     // Validate all questions
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
         if (!questions[i].problem.trim()) {
-            alert(`Please complete question ${i}`);
+            showError(`Please complete question ${i}`);
             return;
         }
         if (!questions[i].example.input.trim() || !questions[i].example.output.trim()) {
-            alert(`Please complete example for question ${i}`);
+            showError(`Please complete example for question ${i}`);
+            return;
+        }
+        if (!questions[i].problemDetails?.inputFormat?.trim()) {
+            showError(`Please complete input format for question ${i}`);
+            return;
+        }
+        if (!questions[i].problemDetails?.outputFormat?.trim()) {
+            showError(`Please complete output format for question ${i}`);
+            return;
+        }
+        if (!questions[i].starterCode?.python?.trim()) {
+            showError(`Please complete Python starter code for question ${i}`);
+            return;
+        }
+        if (!questions[i].starterCode?.java?.trim()) {
+            showError(`Please complete Java starter code for question ${i}`);
             return;
         }
         if (questions[i].testCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
-            alert(`Please complete all test cases for question ${i}`);
+            showError(`Please complete all test cases for question ${i}`);
             return;
         }
     }
@@ -207,7 +249,7 @@ function CreateContestQuestions() {
             throw new Error('No contest data found in localStorage');
         }
     } catch (e) {
-        alert('Contest general information not found. Please go back and fill in the contest details first.');
+        showError('Contest general information not found. Please go back and fill in the contest details first.');
         console.error('Error retrieving contest data:', e);
         console.log('Available localStorage keys:', Object.keys(localStorage));
         return;
@@ -215,7 +257,7 @@ function CreateContestQuestions() {
 
     // Check if we have the required data using the correct field names
     if (!contestGeneralData.title || !contestGeneralData.description) {
-        alert('Contest title and description not found. Please go back and fill in the contest details first.');
+        showError('Contest title and description not found. Please go back and fill in the contest details first.');
         console.error('Missing required contest data. Available data:', contestGeneralData);
         return;
     }
@@ -224,39 +266,45 @@ function CreateContestQuestions() {
     const dataToSend = {
         contestTitle: contestGeneralData.title,
         contestDescription: contestGeneralData.description,
-        duration: contestGeneralData.duration, // Added
-        pointsPerProgram: contestGeneralData.pointsPerProgram, // Added
-        mode: contestGeneralData.mode,
-        type: contestGeneralData.type,
+        duration: contestGeneralData.duration,
+        pointsPerProgram: contestGeneralData.pointsPerProgram,
+        contestMode: contestGeneralData.mode, // Fixed: use contestMode instead of mode
+        contestType: contestGeneralData.type, // Fixed: use contestType instead of type
         topicsCovered: contestGeneralData.topicsCovered,
+        allowedDepartments: contestGeneralData.allowedDepartments,
         numberOfQuestions: parseInt(numberOfQuestions),
         selectedLanguage: selectedLanguage,
-        questions: questions
+        questions: questions,
     };
 
     console.log('Data being sent to API:', dataToSend);
+    console.log('Questions data structure:', questions);
+    console.log('Sample question data:', questions[1]);
 
     try {
         const response = await fetch('/api/admin/create-contest', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // Add your authorization header here if needed
-                // 'Authorization': `Bearer ${yourAuthToken}`
             },
             body: JSON.stringify(dataToSend)
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            alert(`Failed to create contest: ${errorData.message || 'Unknown error'}`);
+            showError(`Failed to create contest: ${errorData.message || 'Unknown error'}`);
             console.error('API Error:', errorData);
             return;
         }
 
         const result = await response.json();
-        alert('Contest created successfully!');
+        showSuccess('Contest created successfully!');
         console.log('Contest creation success:', result);
+        
+        // Add the new event to the context
+        if (result.event) {
+            addNewEvent(result.event);
+        }
         
         // Clear localStorage
         localStorage.removeItem('contestFormData');
@@ -265,7 +313,7 @@ function CreateContestQuestions() {
 
     } catch (error) {
         console.error('Network or unexpected error:', error);
-        alert('An unexpected error occurred while saving the contest. Please check the console for details.');
+        showError('An unexpected error occurred while saving the contest. Please check the console for details.');
     }
   };
 
@@ -542,11 +590,7 @@ function CreateContestQuestions() {
 
   return (
     <div className="create-contest-questions">
-      <AdminNavbar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
-        sidebarItems={sidebarItems}
-      />
+      <AdminNavbar />
 
       <div className="content-wrapper">
         {step === 1 && renderConfigStep()}

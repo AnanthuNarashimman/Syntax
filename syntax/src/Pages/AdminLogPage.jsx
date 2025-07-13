@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import '../Styles/PageStyles/AdminLogPage.css';
 import { Button } from "../Components/Button.jsx";
 import CustomAlert from "../Components/CustomAlert.jsx"; // Import the CustomAlert component
+import { useAlert } from '../contexts/AlertContext';
 
 function AdminLogPage() {
     const navigate = useNavigate();
+    const { showSuccess, showError } = useAlert();
 
     const [formData, setFormData] = useState({
         email: '',
@@ -14,8 +16,6 @@ function AdminLogPage() {
     });
 
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
 
     const loginData = {
         title: "Admin Login",
@@ -43,16 +43,12 @@ function AdminLogPage() {
             ...prev,
             [name]: value
         }));
-        setError('');
-        setSuccessMessage('');
     };
 
     const handleLogin = async (e) => {
         e.preventDefault();
 
         setLoading(true);
-        setError('');
-        setSuccessMessage('');
 
         try {
             const response = await fetch('/api/auth/admin-login', {
@@ -69,7 +65,7 @@ function AdminLogPage() {
             }
 
             const data = await response.json();
-            setSuccessMessage(data.message || 'Login successful!');
+            showSuccess(data.message || 'Login successful!');
             console.log('Login successful:', data);
 
             // Auto-redirect after showing success message
@@ -79,7 +75,7 @@ function AdminLogPage() {
 
         } catch (err) {
             console.error('Login failed:', err.message);
-            setError(err.message || 'An unexpected error occurred. Please try again.');
+            showError(err.message || 'An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -87,8 +83,6 @@ function AdminLogPage() {
 
     const handleLogout = async () => {
         setLoading(true);
-        setError('');
-        setSuccessMessage('');
 
         try {
             const response = await fetch('/api/auth/logout', {
@@ -101,7 +95,7 @@ function AdminLogPage() {
                 throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
             }
 
-            setSuccessMessage('Logged out successfully!');
+            showSuccess('Logged out successfully!');
             console.log('Logged out successfully.');
 
             // Auto-redirect after showing success message
@@ -111,15 +105,10 @@ function AdminLogPage() {
 
         } catch (err) {
             console.error('Logout failed:', err.message);
-            setError(err.message || 'An unexpected error occurred during logout.');
+            showError(err.message || 'An unexpected error occurred during logout.');
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleCloseAlert = () => {
-        setError('');
-        setSuccessMessage('');
     };
 
     return (
@@ -188,20 +177,6 @@ function AdminLogPage() {
             </div>
 
             {/* Custom Alert Component */}
-            {error && (
-                <CustomAlert
-                    message={error}
-                    type="error"
-                    onClose={handleCloseAlert}
-                />
-            )}
-            {successMessage && (
-                <CustomAlert
-                    message={successMessage}
-                    type="success"
-                    onClose={handleCloseAlert}
-                />
-            )}
         </div>
     );
 }

@@ -4,23 +4,29 @@ import {
   Settings, 
   User, 
   Users, 
-  TrendingUp
+  TrendingUp,
+  BookOpen
 } from 'lucide-react';
-import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import '../Styles/ComponentStyles/AdminNavbar.css';
 import { Button } from './Button';
 
-function AdminNavbar({ activeTab, onTabChange, sidebarItems = [] }) {
-  const defaultSidebarItems = [
-    { id: 'home', label: 'Dashboard', icon: Home },
-    { id: 'create', label: 'Create Contest', icon: Plus },
-    { id: 'manage', label: 'Manage Events', icon: Settings },
-    { id: 'participants', label: 'Participants', icon: Users },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-    { id: 'profile', label: 'Profile', icon: User }
-  ];
+const sidebarItems = [
+  { id: 'home', label: 'Dashboard', icon: Home, route: '/admin-dashboard' },
+  { id: 'create', label: 'Create Contest', icon: Plus, route: '/create-contest' },
+  { id: 'manage', label: 'Manage Events', icon: Settings, route: '/manage-contest' },
+  { id: 'participants', label: 'Participants', icon: Users, route: '/manage-participants' },
+  { id: 'analytics', label: 'Analytics', icon: TrendingUp, route: '/analytics' },
+  { id: 'articles', label: 'Articles', icon: BookOpen, route: '/manage-articles' },
+  { id: 'profile', label: 'Profile', icon: User, route: '/admin-profile' }
+];
 
-  const items = sidebarItems.length > 0 ? sidebarItems : defaultSidebarItems;
+function AdminNavbar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Determine active tab by matching current path
+  const activeTab = sidebarItems.find(item => location.pathname.startsWith(item.route))?.id || 'home';
 
   return (
     <div className="navbar-sidebar">
@@ -34,13 +40,13 @@ function AdminNavbar({ activeTab, onTabChange, sidebarItems = [] }) {
       </div>
       
       <nav className="navbar-nav">
-        {items.map((item) => {
+        {sidebarItems.map((item) => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               className={`navbar-nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => onTabChange && onTabChange(item.id)}
+              onClick={() => navigate(item.route)}
             >
               <Icon size={20} />
               <span>{item.label}</span>

@@ -94,11 +94,7 @@ function Analytics() {
     return (
         <>
 
-            <AdminNavbar
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                sidebarItems={sidebarItems}
-            />
+            <AdminNavbar />
 
 
             <div className="analytics-dashboard-wrapper">

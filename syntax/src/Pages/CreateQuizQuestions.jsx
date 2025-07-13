@@ -14,10 +14,14 @@ import { ChevronLeft, ChevronRight, Check, Calculator, Home,
 import '../Styles/PageStyles/CreateQuizQuestions.css';
 import AdminNavbar from "../Components/AdminNavbar";
 import { useNavigate } from 'react-router-dom';
+import { useContestContext } from '../contexts/ContestContext';
+import { useAlert } from '../contexts/AlertContext';
 
 function CreateQuizQuestions() {
 
     const navigate = useNavigate();
+    const { addNewEvent } = useContestContext();
+    const { showError, showSuccess } = useAlert();
 
     const [totalQuestions, setTotalQuestions] = useState(0);
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -100,28 +104,94 @@ function CreateQuizQuestions() {
         setTotalScore(totalQuestions * scorePerQuestion);
     };
 
-    const handleScoreSubmit = () => {
+    const handleScoreSubmit = async () => {
         const finalTotalScore = totalQuestions * scorePerQuestion;
         setTotalScore(finalTotalScore);
 
-        const quizData = {
-            questions: questions,
-            scorePerQuestion: scorePerQuestion,
-            totalScore: finalTotalScore,
-            totalQuestions: totalQuestions
+        // Get contest general data from localStorage
+        let contestGeneralData = {};
+        
+        try {
+            const stored = localStorage.getItem('contestFormData');
+            if (stored) {
+                contestGeneralData = JSON.parse(stored);
+                console.log('Found contest data in localStorage:', contestGeneralData);
+            } else {
+                throw new Error('No contest data found in localStorage');
+            }
+        } catch (e) {
+            showError('Quiz general information not found. Please go back and fill in the quiz details first.');
+            console.error('Error retrieving contest data:', e);
+            return;
+        }
+
+        // Check if we have the required data
+        if (!contestGeneralData.title || !contestGeneralData.description) {
+            showError('Quiz title and description not found. Please go back and fill in the quiz details first.');
+            console.error('Missing required contest data. Available data:', contestGeneralData);
+            return;
+        }
+
+        // Assemble the data to send to the backend
+        const dataToSend = {
+            contestTitle: contestGeneralData.title,
+            contestDescription: contestGeneralData.description,
+            duration: contestGeneralData.duration,
+            pointsPerProgram: scorePerQuestion, // Use scorePerQuestion as points per question
+            contestType: contestGeneralData.type, // Should be "quiz"
+            contestMode: contestGeneralData.mode,
+            topicsCovered: contestGeneralData.topicsCovered,
+            allowedDepartments: contestGeneralData.allowedDepartments,
+            numberOfQuestions: totalQuestions,
+            questions: questions, // Array of quiz questions
         };
 
-        console.log('Quiz created with scoring:', quizData);
-        alert(`Quiz created successfully! Total Score: ${finalTotalScore} points`);
+        console.log('Data being sent to API:', dataToSend);
 
-        // Reset form
-        setTotalQuestions(0);
-        setCurrentQuestion(0);
-        setShowQuestionForm(false);
-        setShowScoreManagement(false);
-        setQuestions([]);
-        setScorePerQuestion(1);
-        setTotalScore(0);
+        try {
+            const response = await fetch('/api/admin/create-contest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToSend)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                showError(`Failed to create quiz: ${errorData.message || 'Unknown error'}`);
+                console.error('API Error:', errorData);
+                return;
+            }
+
+            const result = await response.json();
+            showSuccess('Quiz created successfully!');
+            console.log('Quiz creation success:', result);
+            
+            // Add the new event to the context
+            if (result.event) {
+                addNewEvent(result.event);
+            }
+            
+            // Clear localStorage
+            localStorage.removeItem('contestFormData');
+            
+            // Reset form
+            setTotalQuestions(0);
+            setCurrentQuestion(0);
+            setShowQuestionForm(false);
+            setShowScoreManagement(false);
+            setQuestions([]);
+            setScorePerQuestion(1);
+            setTotalScore(0);
+            
+            // Navigate to manage page
+            navigate('/manage-contest');
+
+        } catch (error) {
+            console.error('Network or unexpected error:', error);
+            showError('An unexpected error occurred while saving the quiz. Please check the console for details.');
+        }
     };
 
     const isCurrentQuestionValid = () => {
@@ -382,11 +452,7 @@ function CreateQuizQuestions() {
 
     return (
         <div className="create-quiz-questions">
-            <AdminNavbar
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                sidebarItems={sidebarItems}
-            />
+            <AdminNavbar />
             <div className="content-wrapper">
                 <div className="page-header">
                     <button

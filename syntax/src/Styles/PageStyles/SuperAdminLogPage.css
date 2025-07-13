@@ -1,217 +1,217 @@
 /* Root Layout */
 .desktop-container {
-    display: flex;
-    height: 100vh;
-    width: 100%;
-  }
-  
-  /* Left Side: Admin Panel */
-  .super-desktop-right {
-    width: 60%;
-    position: relative;
-    background-image: url('../../assets/Images/Super.jpeg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    padding: 1rem;
-  }
-  
-  .super-card {
-    position: absolute;
-    top: 24%;
-    left: 75.2%;
-    transform: translate(-50%, -50%);
-    width: 14vw;
-    height: 33vh;
-    background-color: #fff;
-    font-family: 'Nunito sans';
-    border: 10px solid #666;
-    padding: 1.5rem;
-    border-radius: 8px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 2%;
-  }
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
 
-  .super-top-bar {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    left: 0;
-    background: #666;
-    height: 10px;
-    border-radius: 8px 8px 0 0;
-    display: none;
-  }
-  
-  .super-text {
-    font-size: 22px; /* ~30px */
-    font-weight: 600;
-    color: #444444;
-    margin-bottom: 1rem;
-  }
-  
-  .super-text .highlight {
-    color: #e95a49;
-  }
-  
-  /* Admin Button (inside .admin-card) */
-  .super-button {
-    width: 100%;
-    height: 55px;
-    background-color: #e95a49;
-    color: #ffffff;
-    font-size: 1.3rem;
-    font-weight: 600;
-    border-radius: 0.5rem;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-    padding: 15px;
-  }
-  
-  .admin-button:hover {
-    background-color: #d94c3b;
-  }
-  
-  /* Right Side: Login Section */
-  .super-desktop-left {
-    width: 50%;
-    height: 100%;
-    background-color: #f76c5e;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Nunito sans';
-  }
-  
-  .login-form {
-    width: 100%;
-    max-width: 500px;
-  }
-  
-  /* Brand Name */
-  .brand-name {
-    font-size: 50px;
-    font-family: "Figtree", sans-serif;
-    font-weight: bold;
-    color: #ffffff;
-    text-align: center;
-    margin-bottom: 2.5rem;
-  }
-  
-  /* Login Title */
-  .login-title {
-    font-size: 25px;
-    font-weight: 600;
-    text-align: center;
-    color: #ffffff;
-    margin-bottom: 2rem;
-  }
-  
-  /* Headings */
-  .login-heading {
-    text-align: center;
-    margin-bottom: 2.5rem;
-  }
-  
-  .login-heading .heading-main {
-    font-size: 33px;
-    font-weight: bold;
-    color: #ffffff;
-    margin-bottom: 0.5rem;
-  }
-  
-  .login-heading .heading-sub {
-    font-size: 1.15rem;
-    color: #ecefe9;
-  }
-  
-  /* Input Form Fields */
-  .form-group {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    position: relative;
-  }
-  
-  .form-group label {
-    position: absolute;
-    top: 20%;
-    left: 11%;
-    align-items: center;
-    font-size: 18px;
-    font-weight: 500;
-    color: #666666d9;
-    align-items: left;
-    pointer-events: none;
-  }
+/* Left Side: Admin Panel */
+.super-desktop-right {
+  width: 60%;
+  position: relative;
+  background-image: url('../../assets/Images/Super.jpeg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 1rem;
+}
 
-  .passwordLabel {
-    top: 8% !important;
-  }
-  
-  .input-field {
-    width: 85%;
-    height: 38px;
-    padding: 0 1rem;
-    font-size: 1.125rem;
-    border: 0.3px solid #324c54;
-    border-radius: 5px;
-    color: #333333;
-  }
-  
-  /* Forgot Password */
-  .forgot-password {
-    margin-top: 20px;
-    text-align: right;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #ffffff;
-    cursor: pointer;
-    margin-left: 50%;
-  }
-  
-  /* Login Button */
-  .login-button {
-    width: 70%;
-    height: 45px;
-    background-color: #385A64;
-    margin-left: 50%;
-    transform: translateX(-50%);
-    color: #ffffff;
-    font-size: 1.25rem;
-    font-weight: 600;
-    border-radius: 0.5rem;
-    margin-top: 2rem;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s ease-in-out;
-  }
-  
-  .login-button:hover {
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 2px 2px 5px #00000082;
-  }
-  
-  /* Register Link */
-  .register-link {
-    text-align: center;
-    font-size: 19px;
-    color: #ffffff;
-    margin-top: 2.5rem;
-  }
-  
-  .create-account {
-    font-weight: 600;
-    color: #083f48;
-    cursor: pointer;
-    margin-left: 0.5rem;
-  }
+.super-card {
+  position: absolute;
+  top: 24%;
+  left: 75.2%;
+  transform: translate(-50%, -50%);
+  width: 14vw;
+  height: 33vh;
+  background-color: #fff;
+  font-family: 'Nunito sans';
+  border: 10px solid #666;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2%;
+}
+
+.super-top-bar {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  left: 0;
+  background: #666;
+  height: 10px;
+  border-radius: 8px 8px 0 0;
+  display: none;
+}
+
+.super-text {
+  font-size: 22px; /* ~30px */
+  font-weight: 600;
+  color: #444444;
+  margin-bottom: 1rem;
+}
+
+.super-text .highlight {
+  color: #e95a49;
+}
+
+/* Admin Button (inside .admin-card) */
+.super-button {
+  width: 100%;
+  height: 55px;
+  background-color: #e95a49;
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  padding: 15px;
+}
+
+.admin-button:hover {
+  background-color: #d94c3b;
+}
+
+/* Right Side: Login Section */
+.super-desktop-left {
+  width: 50%;
+  height: 100%;
+  background-color: #f76c5e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Nunito sans';
+}
+
+.login-form {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Brand Name */
+.brand-name {
+  font-size: 50px;
+  font-family: "Figtree", sans-serif;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+/* Login Title */
+.login-title {
+  font-size: 25px;
+  font-weight: 600;
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 2rem;
+}
+
+/* Headings */
+.login-heading {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.login-heading .heading-main {
+  font-size: 33px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.login-heading .heading-sub {
+  font-size: 1.15rem;
+  color: #ecefe9;
+}
+
+/* Input Form Fields */
+.form-group {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+}
+
+.form-group label {
+  position: absolute;
+  top: 20%;
+  left: 11%;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: #666666d9;
+  align-items: left;
+  pointer-events: none;
+}
+
+.passwordLabel {
+  top: 8% !important;
+}
+
+.input-field {
+  width: 85%;
+  height: 38px;
+  padding: 0 1rem;
+  font-size: 1.125rem;
+  border: 0.3px solid #324c54;
+  border-radius: 5px;
+  color: #333333;
+}
+
+/* Forgot Password */
+.forgot-password {
+  margin-top: 20px;
+  text-align: right;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  margin-left: 50%;
+}
+
+/* Login Button */
+.login-button {
+  width: 70%;
+  height: 45px;
+  background-color: #385A64;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.login-button:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 2px 2px 5px #00000082;
+}
+
+/* Register Link */
+.register-link {
+  text-align: center;
+  font-size: 19px;
+  color: #ffffff;
+  margin-top: 2.5rem;
+}
+
+.create-account {
+  font-weight: 600;
+  color: #083f48;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
   

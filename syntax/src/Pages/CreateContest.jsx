@@ -16,6 +16,7 @@ import {
 import '../Styles/PageStyles/CreateContest.css';
 import AdminNavbar from "../Components/AdminNavbar";
 import { useNavigate } from 'react-router-dom';
+import { useAlert } from '../contexts/AlertContext';
 
 import Create from '../assets/Images/Create.svg';
 
@@ -28,11 +29,18 @@ function CreateContest() {
     description: '',
     topicsCovered: '',
     duration: '', // Added
-    pointsPerProgram: '' // Added
+    pointsPerProgram: '', // Added
+    allowedDepartments: '' // Added department field
   });
 
   const [activeTab, setActiveTabState] = useState('create');
   const navigate = useNavigate();
+  const { showError, showSuccess } = useAlert();
+
+  const [articleInputType, setArticleInputType] = useState('file'); // 'file' or 'link'
+  const [articleFile, setArticleFile] = useState(null);
+  const [articleLink, setArticleLink] = useState('');
+  const [articleText, setArticleText] = useState('');
 
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -96,30 +104,87 @@ function CreateContest() {
     }));
   };
 
-  const handleCreate = () => {
+  const handleArticleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'text/plain') {
+      setArticleFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setArticleText(event.target.result);
+      };
+      reader.readAsText(file);
+    } else {
+      setArticleFile(null);
+      setArticleText('');
+      showError('Only .txt files are accepted for article upload.');
+    }
+  };
+
+  const handleArticleLinkChange = (e) => {
+    setArticleLink(e.target.value);
+  };
+
+  const handleCreate = async () => {
     // Validate form data
-    if (!formData.title.trim() || !formData.description.trim() || !formData.topicsCovered.trim() || !formData.duration.trim() || !formData.pointsPerProgram.trim()) {
-      alert('Please fill in all required fields');
+    if (!formData.title.trim() || !formData.description.trim() || !formData.topicsCovered.trim() || !formData.allowedDepartments.trim()) {
+      showError('Please fill in all required fields');
+      return;
+    }
+    if (selectedType === 'article') {
+      if (articleInputType === 'file') {
+        if (!articleFile || !articleText.trim()) {
+          showError('Please upload a valid .txt file for the article.');
+          return;
+        }
+      } else if (articleInputType === 'link') {
+        if (!articleLink.trim()) {
+          showError('Please provide a valid article link.');
+          return;
+        }
+      }
+      // Send article to backend
+      try {
+        const payload = {
+          title: formData.title,
+          description: formData.description,
+          topicsCovered: formData.topicsCovered,
+          allowedDepartments: formData.allowedDepartments,
+          type: 'article',
+          articleContent: articleInputType === 'file' ? articleText : undefined,
+          articleLink: articleInputType === 'link' ? articleLink : undefined,
+        };
+        const response = await fetch('/api/articles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          showError(data.message || 'Failed to create article.');
+          return;
+        }
+        showSuccess('Article created successfully!');
+        // Optionally reset form or navigate
+      } catch (err) {
+        showError('Failed to create article.');
+      }
       return;
     }
 
-    // Store form data (you can use context or pass as state)
+    if (!formData.duration.trim() || !formData.pointsPerProgram.trim()) {
+      showError('Please fill in all required fields');
+      return;
+    }
     localStorage.setItem('contestFormData', JSON.stringify({
       ...formData,
       type: selectedType,
-      mode: selectedMode,
-      contestType: selectedMode // Save as contestType for backend
+      mode: selectedMode
     }));
-
-    // Navigate based on contest type
     if (selectedType === 'quiz') {
       navigate('/create-quiz-questions');
     } else if (selectedType === 'contest') {
       navigate('/create-contest-questions');
-    } else if (selectedType === 'article') {
-      // Handle article creation
-      alert('Article created successfully!');
-      // Reset form or navigate to manage page
     }
   };
 
@@ -305,14 +370,102 @@ function CreateContest() {
         )}
 
         {selectedType === 'article' && (
-          <div className="form-group">
-            <p htmlFor="file">Upload Article</p>
-            <div className="file-upload">
-              <input type="file" id="file" accept=".pdf,.doc,.docx,.txt" />
-              <span>Choose file or drag and drop</span>
+          <>
+            <div className="form-group">
+              <p>Article Input Type</p>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <p style={{margin: 0, display: 'flex', alignItems: 'center'}}>
+                  <input
+                    type="radio"
+                    name="articleInputType"
+                    value="file"
+                    checked={articleInputType === 'file'}
+                    onChange={() => setArticleInputType('file')}
+                    style={{ marginRight: '0.5em' }}
+                  />
+                  Upload .txt File
+                </p>
+                <p style={{margin: 0, display: 'flex', alignItems: 'center'}}>
+                  <input
+                    type="radio"
+                    name="articleInputType"
+                    value="link"
+                    checked={articleInputType === 'link'}
+                    onChange={() => setArticleInputType('link')}
+                    style={{ marginRight: '0.5em' }}
+                  />
+                  Provide Link
+                </p>
+              </div>
             </div>
-          </div>
+            {articleInputType === 'file' && (
+              <div className="form-group">
+                <p htmlFor="file">Upload Article (.txt only)</p>
+                <div
+                  className="file-upload"
+                  onDrop={e => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      handleArticleFileChange({ target: { files: e.dataTransfer.files } });
+                    }
+                  }}
+                  onDragOver={e => e.preventDefault()}
+                  onDragEnter={e => e.preventDefault()}
+                  style={{
+                    border: '2px dashed #ccc',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: '#fafbfc',
+                    color: '#333',
+                  }}
+                  onClick={() => document.getElementById('article-file-input').click()}
+                >
+                  <input
+                    type="file"
+                    id="article-file-input"
+                    accept=".txt"
+                    style={{ display: 'none' }}
+                    onChange={handleArticleFileChange}
+                  />
+                  <span>
+                    {articleFile ? articleFile.name : 'Click or drag and drop a .txt file here'}
+                  </span>
+                </div>
+              </div>
+            )}
+            {articleInputType === 'link' && (
+              <div className="form-group">
+                <p htmlFor="articleLink">Article Link</p>
+                <input
+                  type="url"
+                  id="articleLink"
+                  placeholder="Paste article link (e.g. GeeksforGeeks)"
+                  value={articleLink}
+                  onChange={handleArticleLinkChange}
+                />
+              </div>
+            )}
+          </>
         )}
+
+        <div className="form-group">
+          <p htmlFor="allowedDepartments">Allowed to Attend</p>
+          <select
+            id="allowedDepartments"
+            value={formData.allowedDepartments}
+            onChange={(e) => handleInputChange('allowedDepartments', e.target.value)}
+          >
+            <option value="">Select Departments</option>
+            <option value="Any department">Any department</option>
+            <option value="CSE">CSE</option>
+            <option value="EEE">EEE</option>
+            <option value="ECE">ECE</option>
+            <option value="IT">IT</option>
+            <option value="CSD">CSD</option>
+          </select>
+        </div>
 
         <div className="form-actions">
           <button className="back-button" onClick={handleBack}>
@@ -332,11 +485,7 @@ function CreateContest() {
   return (
     <>
     <div className="create-contest">
-        <AdminNavbar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-          sidebarItems={sidebarItems}
-        />
+        <AdminNavbar />
 
       <div className="content-wrapper">
         <div className="progress-indicator">

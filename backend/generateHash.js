@@ -25,5 +25,5 @@ async function generateHash(plainPassword) {
 // --- Usage Examples ---
 // Replace 'YourAdminPassword123' and 'YourStudentPassword456' with your actual desired passwords.
 // Run this script for each password you need to hash.
-generateHash('Admin@123');
+generateHash('SuperAdmin@123');
 // generateHash('MyStudentPass#2'); // Uncomment to generate for a student password

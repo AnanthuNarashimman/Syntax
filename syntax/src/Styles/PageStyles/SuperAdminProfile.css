@@ -1,0 +1,304 @@
+.SuperAdminProfile {
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin-left: 280px;
+}
+
+/* Page Header */
+.PageHeader {
+  margin-bottom: 2rem;
+}
+
+.PageHeader h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.PageHeader p {
+  font-size: 1.1rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* Profile Container */
+.ProfileContainer {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  max-width: 1200px;
+}
+
+/* Profile Card */
+.ProfileCard {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+  text-align: center;
+}
+
+.ProfileAvatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e95a49 0%, #c94138 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  position: relative;
+}
+
+.AvatarIcon {
+  width: 60px;
+  height: 60px;
+  color: white;
+}
+
+.ProfileName {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.ProfileRole {
+  color: #e95a49;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ProfileStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.StatItem {
+  text-align: center;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.StatValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.25rem 0;
+}
+
+.StatLabel {
+  font-size: 0.875rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* Settings Section */
+.SettingsSection {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.SettingsHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f7fafc;
+}
+
+.SettingsHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.SettingsContent {
+  padding: 2rem;
+}
+
+.SettingsForm {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.FormGroup {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.FormGroup label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.FormGroup input {
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.FormGroup input:focus {
+  outline: none;
+  border-color: #e95a49;
+}
+
+.FormGroup input:disabled {
+  background: #f7fafc;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.PasswordSection {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.PasswordSection h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+}
+
+.PasswordFields {
+  display: grid;
+  gap: 1rem;
+}
+
+.FormActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.BtnPrimary,
+.BtnSecondary {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.BtnPrimary {
+  background: #e95a49;
+  color: white;
+}
+
+.BtnPrimary:hover:not(:disabled) {
+  background: #c94138;
+  transform: translateY(-1px);
+}
+
+.BtnSecondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.BtnSecondary:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.BtnPrimary:disabled,
+.BtnSecondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Alert Messages */
+.Alert {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.AlertSuccess {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.AlertError {
+  background: #FED7D7;
+  color: #C53030;
+  border: 1px solid #FEB2B2;
+}
+
+/* Loading State */
+.LoadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.1rem;
+  color: #718096;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .ProfileContainer {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .SuperAdminProfile {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .ProfileStats {
+    grid-template-columns: 1fr;
+  }
+
+  .FormActions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .PageHeader h1 {
+    font-size: 2rem;
+  }
+
+  .ProfileCard {
+    padding: 1.5rem;
+  }
+
+  .ProfileAvatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .AvatarIcon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .SettingsContent {
+    padding: 1.5rem;
+  }
+} 
