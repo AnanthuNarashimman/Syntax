@@ -1,6 +1,13 @@
-// index.js - Your complete Node.js server setup file
+// Having a lot of comments doesn't mean it is made using AI. 
+// We really spent time to write meaningful comments, trying to explain what each block or function does.
+// You can find some grammar mistakes too!
 
-// --- 1. Core Node.js and Express Imports ---
+// The server is "Stateless" meaning there won't be any information stored on server about users.
+// Make sure to take a glance on how "JWT" authentication works before diving deep.
+// For now, in JWT the server sends back a encryoted token after authentication called as "JSON Web Tokens" which will be stored in browser.
+// Everytime browser makes a request, the server reads the token and finds out which user is making that request.
+
+// Core Node.js and Express Imports 
 const express = require('express');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
@@ -9,7 +16,7 @@ const cors = require('cors');
 
 const security_key = process.env.SECURITY_KEY
 
-// --- 2. Firebase Admin SDK Initialization ---
+// Firebase Admin SDK Initialization 
 const admin = require('firebase-admin');
 const serviceAccount = require(security_key);
 
@@ -19,7 +26,11 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-// --- 3. Password Hashing Utilities ---
+// Password Hashing Utilities
+
+
+// Hashes the plain string password 
+// Used by "Super Admin" to hash passwords while adding new Admins
 const bcrypt = require('bcryptjs');
 
 async function hashPassword(password) {
@@ -36,6 +47,8 @@ async function hashPassword(password) {
     }
 }
 
+// Compares the entered plain password by hashing and comparing it with the existing hashedPassword
+// Used for Admin logins, Super Admin logins and for password changing functionalities where there is a need to verify an existing password
 async function comparePasswords(plainPassword, hashedPassword) {
     if (!plainPassword || typeof plainPassword !== 'string' || !hashedPassword || typeof hashedPassword !== 'string') {
         throw new Error('Both plainPassword and hashedPassword must be non-empty strings for comparison.');
@@ -49,8 +62,16 @@ async function comparePasswords(plainPassword, hashedPassword) {
     }
 }
 
-// --- 4. Authentication Service Logic (Modified for JWT) ---
+// Authentication Service Logic
 
+
+// Authentication Service Logic (JWT) for "Admins"
+// 1) Takes email and password and checks their data types.
+// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be throwed.
+// 3) Compares the password using the function "comparePasswords (Line:52)". If it isnt'a match, an error will be throwed.
+// 4) Creates "payload" with necessary datas {userId, userName, email, isAdmin} which will encrypted as token.
+// 5) Creates a token that expires in 3 hours.
+// 6) If an error occurs, appropriate messages will be shown.
 async function loginAdminUser(email, password) {
     if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
         throw new Error('Email and password are required and must be strings.');
@@ -91,7 +112,7 @@ async function loginAdminUser(email, password) {
         }
 
         const tokenOptions = {
-            expiresIn: '1h'
+            expiresIn: '3h'
         };
 
         const token = jwt.sign(payload, jwtSecret, tokenOptions);
@@ -114,6 +135,14 @@ async function loginAdminUser(email, password) {
     }
 }
 
+
+// Authentication Service Logic (JWT) for "Super Admins".
+// 1) Takes email and password and checks their data types.
+// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be throwed.
+// 3) Compares the password using the function "comparePasswords (Line:52)". If it isnt'a match, an error will be throwed.
+// 4) Creates "payload" with necessary datas {userId, userName, email, isAdmin} which will encrypted as token.
+// 5) Creates a token that expires in 3 hours.
+// 6) If an error occurs, appropriate messages will be shown.
 async function loginSuperAdminUser(email, password) {
     if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
         throw new Error('Email and password are required and must be strings.');
@@ -177,7 +206,7 @@ async function loginSuperAdminUser(email, password) {
     }
 }
 
-// --- 5. Express App Setup and Middleware Configuration ---
+// Express App Setup and Middleware Configuration 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -188,7 +217,13 @@ app.use(cors({
     credentials: true,
 }));
 
-// --- 6. Middleware for Admin-Only Route Protection (Modified for JWT) ---
+// Middleware for Admin-Only Route Protection 
+// Used by functionalities like "manage quizzes, create contest, event management, article management" to ensure the request is made by an admin.
+// 1) Gets the encrypted 'auth-token' from the browser cookies and decodes it.
+// 2) Checks for "isAdmin" in the token. It is a boolean value from our firebase db. 
+// 3) If the requested user is actually an admin, then the function "next()" will be executed. 
+//    next() : This is a handler that lets express knows that the current middleware is executed and returned success.
+// 4) If the user is not admin, if any data is missing or if the server collapses, then corresponding errors will be logged
 function requireAdminAuth(req, res, next) {
     const token = req.cookies.auth_token;
 
@@ -224,6 +259,14 @@ function requireAdminAuth(req, res, next) {
     }
 }
 
+
+// Middleware for SuperAdmin-Only Route Protection 
+// Used by functionalities like "creating admins, managing contests, super-admin profile" to ensure the request is made by a super admin.
+// 1) Gets the encrypted 'auth-token' from the browser cookies and decodes it.
+// 2) Checks for "isSuper" in the token. It is a boolean value from our firebase db. 
+// 3) If the requested user is actually an admin, then the function "next()" will be executed. 
+//    next() : This is a handler that lets express knows that the current middleware is executed and returned success.
+// 4) If the user is not super admin, if any data is missing or if the server collapses, then corresponding errors will be logged
 function requireSuperAdminAuth(req, res, next) {
     const token = req.cookies.auth_token;
 
@@ -259,8 +302,19 @@ function requireSuperAdminAuth(req, res, next) {
     }
 }
 
-// --- 7. API Routes Definition ---
+// API Routes Definition
 
+
+// API for Admin authentication
+
+// Gets email and password from the frontend "AdminLogPage.jsx"
+// Passes the email and password to the function "loginAdminUser (line : 75)" to check credentials
+// Gets the encrypted token from the function "loginAdminUser" and stores it in cookies with the name "auth_token" with some security measures
+// httpOnly: true => This prevents the cookie to be accessed from client-side javaScript
+// secure: process.env.NODE_ENV === 'production' => Decides whether the cookie be passed only in HTTPS connection if the "NODE_ENV" is set as 'production' in env.
+// maxAge: 1000 * 60 * 180 => The lifetime of the cookie. Set as 3 hours
+//sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
+//path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
 app.post('/api/auth/admin-login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -269,7 +323,7 @@ app.post('/api/auth/admin-login', async (req, res) => {
         res.cookie('auth_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 60,
+            maxAge: 1000 * 60 * 180,
             sameSite: 'Lax',
             path: '/'
         });
@@ -285,6 +339,18 @@ app.post('/api/auth/admin-login', async (req, res) => {
     }
 });
 
+
+
+// API for Super Admin authentication
+
+// Gets email and password from the frontend "SuperAdminLogPage.jsx"
+// Passes the email and password to the function "loginSuperAdminUser (line : 146)" to check credentials
+// Gets the encrypted token from the function "loginAdminUser" and stores it in cookies with the name "auth_token" with some security measures
+// httpOnly: true => This prevents the cookie to be accessed from client-side javaScript
+// secure: process.env.NODE_ENV === 'production' => Decides whether the cookie be passed only in HTTPS connection if the "NODE_ENV" is set as 'production' in env.
+// maxAge: 1000 * 60 * 180 => The lifetime of the cookie. Set as 3 hours
+//sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
+//path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
 app.post('/api/auth/super-login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -309,6 +375,10 @@ app.post('/api/auth/super-login', async (req, res) => {
     }
 });
 
+
+// API for Logging out
+
+// Clears the "auth_token" from the cookie and conveys it to the frontend
 app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('auth_token', {
         httpOnly: true,
@@ -319,19 +389,14 @@ app.post('/api/auth/logout', (req, res) => {
     res.status(200).json({ message: 'Logged out successfully.' });
 });
 
-app.get('/api/admin/manage-quizzes', requireAdminAuth, (req, res) => {
-    res.status(200).json({
-        message: `Welcome to the Admin Quiz Management Panel, User ID: ${req.user.userId}!`,
-        data: {
-            availableQuizzes: [
-                { id: 'quiz_node_basics', title: 'Node.js Fundamentals', status: 'Draft' },
-                { id: 'quiz_security_pro', title: 'Web Security Master', status: 'Published' }
-            ],
-            pendingReviews: 5
-        }
-    });
-});
 
+
+// API for fetching and passing profile of Admins
+
+// 1) Gets a bodyless reques from "AdminProfilePage.jsx"
+// 2) Checks the "auth_token" from cookies and decodes it.
+// 3) If there is a toke and the "isAdmin" is true in token, then the userName and email is decrypted from the token itself and sent back to the profile page
+// 4) If either there is not a token or the user is not an admin, the profile won't be passed and corresponding errors will be logged
 app.get('/api/user/profile', (req, res) => {
     const token = req.cookies.auth_token;
 
@@ -361,6 +426,16 @@ app.get('/api/user/profile', (req, res) => {
     }
 });
 
+
+
+// API for verifying password
+
+// Used by AdminProfilePage.jsx to verify the old password before updating passwords.
+// 1) Gets the currentPassword from the ProfilePage and the token.
+// 2) Decodes the userId from the auth_token and uses it find document of current user in firebase.
+// 3) Compares the Password from the request and the actual password using the function  "ComparePasswords (Line:52)".
+// 4) If the password is correct, then returns "PasswordMatch": true.
+// 5) In case of any errors, appropriate errors will be logged.
 app.post('/api/verify/pass-verify', async (req, res) => {
     try {
         const { currentPassword } = req.body;
@@ -430,6 +505,14 @@ app.post('/api/verify/pass-verify', async (req, res) => {
 });
 
 
+
+// API for Updating password
+
+// 1) Gets the new Password from the "AdminProfilePage.jsx" and auth_token from cookies.
+// 2) Decodes the userId from the token to get the user document from firebase.
+// 3) Hashes the new password. 
+// 4) Updates the "hashedPassword" field in firebase db with new password.
+// 5) In case of errors logs appropriate messages.
 app.post('/api/update/pass-update', async (req, res) => {
     try {
         const { newPassword } = req.body;
@@ -479,8 +562,15 @@ app.post('/api/update/pass-update', async (req, res) => {
     }
 });
 
-// --- 8. Contest Management Helper Functions ---
+// Function for creating quizzes
 
+// 1) Gets necessary informations from the route '/api/admin/create-contest'.
+// 2) Checks if the number of questions macthes the value in "numberOfQuestions".
+// 3) Checks if each question has four options and correct answer.
+// 4) Logs an acknowledgement message of what quiz it is going to create.
+// 5) An "eventData" dictionary is created with appropriate values. 
+// 6) The "eventData" is added to the collection "events".
+// 7) The id of the created event it's entire data is passed back.
 async function handleQuizCreation(req, res, data) {
     try {
         const { contestTitle, contestDescription, duration, numberOfQuestions, pointsPerProgram, questions, contestType, contestMode, topicsCovered, allowedDepartments } = data;
@@ -544,7 +634,7 @@ async function handleQuizCreation(req, res, data) {
             eventType: contestType, // "quiz" or "contest"
             eventMode: contestMode, // "strict" or "practice"
             topicsCovered: topicsCovered,
-            allowedDepartments: allowedDepartments || 'Any department', // Added department field
+            allowedDepartments: allowedDepartments || 'Any department',
             
             createdBy: req.user.userId,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -571,6 +661,19 @@ async function handleQuizCreation(req, res, data) {
     }
 }
 
+
+
+// Function for creating coding contests
+
+// 1) Gets necessary informations from the route '/api/admin/create-contest'.
+// 2) Checks if the number of questions macthes the value in "numberOfQuestions".
+// 3) Creates an empty array "problems".
+// 4) Destructures the "questions" from the frontend as "questionData" and checks each question has necessary details such as input and output formats, test cases and more
+// 5) After verifying each question it constructs a dictionary "problemData" from the question.
+// 6) Pushes the "problemData" to the array "problems".
+// 7) This prcoess is done for each question.
+// 8) A dictionary "eventData" is created with necessary information including the "problems" array.
+// 9) The eventData is added to the firebase db in collection named "events".
 async function handleCodingContestCreation(req, res, data) {
     try {
         const { contestTitle, contestDescription, duration, numberOfQuestions, pointsPerProgram, questions, selectedLanguage, contestType, contestMode, topicsCovered, allowedDepartments } = data;
@@ -716,8 +819,14 @@ async function handleCodingContestCreation(req, res, data) {
     }
 }
 
-// --- 9. Contest Management APIs ---
+// Event Creation API
 
+// 1) Gets required event type and questions from "CreateContests.jsx"
+// 2) Checks for necessary information such as title, description and more.
+// 3) Logs what data it recieved.
+// 4) If the event is of type "quiz" then function "handleQuizCreation (line : 574)" will be executed.
+// 5) If the event is of type "contest" then function "handleCodingContestCreation (line : 677)" will be executed.
+// 6) If any error occurs, corresponding errors will be logged.
 app.post('/api/admin/create-contest', requireAdminAuth, async (req, res) => {
     try {
         
@@ -809,6 +918,16 @@ app.post('/api/admin/create-contest', requireAdminAuth, async (req, res) => {
     }
 });
 
+
+
+// Event fetching API
+
+// 1) Gets a bodyless request from "ManageContests.jsx".
+// 2) The middleware "requireAdminAuth (line : 227)" is executed to make sure the request is made by an admin.
+// 3) Gets all events from collection "events" from firebase.
+// 4) Sorts the Events in descending order of created time.
+// 5) Sends back the events.
+// 6) IF any error occurs, appropriate messages will be logged.
 app.get('/api/admin/events', requireAdminAuth, async (req, res) => {
     try {
         const eventsSnapshot = await db.collection('events')
@@ -844,6 +963,13 @@ app.get('/api/admin/events', requireAdminAuth, async (req, res) => {
     }
 });
 
+
+// Specific Event fetching API
+
+// 1) Gets the "eventId" from Frontend.
+// 2) Finds the event from the "events" collection using the "eventId".
+// 3) Sends back the event information.
+// 4) In case of any errors, Appropriate messages will be logged.
 app.get('/api/admin/events/:eventId', requireAdminAuth, async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -881,6 +1007,15 @@ app.get('/api/admin/events/:eventId', requireAdminAuth, async (req, res) => {
     }
 });
 
+
+
+// Event Updation API
+
+// 1) Gets the eventId and the datas to be updated from the frontend. Mostly called from the modal before starting an event.
+// 2) Removes the data that needs not to be updated like the creator, id and time.
+// 3) Checks if the event is created by the current user.
+// 4) Updates the event document in the "events" collection.
+// 5) If any errors, corresponsing messages will be logged.
 app.put('/api/admin/events/:eventId', requireAdminAuth, async (req, res) => {
     try {
         const { eventId } = req.params;
@@ -927,44 +1062,17 @@ app.put('/api/admin/events/:eventId', requireAdminAuth, async (req, res) => {
     }
 });
 
-app.delete('/api/admin/events/:eventId', requireAdminAuth, async (req, res) => {
-    try {
-        const { eventId } = req.params;
 
-        const eventRef = db.collection('events').doc(eventId);
-        const eventDoc = await eventRef.get();
 
-        if (!eventDoc.exists) {
-            return res.status(404).json({
-                message: 'Event not found'
-            });
-        }
+// Article Upload API
 
-        // Check if the event belongs to the authenticated admin
-        const eventData = eventDoc.data();
-        if (eventData.createdBy !== req.user.userId) {
-            return res.status(403).json({
-                message: 'Access denied: You can only delete events you created'
-            });
-        }
-
-        await eventRef.delete();
-
-        res.status(200).json({
-            message: 'Event deleted successfully!',
-            eventId
-        });
-
-    } catch (error) {
-        console.error('Error deleting event:', error);
-        res.status(500).json({
-            message: 'Failed to delete event. Please try again.',
-            error: error.message
-        });
-    }
-});
-
-// --- Article Upload Endpoint ---
+// 1) Executes function "requireAdminAuth (line : 227)" to check if the requested user is admin. 
+// 2) Gets the necessary details of article from Frontend.
+// 3) Checks if necessary fields is present.
+// 4) Creates "articleData" to have either a link or text file depending on the data passed from frontend.
+// 5) Adds the data to the firebase collection "articles".
+// 6) Sends back success message.
+// 7) If any errors, appropriate messages will be logged.
 app.post('/api/articles', requireAdminAuth, async (req, res) => {
     try {
         const { title, description, topicsCovered, allowedDepartments, articleContent, articleLink } = req.body;
@@ -998,7 +1106,14 @@ app.post('/api/articles', requireAdminAuth, async (req, res) => {
     }
 });
 
-// --- Article Fetch Endpoint ---
+
+
+// Article Fetch API
+
+// 1) Executes function "requireAdminAuth (line : 227)" to check if the requested user is admin. 
+// 2) Gets data from collection "articles".
+// 3) Returns the articles back to frontend.
+// 4) If any errors, appropriate messages will be logged.
 app.get('/api/articles', requireAdminAuth, async (req, res) => {
     try {
         const snapshot = await db.collection('articles').orderBy('createdAt', 'desc').get();
@@ -1013,9 +1128,13 @@ app.get('/api/articles', requireAdminAuth, async (req, res) => {
     }
 });
 
-// --- Super Admin APIs ---
+// Super Admin API for fetching Admins
 
-// Get all admins
+// 1) Gets a bodyless request from frontend.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Gets all admins from collection "users" using "isAdmin:true".
+// 4) Returns admin details back to frontend.
+// 5) If any errors, messages will be logged appropriately.
 app.get('/api/super-admin/admins', requireSuperAdminAuth, async (req, res) => {
     try {
         const snapshot = await db.collection('users').where('isAdmin', '==', true).get();
@@ -1038,7 +1157,14 @@ app.get('/api/super-admin/admins', requireSuperAdminAuth, async (req, res) => {
     }
 });
 
-// Add endpoint to create a new admin (super admin only)
+// Super Admin API for adding Admins.
+
+// 1) Gets a request from frontend with admin name, email and password.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Checks if there is already an admin with same mail.
+// 4) Hashes the password.
+// 5) Adds the data to the "users" collection.
+// 6) If any errors, messages will be logged.
 app.post('/api/super-admin/admins', requireSuperAdminAuth, async (req, res) => {
     try {
         const { userName, email, password } = req.body;
@@ -1071,7 +1197,13 @@ app.post('/api/super-admin/admins', requireSuperAdminAuth, async (req, res) => {
     }
 });
 
-// Update admin details
+// Super Admin API for Admin updation
+
+// 1) Gets a request from frontend with data to be changed.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Checks if there is already an admin with same mail.
+// 4) Updates the data.
+// 6) If any errors, messages will be logged.
 app.put('/api/super-admin/admins/:adminId', requireSuperAdminAuth, async (req, res) => {
     try {
         const { adminId } = req.params;
@@ -1107,7 +1239,16 @@ app.put('/api/super-admin/admins/:adminId', requireSuperAdminAuth, async (req, r
     }
 });
 
-// Delete admin
+
+
+// Super Admin API for deleting Admins
+
+// 1) Gets a request from frontend with adminId to be deleted.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Checks if there is already an admin with same mail.
+// 4) If the data requested to be deleted is a super admin by defalt, an error will be raised.
+// 5) Admin data is deleted from "users" collection
+// 6) If any errors, messages will be logged.
 app.delete('/api/super-admin/admins/:adminId', requireSuperAdminAuth, async (req, res) => {
     try {
         const { adminId } = req.params;
@@ -1137,7 +1278,15 @@ app.delete('/api/super-admin/admins/:adminId', requireSuperAdminAuth, async (req
     }
 });
 
-// Get all contests (for super admin to manage)
+
+
+// Super Admin API for displaying contests.
+
+// 1) Gets a bodyless request from frontend.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Gets data from collection "events".
+// 4) Sends back the data.
+// 5) If any errors, messages will be logged.
 app.get('/api/super-admin/contests', requireSuperAdminAuth, async (req, res) => {
     try {
         const snapshot = await db.collection('events').orderBy('createdAt', 'desc').get();
@@ -1163,7 +1312,15 @@ app.get('/api/super-admin/contests', requireSuperAdminAuth, async (req, res) => 
     }
 });
 
-// Delete contest (super admin can delete any contest)
+
+
+// Super Admin API for deleting Contests.
+
+// 1) Gets a request from frontend with contestId to be deleted.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Checks if there is already a contest with same contestId.
+// 4) Deletes the contests from collection "events".
+// 5) If any errors, messages will be logged.
 app.delete('/api/super-admin/contests/:contestId', requireSuperAdminAuth, async (req, res) => {
     try {
         const { contestId } = req.params;
@@ -1184,7 +1341,12 @@ app.delete('/api/super-admin/contests/:contestId', requireSuperAdminAuth, async 
     }
 });
 
-// Add this endpoint for super admin profile
+// Super Admin API for profile
+
+// 1) Gets a bodyless reqyest from frontend.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Gets back the decoded data and sends it to the frontend.
+// 4) If any error, message will be logged appropriately.
 app.get('/api/super-admin/profile', requireSuperAdminAuth, async (req, res) => {
     try {
         // req.user is set by requireSuperAdminAuth middleware
@@ -1202,7 +1364,13 @@ app.get('/api/super-admin/profile', requireSuperAdminAuth, async (req, res) => {
     }
 });
 
-// Add this endpoint for super admin password update
+// Super Admin API for super admin password update.
+
+// 1) Get's user given current password and new password from the frontend.
+// 2) The function "requireSuperAdminAuth" is executed to check if the requested user is "SuperAdmin".
+// 3) Checks the user entered old password.
+// 4) Hashed the new password and sets is as new password in firebase collection "users".
+// 5) If any error, messages will be logged.
 app.put('/api/super-admin/profile', requireSuperAdminAuth, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -1232,7 +1400,7 @@ app.put('/api/super-admin/profile', requireSuperAdminAuth, async (req, res) => {
     }
 });
 
-// --- 9. Start the Express Server ---
+// Starting up Express Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
