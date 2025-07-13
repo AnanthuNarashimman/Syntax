@@ -18,7 +18,11 @@ import { useContestContext } from '../contexts/ContestContext';
 
 function AdminDashboard() {
   // Use ContestContext
-  const { getStats, getRecentContests, loading, adminName } = useContestContext();
+  const { getStats, getRecentContests, loading, adminName, fetchEvents } = useContestContext();
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const [activeTab, setActiveTabState] = useState('home');
   const navigate = useNavigate();
