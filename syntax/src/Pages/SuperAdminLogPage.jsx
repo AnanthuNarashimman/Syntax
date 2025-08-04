@@ -119,9 +119,11 @@ function SuperAdminLogPage() {
                         <div className="super-top-bar"></div>
                         <span>Are you a</span>
                         <br />
-                        <span className="highlight">Student ?</span>
+                        <span className="highlight">Admin ?</span>
                     </div>
-                    <Button className="super-button">{adminData.buttonText}</Button>
+                    <Button className="super-button" onClick={() => navigate('/admin-login')}>
+                        {adminData.buttonText}
+                    </Button>
                 </div>
             </div>
 

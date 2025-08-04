@@ -14,6 +14,13 @@ import SuperAdminDashboard from "./Pages/SuperAdminDashboard.jsx";
 import SuperManageUsers from "./Pages/SuperManageUsers.jsx";
 import SuperManageContests from "./Pages/SuperManageContests.jsx";
 import SuperAdminProfile from "./Pages/SuperAdminProfile.jsx";
+import StudentContests from "./Pages/StudentContests.jsx";
+import StudentHome from "./Pages/StudentHome.jsx";
+import StudentLeader from "./Pages/StudentLeader.jsx";  
+import StudentPractice from"./Pages/StudentPractice.jsx";
+import StudentUser from "./Pages/StudentUser.jsx";
+
+
 
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -39,6 +46,11 @@ function App() {
             <Route path="/admin-profile" element={<AdminProfile />} />
             <Route path="/create-quiz-questions" element={<CreateQuizQuestions />} />
             <Route path="/create-contest-questions" element={<CreateContestQuestions />} />
+            <Route path="/student-contests" element={<StudentContests />} />
+            <Route path="/student-home" element={<StudentHome />} />
+            <Route path="/student-leader" element={<StudentLeader />} />
+            <Route path="/student-practice" element={<StudentPractice />} />
+            <Route path="/student-user" element={<StudentUser />} />
             
             {/* Super Admin Routes */}
             <Route path="/super-dashboard" element={<SuperAdminDashboard />} />

@@ -1,0 +1,107 @@
+@keyframes blinkCursor {
+  50% {
+    border-right-color: transparent;
+  }
+}
+
+@keyframes typeAndDelete {
+  0%,
+  10% {
+    width: 0;
+  }
+  45%,
+  55% {
+    width: 8.5em;
+  } /* adjust width based on content */
+  90%,
+  100% {
+    width: 0;
+  }
+}
+
+.styledWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.terminalLoader {
+  border: 0.15em solid #333;
+  background-color: #1a1a1a;
+  color: #0f0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.4em;
+  padding: 2em 1.5em;
+  width: 18em;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.terminalHeader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2em;
+  background-color: #333;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  padding: 0 0.6em;
+  box-sizing: border-box;
+}
+
+.terminalControls {
+  float: right;
+}
+
+.control {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.5em;
+  border-radius: 50%;
+  background-color: #777;
+}
+
+.control.close {
+  background-color: #e33;
+}
+
+.control.minimize {
+  background-color: #ee0;
+}
+
+.control.maximize {
+  background-color: #0b0;
+}
+
+.terminalTitle {
+  float: left;
+  line-height: 2em;
+  color: #eee;
+  font-size: 1.1em;
+}
+
+.text {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 0.25em solid green; /* Cursor */
+  animation:
+    typeAndDelete 4s steps(11) infinite,
+    blinkCursor 0.5s step-end infinite alternate;
+  margin-top: 2em;
+  font-size: 1.2em;
+} 

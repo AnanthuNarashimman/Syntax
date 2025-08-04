@@ -1,0 +1,646 @@
+/* StudentHome.module.css */
+/* Note: All class names are converted to camelCase for easier use with CSS Modules. */
+
+.studentHome {
+  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.homeContainer {
+  max-width: 1200px;
+  margin: 5rem auto 0 auto;
+  padding: 30px;
+}
+
+/* Welcome Section */
+.welcomeSection {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.welcomeContent {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.welcomeTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 24px;
+}
+
+.welcomeIllustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.welcomeImage {
+  max-width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 16px;
+  margin: 0 auto 16px auto;
+  display: block;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 24px;
+  margin-bottom: 0;
+}
+
+.sectionDivider {
+  border: none;
+  border-top: 2px solid #f2dede;
+  margin: 32px 0 24px 0;
+}
+
+.overallInfo {
+  min-width: 320px;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.overallHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ff6b6b;
+  margin-bottom: 8px;
+}
+
+.overallMenu {
+  color: #aaa;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.overallMainStats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.mainStat {
+  flex: 1;
+  text-align: center;
+}
+
+.mainStatNumber {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+.mainStatLabel {
+  font-size: 0.95rem;
+  color: #ff6b6b;
+  opacity: 0.8;
+}
+
+.overallProgress {
+  margin: 8px 0 12px 0;
+  font-size: 0.95rem;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overallProgressBar {
+  background: #ffeaea;
+  border-radius: 8px;
+  height: 8px;
+  width: 100%;
+  margin: 4px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.overallProgressBar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b, #ffb199);
+  border-radius: 8px;
+}
+
+.overallProgressLabel {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.overallTier {
+  color: #ffb300;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1rem;
+}
+
+.overallBadges {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.badge {
+  background: #fff3e0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 60px;
+}
+
+.badgeNumber {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+.badgeLabel {
+  font-size: 0.85rem;
+  color: #ff6b6b;
+}
+
+.performanceTitle {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16px;
+}
+
+.performanceSectionstd {
+  margin-bottom: 32px;
+  padding-top: 20px;
+}
+
+.performanceSectionstd h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.performanceContent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 40px;
+  justify-content: flex-start;
+}
+
+.chartContainer {
+  flex: 2;
+  background: #fff;
+  padding: 32px 32px 24px 32px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  min-width: 0;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.chartHeader {
+    /* No styles directly on this class in the original */
+}
+
+.chartLegend {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.legendColor {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legendColor.quiz {
+  background: #ff6b6b;
+}
+
+.legendColor.codethon {
+  background: #4ecdc4;
+}
+
+.legendColor.practice {
+  background: #45b7d1;
+}
+
+.chartArea {
+  position: relative;
+  height: 280px;
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  grid-template-rows: 1fr 30px;
+  height: 100%;
+}
+
+.yAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: end;
+  padding-right: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.chartLines {
+  position: relative;
+  border-left: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.chartSvg {
+  width: 100%;
+  height: 280px;
+  display: block;
+}
+
+.chartLine {
+    /* Used within the SVG, styles applied directly */
+}
+
+.xAxis {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.monthProgress {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.monthProgress.card {
+  min-width: 280px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+  align-self: stretch;
+  margin-top: 0;
+}
+
+.monthHeader {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.monthMenu {
+  color: #aaa;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.monthCompare {
+  font-size: 0.95rem;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.monthOverview {
+    /* No direct styles */
+}
+
+.monthOverviewTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.monthOverviewList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.monthOverviewList li {
+  font-size: 0.95rem;
+  color: #888;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.work { background: #ff6b6b; }
+.dot.meditation { background: #b2dfdb; }
+.dot.projects { background: #ffd54f; }
+
+.monthProgressCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0;
+  position: relative;
+}
+
+.monthProgressCircle svg {
+  display: block;
+}
+
+.monthProgressText {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.monthProgressButtons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btnPrimary {
+  background: #ff6b6b;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background: #ff5252;
+  transform: translateY(-2px);
+}
+
+.btnSecondary {
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.btnSecondary:hover {
+  background: #e9ecef;
+}
+
+.btnOutline {
+  background: transparent;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.btnOutline:hover {
+  background: #f8f9fa;
+}
+
+.btnSm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Contest Join Section */
+.contestJoinSection {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 32px;
+  align-items: center;
+}
+
+.contestContent h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.contestContent p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.contestInput {
+  display: flex;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.contestCodeInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.contestCodeInput:focus {
+  outline: none;
+  border-color: #ff6b6b;
+}
+
+.contestIllustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.findImage {
+  max-width: 260px;
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  background: #fff;
+}
+
+/* Upcoming Contests */
+.upcomingContests {
+  margin-bottom: 32px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sectionHeader h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.contestsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.contestCard {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 24px;
+  border-radius: 12px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.contestCard:hover {
+  transform: translateY(-4px);
+}
+
+.contestCard:nth-child(2) {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.contestCard:nth-child(3) {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.contestInfo h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.contestMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contestDate,
+.contestParticipants {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.contestActions {
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .homeContainer {
+    padding: 16px;
+  }
+  
+  .welcomeSection {
+    grid-template-columns: 1fr;
+  }
+  
+  .performanceContent {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+  
+  .contestJoinSection {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .contestInput {
+    flex-direction: column;
+    max-width: none;
+  }
+  
+  .contestsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .contestCard {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcomeTitle {
+    font-size: 24px;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .chartLegend {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

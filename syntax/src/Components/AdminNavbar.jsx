@@ -31,11 +31,7 @@ function AdminNavbar() {
   return (
     <div className="navbar-sidebar">
       <div className="navbar-header">
-        <div className="navbar-logo">
-          <span className="navbar-logo-bracket">&lt;</span>
-          <span className="navbar-logo-text">SYNTAX</span>
-          <span className="navbar-logo-bracket">/&gt;</span>
-        </div>
+        <div className="navbar-logo">&lt; SYNTAX /&gt;</div>
         <p className="navbar-logo-subtitle">Admin Panel</p>
       </div>
       

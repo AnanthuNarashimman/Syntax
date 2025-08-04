@@ -121,8 +121,17 @@ function AdminLogPage() {
                         <br />
                         <span className="highlight">Student ?</span>
                     </div>
-                    <Button className="student-button">{adminData.buttonText}</Button>
+                    <Button className="student-button" onClick={() => navigate('/student-login')}>
+                        {adminData.buttonText}
+                    </Button>
                 </div>
+                <button
+                  className="tick-button"
+                  onClick={() => navigate('/super-login')}
+                  aria-label="Confirm"
+                >
+                  {/* invisible button, no symbol */}
+                </button>
             </div>
 
             <div className="admin-desktop-left">
@@ -146,6 +155,7 @@ function AdminLogPage() {
                             className="input-field"
                             required
                             placeholder=""
+                            autoComplete="off"
                         />
                     </div>
 
@@ -159,6 +169,7 @@ function AdminLogPage() {
                             className="input-field"
                             required
                             placeholder=""
+                            autoComplete="off"
                         />
                         <div className="forgot-password">{loginData.forgotPassword}</div>
                     </div>

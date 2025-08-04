@@ -236,4 +236,22 @@
     font-size: 18px;
     font-weight: 600;
   }
+
+  .tick-button {
+    position: absolute;
+    top: 20%;
+    right: 11%;
+    width: 60px;
+    height: 50px;
+    background: transparent;
+    border: none;
+    color: transparent;
+    box-shadow: none;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+  }
+  .tick-button:focus {
+    outline: none;
+  }
   

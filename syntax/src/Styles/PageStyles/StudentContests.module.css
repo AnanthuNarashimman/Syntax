@@ -1,0 +1,579 @@
+/* StudentContests.module.css */
+/* Note: All class names are converted to camelCase for easier use with CSS Modules. */
+
+.studentContests {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  .contestsContainer {
+    max-width: 1200px;
+    margin: 4rem auto 0 auto;
+    padding: 2rem 1rem;
+  }
+  
+  /* Header Section */
+  .contestsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 2.5rem 2rem;
+    background: #fff;
+    border-radius: 18px;
+    color: #222;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    border: 1px solid #ececec;
+  }
+  
+  .headerContent h1 {
+    font-size: 2.3rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #222;
+  }
+  
+  .headerContent p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+    color: #444;
+  }
+  
+  .headerIllustration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .contestsImage {
+    max-width: 220px;
+    width: 100%;
+    height: 160px;
+    object-fit: contain;
+    display: block;
+    margin: 0 0 0 32px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    background: #fff;
+  }
+  
+  .contestIcon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Search and Filter Section */
+  .searchFilterBar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    border-radius: 32px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 1.2rem 2rem;
+    margin-bottom: 2.5rem;
+  }
+  
+  .searchFilterBar .searchInput,
+  .searchFilterBar .filterSelect {
+    color: #222;
+    background: #fff;
+  }
+  
+  .searchInput {
+    flex: 2;
+    padding: 0.75rem 1.2rem;
+    border: 1.5px solid #e9ecef;
+    border-radius: 24px;
+    font-size: 1rem;
+  }
+  
+  .searchInput::placeholder {
+    color: #444 !important;
+    opacity: 1;
+    font-weight: 500;
+  }
+  
+  .searchInputVisible::placeholder {
+    color: #444 !important;
+    opacity: 1;
+    font-weight: 500;
+  }
+  
+  .searchInput:focus {
+    outline: none;
+    border-color: #667eea;
+  }
+  
+  .filterSelect {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid #e9ecef;
+    border-radius: 24px;
+    font-size: 1rem;
+  }
+  
+  .filterSelect:focus {
+    outline: none;
+    border-color: #667eea;
+  }
+  
+  .filterBtn {
+    padding: 0.7rem 2rem;
+    background: #ff6b6b;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .filterBtn:hover {
+    background: #ff5252;
+  }
+  
+  /* Contest Groups */
+  .contestGroup {
+    margin-bottom: 2.5rem;
+  }
+  
+  .groupTitle {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1.2rem;
+    margin-left: 0.2rem;
+  }
+  
+  .contestsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 2rem;
+  }
+  
+  /* Contest Card */
+  .contestCard {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    border: 1px solid #ececec;
+    padding: 2rem 2rem 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .contestCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  .contestCard.completed {
+    opacity: 0.7;
+  }
+  
+  .contestBadges {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .statusBadge, .difficultyBadge {
+    padding: 0.3rem 1.1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  
+  .contestTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 0.2rem;
+  }
+  
+  .contestDescription {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .contestDetailsBox {
+    background: #f3f6fa;
+    color: #444;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1.5rem;
+    font-size: 0.98rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .contestDetailsBox b {
+    color: #222;
+  }
+  
+  .contestParticipantsBar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .progressBar {
+    flex: 1;
+    height: 7px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .progressFill {
+    height: 100%;
+    background: #667eea;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  
+  .contestTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .tag {
+    padding: 0.25rem 0.9rem;
+    background: #e9ecef;
+    color: #495057;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  
+  .contestActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+  
+  .btnOutline {
+    padding: 0.7rem 1.5rem;
+    background: #fff;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btnOutline:hover {
+    background: #f8f9fa;
+    color: #5a67d8;
+  }
+  
+  .btnPrimary {
+    padding: 0.7rem 1.5rem;
+    background: #667eea;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .btnPrimary:hover:not(.disabled) {
+    background: #5a67d8;
+  }
+  
+  .btnPrimary.disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+  
+  /* Loading State */
+  .loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    gap: 1rem;
+  }
+  
+  .loadingSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+.strictBadge {
+  background: #4caab3;
+  color: #111;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-radius: 16px;
+  padding: 6px 18px;
+  margin-left: auto;
+  box-shadow: 2px 4px 8px #bdbdbd40;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.codeFindBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 1.2rem 2rem;
+  margin: 2rem auto 2.5rem auto;
+  max-width: 600px;
+}
+
+.codeInput {
+  flex: 2;
+  padding: 0.75rem 1.2rem;
+  border: 1.5px solid #e9ecef;
+  border-radius: 24px;
+  font-size: 1rem;
+  color: #222;
+  background: #fff;
+}
+
+.codeInput::placeholder {
+  color: #444 !important;
+  opacity: 1;
+  font-weight: 500;
+}
+
+.codeInput:focus {
+  outline: none;
+  border-color: #ff6b6b;
+}
+
+.codeFindBtn {
+  padding: 0.7rem 2rem;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.codeFindBtn:hover {
+  background: #ff5252;
+}
+
+.practiceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.practiceCard {
+  background-color: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.practiceCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0;
+}
+
+.typeBadge {
+  background: #4caab3;
+  color: #111;
+  font-weight: bold;
+  font-size: 1.3rem;
+  border-radius: 24px;
+  padding: 8px 24px;
+  margin-right: 12px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.practiceBadge {
+  background: #ff6b57;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 16px;
+  padding: 6px 18px;
+  margin-top: 8px;
+  margin-left: auto;
+  box-shadow: 2px 4px 8px #bdbdbd40;
+  display: inline-block;
+}
+
+.cardBody {
+  background: #d6a5a5;
+  border-radius: 32px;
+  padding: 32px 24px;
+  margin: 18px 0;
+}
+
+.cardInfo {
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.startBtn {
+  background: #a86c6c;
+  color: #222;
+  font-weight: bold;
+  font-size: 1.3rem;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 36px;
+  cursor: pointer;
+  box-shadow: 2px 4px 8px #bdbdbd40;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+.startBtn:hover, .startBtn:focus {
+  background: #8d5555;
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+}
+
+.viewBtn {
+  background: #ff6b57;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.3rem;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 36px;
+  cursor: pointer;
+  box-shadow: 2px 4px 8px #bdbdbd40;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+
+.viewBtn:hover, .viewBtn:focus {
+  background: #ff3b1f;
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+}
+
+.cardFooter button {
+  outline: none;
+  border: none;
+}
+
+@media (max-width: 600px) {
+  .cardFooter {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+}
+
+.quickSearch {
+  display: flex;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  font-size: 1rem;
+  outline: none;
+  background-color: #fff;
+  color: #222;
+}
+
+.findBtn {
+  padding: 12px 25px;
+  background-color: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.findBtn:hover {
+  background-color: #ff5252;
+}
+
+.showMore {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.showMoreBtn {
+  padding: 15px 30px;
+  background-color: transparent;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.showMoreBtn:hover {
+  background-color: #667eea;
+  color: white;
+}
