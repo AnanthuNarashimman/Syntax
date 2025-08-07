@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAlert } from "../contexts/AlertContext";
 
 import { Button } from "../Components/Button.jsx";
 import '../Styles/PageStyles/StudentLogPage.css';
 
 export const StudentLogPage = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useAlert();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -45,6 +47,12 @@ export const StudentLogPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    // Validate form data
+    if (!formData.email || !formData.password) {
+      showError('Please fill in all fields');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -53,16 +61,20 @@ export const StudentLogPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important for JWT cookies
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        throw new Error(data.message || `Login failed with status: ${response.status}`);
       }
 
-      const data = await response.json();
       console.log('Login successful:', data);
+
+      // Show success message
+      showSuccess(`Welcome back, ${data.user.userName}! Redirecting to dashboard...`);
 
       // Auto-redirect after showing success message
       setTimeout(() => {
@@ -71,7 +83,7 @@ export const StudentLogPage = () => {
 
     } catch (err) {
       console.error('Login failed:', err.message);
-      // You can add error handling here if you have an alert system
+      showError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

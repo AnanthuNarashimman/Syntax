@@ -1,615 +1,540 @@
-/* StudentHome.module.css */
-/* Note: All class names are converted to camelCase for easier use with CSS Modules. */
-
+/* Professional Student Home Design */
 .studentHome {
   min-height: 100vh;
-  background: #f8f9fa;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #2d3748;
 }
 
 .homeContainer {
-  max-width: 1200px;
-  margin: 5rem auto 0 auto;
-  padding: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  padding-top: 6rem;
 }
 
-/* Welcome Section */
-.welcomeSection {
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 24px;
-  margin-bottom: 32px;
+/* Header Section */
+.headerSection {
+  margin-bottom: 2rem;
+}
+
+.welcomeCard {
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  box-shadow: 0 20px 40px rgba(255, 138, 101, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcomeCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.2;
 }
 
 .welcomeContent {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  flex: 1;
+  z-index: 1;
+  position: relative;
 }
 
 .welcomeTitle {
-  font-size: 28px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 24px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
 }
 
-.welcomeIllustration {
+.highlight {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcomeSubtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 1.5rem;
+}
+
+.studentInfo {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.infoTag {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .welcomeImage {
-  max-width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 16px;
-  margin: 0 auto 16px auto;
-  display: block;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-
-.card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  padding: 24px;
-  margin-bottom: 0;
-}
-
-.sectionDivider {
-  border: none;
-  border-top: 2px solid #f2dede;
-  margin: 32px 0 24px 0;
-}
-
-.overallInfo {
-  min-width: 320px;
-  max-width: 350px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-}
-
-.overallHeader {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #ff6b6b;
-  margin-bottom: 8px;
-}
-
-.overallMenu {
-  color: #aaa;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.overallMainStats {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
-.mainStat {
-  flex: 1;
-  text-align: center;
-}
-
-.mainStatNumber {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #ff6b6b;
-}
-
-.mainStatLabel {
-  font-size: 0.95rem;
-  color: #ff6b6b;
-  opacity: 0.8;
-}
-
-.overallProgress {
-  margin: 8px 0 12px 0;
-  font-size: 0.95rem;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.overallProgressBar {
-  background: #ffeaea;
-  border-radius: 8px;
-  height: 8px;
-  width: 100%;
-  margin: 4px 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.overallProgressBar span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #ff6b6b, #ffb199);
-  border-radius: 8px;
-}
-
-.overallProgressLabel {
-  font-size: 0.9rem;
-  color: #888;
-}
-
-.overallTier {
-  color: #ffb300;
-  font-weight: 600;
+  flex-shrink: 0;
+  margin-left: 2rem;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 1rem;
-}
-
-.overallBadges {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-}
-
-.badge {
-  background: #fff3e0;
-  border-radius: 10px;
-  padding: 8px 12px;
-  text-align: center;
-  min-width: 60px;
-}
-
-.badgeNumber {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #ff6b6b;
-}
-
-.badgeLabel {
-  font-size: 0.85rem;
-  color: #ff6b6b;
-}
-
-.performanceTitle {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 16px;
-}
-
-.performanceSectionstd {
-  margin-bottom: 32px;
-  padding-top: 20px;
-}
-
-.performanceSectionstd h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 20px;
-}
-
-.performanceContent {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 40px;
-  justify-content: flex-start;
-}
-
-.chartContainer {
-  flex: 2;
-  background: #fff;
-  padding: 32px 32px 24px 32px;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  min-width: 0;
-  min-height: 340px;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  overflow: hidden;
-}
-
-.chartHeader {
-    /* No styles directly on this class in the original */
-}
-
-.chartLegend {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.legendColor {
-  width: 16px;
-  height: 3px;
-  border-radius: 2px;
-}
-
-.legendColor.quiz {
-  background: #ff6b6b;
-}
-
-.legendColor.codethon {
-  background: #4ecdc4;
-}
-
-.legendColor.practice {
-  background: #45b7d1;
-}
-
-.chartArea {
-  position: relative;
-  height: 280px;
-}
-
-.chartGrid {
-  display: grid;
-  grid-template-columns: 30px 1fr;
-  grid-template-rows: 1fr 30px;
-  height: 100%;
-}
-
-.yAxis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: end;
-  padding-right: 12px;
-  font-size: 12px;
-  color: #666;
-}
-
-.chartLines {
-  position: relative;
-  border-left: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.chartSvg {
-  width: 100%;
-  height: 280px;
-  display: block;
-}
-
-.chartLine {
-    /* Used within the SVG, styles applied directly */
-}
-
-.xAxis {
-  grid-column: 2;
-  display: flex;
-  justify-content: space-between;
-  padding-top: 12px;
-  font-size: 12px;
-  color: #666;
-}
-
-.monthProgress {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.monthProgress.card {
-  min-width: 280px;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-start;
-  flex: 1;
-  align-self: stretch;
-  margin-top: 0;
-}
-
-.monthHeader {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.monthMenu {
-  color: #aaa;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.monthCompare {
-  font-size: 0.95rem;
-  color: #888;
-  margin-bottom: 4px;
-}
-
-.monthOverview {
-    /* No direct styles */
-}
-
-.monthOverviewTitle {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.monthOverviewList {
-  list-style: none;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
   padding: 0;
-  margin: 0 0 8px 0;
+  width: 40%;
 }
 
-.monthOverviewList li {
-  font-size: 0.95rem;
-  color: #888;
-  margin-bottom: 2px;
+.welcomeImage img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 20px;
+  box-shadow: none;
+  background: none;
+  backdrop-filter: none;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Stats Section */
+.statsSection {
+  margin-bottom: 2rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.statCard {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 1rem;
 }
 
-.dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
-.dot.work { background: #ff6b6b; }
-.dot.meditation { background: #b2dfdb; }
-.dot.projects { background: #ffd54f; }
-
-.monthProgressCircle {
+.statIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 8px 0;
-  position: relative;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  flex-shrink: 0;
 }
 
-.monthProgressCircle svg {
-  display: block;
+.statContent {
+  flex: 1;
 }
 
-.monthProgressText {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.2rem;
+.statNumber {
+  font-size: 1.8rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
 }
 
-.monthProgressButtons {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
+.statLabel {
+  font-size: 0.9rem;
+  color: #718096;
   font-weight: 500;
+}
+
+/* Progress Section */
+.progressSection {
+  margin-bottom: 2rem;
+}
+
+.progressCard {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.progressTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.progressBadge {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #2d3748;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.progressBar {
+  background: #e2e8f0;
+  border-radius: 10px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff8a65 0%, #ff7043 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.progressStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+/* Actions Section */
+.actionsSection {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.actionCard {
+  background: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #2d3748;
 }
 
-.btnPrimary {
-  background: #ff6b6b;
+.actionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
   color: white;
 }
 
-.btnPrimary:hover {
-  background: #ff5252;
-  transform: translateY(-2px);
+.actionCard span {
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
-.btnSecondary {
-  background: #f8f9fa;
-  color: #666;
-  border: 1px solid #e0e0e0;
+/* Contest Section */
+.contestSection {
+  margin-bottom: 2rem;
 }
 
-.btnSecondary:hover {
-  background: #e9ecef;
-}
-
-.btnOutline {
-  background: transparent;
-  color: #666;
-  border: 1px solid #e0e0e0;
-}
-
-.btnOutline:hover {
-  background: #f8f9fa;
-}
-
-.btnSm {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-/* Contest Join Section */
-.contestJoinSection {
+.contestCard {
   background: white;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  margin-bottom: 32px;
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  gap: 32px;
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
   align-items: center;
+  gap: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.contestContent h2 {
-  font-size: 24px;
+.contestContent {
+  flex: 1;
+}
+
+.contestTitle {
+  font-size: 1.8rem;
   font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 8px;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
 }
 
-.contestContent p {
-  color: #666;
-  margin-bottom: 24px;
-  font-size: 16px;
+.contestDescription {
+  color: #718096;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
 }
 
 .contestInput {
   display: flex;
-  gap: 12px;
+  gap: 1rem;
   max-width: 400px;
 }
 
-.contestCodeInput {
+.codeInput {
   flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  background: #f7fafc;
 }
 
-.contestCodeInput:focus {
+.codeInput:focus {
   outline: none;
-  border-color: #ff6b6b;
+  border-color: #ff8a65;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.1);
+}
+
+.joinButton {
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.joinButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 138, 101, 0.4);
 }
 
 .contestIllustration {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.findImage {
-  max-width: 260px;
-  width: 100%;
-  height: 220px;
+.contestIllustration img {
+  width: 220px;
+  height: 180px;
   object-fit: contain;
-  display: block;
-  margin: 0 auto;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  background: #fff;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
-/* Upcoming Contests */
-.upcomingContests {
-  margin-bottom: 32px;
+/* Upcoming Section */
+.upcomingSection {
+  margin-bottom: 2rem;
 }
 
 .sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
-.sectionHeader h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
+.viewAllButton {
+  background: transparent;
+  border: 2px solid #ff8a65;
+  color: #ff8a65;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.viewAllButton:hover {
+  background: #ff8a65;
+  color: white;
 }
 
 .contestsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 20px;
+  gap: 1.5rem;
 }
 
-.contestCard {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  padding: 24px;
-  border-radius: 12px;
-  color: white;
+.contestItem {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.contestItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.contestHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-  transition: transform 0.3s ease;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.contestCard:hover {
-  transform: translateY(-4px);
+.contestType {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.contestCard:nth-child(2) {
-  background: linear-gradient(135deg, #f093fb, #f5576c);
-}
-
-.contestCard:nth-child(3) {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-}
-
-.contestInfo h3 {
-  font-size: 18px;
+.typeBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.typeBadge.contest {
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+}
+
+.typeBadge.practice {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+}
+
+.typeBadge.quiz {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+  color: white;
+}
+
+.difficulty {
+  font-size: 0.8rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.contestTime {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.contestName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1rem;
 }
 
 .contestMeta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.contestDate,
-.contestParticipants {
+.metaItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  opacity: 0.9;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #718096;
 }
 
-.contestActions {
-  display: flex;
-  align-items: center;
+.contestJoinBtn {
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.contestJoinBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 138, 101, 0.4);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .homeContainer {
-    padding: 16px;
+    padding: 1rem;
+    padding-top: 5rem;
   }
   
-  .welcomeSection {
-    grid-template-columns: 1fr;
-  }
-  
-  .performanceContent {
-    grid-template-columns: 1fr;
+  .welcomeCard {
     flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
   }
   
-  .contestJoinSection {
+  .welcomeTitle {
+    font-size: 2rem;
+  }
+  
+  .studentInfo {
+    justify-content: center;
+  }
+  
+  .welcomeImage img {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .contestIllustration img {
+    width: 180px;
+    height: 150px;
+  }
+  
+  .statsGrid {
     grid-template-columns: 1fr;
+  }
+  
+  .actionsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .contestCard {
+    flex-direction: column;
     text-align: center;
   }
   
@@ -621,26 +546,34 @@
   .contestsGrid {
     grid-template-columns: 1fr;
   }
-  
-  .contestCard {
-    flex-direction: column;
-    gap: 16px;
-  }
 }
 
 @media (max-width: 480px) {
   .welcomeTitle {
-    font-size: 24px;
+    font-size: 1.5rem;
+  }
+  
+  .welcomeImage img {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .contestIllustration img {
+    width: 150px;
+    height: 120px;
+  }
+  
+  .actionsGrid {
+    grid-template-columns: 1fr;
   }
   
   .sectionHeader {
     flex-direction: column;
-    gap: 12px;
+    gap: 1rem;
     align-items: flex-start;
   }
-  
-  .chartLegend {
-    flex-direction: column;
-    gap: 8px;
-  }
 }
+
+/* Sidebar styles removed - StudentHome now uses full width layout */
+
+/* Responsive styles for sidebar removed */

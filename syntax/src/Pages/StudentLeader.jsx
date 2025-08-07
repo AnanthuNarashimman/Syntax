@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Trophy, Medal, Crown, TrendingUp, Users, Target, Filter, Search, Award, Star, Zap, ChevronUp, ChevronDown, Flame, Calendar, BookOpen, RefreshCw, ArrowUp } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
-import styles from '../Styles/PageStyles/StudentLeader.module.css'; // Import as a 'styles' object
+import styles from '../Styles/PageStyles/StudentLeader.module.css';
 
 const StudentLeader = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -98,103 +99,233 @@ const StudentLeader = () => {
   return (
     <div className={styles.studentLeader}>
       <StudentNavbar />
-      
+
       <div className={styles.leaderContainer}>
-        <div className={styles.leaderTopSection}>
-          <div className={styles.profileCard}>
-            <div className={styles.profileAvatar}>
-              <div className={styles.avatarCircle}>
-                <span className={styles.rankNumber}>{userProfile.rank}</span>
-              </div>
-              <div className={styles.crownIcon}>👑</div>
+        {/* Header Section */}
+        <div className={styles.leaderHeader}>
+          <div className={styles.headerContent}>
+            <div className={styles.headerText}>
+              <h1 className={styles.pageTitle}>Leaderboard & Rankings</h1>
+              <p className={styles.pageSubtitle}>
+                Track your progress and compete with fellow students across various challenges
+              </p>
             </div>
-            <div className={styles.profileInfo}>
-              <div className={styles.profileHeader}>
-                <h2>{userProfile.name}</h2>
-                <div className={styles.pointsBadge}>
-                  <span className={styles.pointsIcon}>🏆</span>
-                  <span>{userProfile.points} points</span>
+            <div className={styles.headerStats}>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <Users size={24} />
+                </div>
+                <div className={styles.statInfo}>
+                  <h3>1,247</h3>
+                  <p>Total Students</p>
                 </div>
               </div>
-              <div className={styles.profileSummary}>
-                <h3>Summary</h3>
-                <div className={styles.summaryItems}>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>🔥</span>
-                    <span className={styles.summaryLabel}>Codefusions</span>
-                    <span className={styles.summaryCount}>{userProfile.summary.codefusions.count}</span>
-                    <span className={styles.summaryPoints}>{userProfile.summary.codefusions.points}</span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>⚡</span>
-                    <span className={styles.summaryLabel}>Quizzes</span>
-                    <span className={styles.summaryCount}>{userProfile.summary.quizzes.count}</span>
-                    <span className={styles.summaryPoints}>{userProfile.summary.quizzes.points}</span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span className={styles.summaryIcon}>💪</span>
-                    <span className={styles.summaryLabel}>Practices</span>
-                    <span className={styles.summaryCount}>{userProfile.summary.practices.count}</span>
-                    <span className={styles.summaryPoints}>{userProfile.summary.practices.points}</span>
-                  </div>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <TrendingUp size={24} />
+                </div>
+                <div className={styles.statInfo}>
+                  <h3>#{userProfile.rank}</h3>
+                  <p>Your Rank</p>
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <Flame size={24} />
+                </div>
+                <div className={styles.statInfo}>
+                  <h3>15</h3>
+                  <p>Day Streak</p>
                 </div>
               </div>
             </div>
           </div>
-          {/* Removed: mini leaderboard card */}
         </div>
 
+        {/* User Profile Card */}
+        <div className={styles.profileSection}>
+          <div className={styles.profileCard}>
+            <div className={styles.profileHeader}>
+              <div className={styles.profileAvatar}>
+                <div className={styles.avatarCircle}>
+                  <span className={styles.rankNumber}>#{userProfile.rank}</span>
+                </div>
+                {userProfile.rank <= 3 && (
+                  <div className={styles.crownIcon}>
+                    {userProfile.rank === 1 && <Crown size={24} color="#FFD700" />}
+                    {userProfile.rank === 2 && <Medal size={24} color="#C0C0C0" />}
+                    {userProfile.rank === 3 && <Award size={24} color="#CD7F32" />}
+                  </div>
+                )}
+              </div>
+              <div className={styles.profileInfo}>
+                <h2 className={styles.profileName}>{userProfile.name}</h2>
+                <div className={styles.pointsBadge}>
+                  <Trophy size={16} />
+                  <span>{userProfile.points} points</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.profileStats}>
+              <h3 className={styles.statsTitle}>Performance Summary</h3>
+              <div className={styles.statsGrid}>
+                <div className={styles.statItem}>
+                  <div className={styles.statIcon}>
+                    <Trophy size={20} />
+                  </div>
+                  <div className={styles.statDetails}>
+                    <span className={styles.statLabel}>Contests</span>
+                    <div className={styles.statValues}>
+                      <span className={styles.statCount}>{userProfile.summary.codefusions.count}</span>
+                      <span className={styles.statPoints}>{userProfile.summary.codefusions.points} pts</span>
+                    </div>
+                    <div className={styles.statTrend}>
+                      <ChevronUp size={14} />
+                      <span>+2 this week</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statIcon}>
+                    <Zap size={20} />
+                  </div>
+                  <div className={styles.statDetails}>
+                    <span className={styles.statLabel}>Quizzes</span>
+                    <div className={styles.statValues}>
+                      <span className={styles.statCount}>{userProfile.summary.quizzes.count}</span>
+                      <span className={styles.statPoints}>{userProfile.summary.quizzes.points} pts</span>
+                    </div>
+                    <div className={styles.statTrend}>
+                      <ChevronUp size={14} />
+                      <span>+5 this week</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statIcon}>
+                    <BookOpen size={20} />
+                  </div>
+                  <div className={styles.statDetails}>
+                    <span className={styles.statLabel}>Practice</span>
+                    <div className={styles.statValues}>
+                      <span className={styles.statCount}>{userProfile.summary.practices.count}</span>
+                      <span className={styles.statPoints}>{userProfile.summary.practices.points} pts</span>
+                    </div>
+                    <div className={styles.statTrend}>
+                      <ChevronDown size={14} />
+                      <span>-1 this week</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Achievement Badges */}
+            <div className={styles.achievementSection}>
+              <h4 className={styles.achievementTitle}>Recent Achievements</h4>
+              <div className={styles.achievementBadges}>
+                <div className={styles.achievementBadge}>
+                  <Crown size={16} />
+                  <span>Top 10</span>
+                </div>
+                <div className={styles.achievementBadge}>
+                  <Flame size={16} />
+                  <span>15 Day Streak</span>
+                </div>
+                <div className={styles.achievementBadge}>
+                  <Trophy size={16} />
+                  <span>Contest Winner</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Leaderboard Section */}
         <div className={styles.leaderboardSection}>
           <div className={styles.leaderboardHeader}>
-            <h2>Leader Board 📊</h2>
+            <div className={styles.leaderboardTitle}>
+              <Trophy size={24} />
+              <h2>Global Leaderboard</h2>
+            </div>
             <div className={styles.leaderboardFilters}>
-              <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} className={styles.filterSelect}>
-                <option value="">All Departments</option>
-                <option value="CSE">CSE</option>
-                <option value="ECE">ECE</option>
-                <option value="EEE">EEE</option>
-                <option value="IT">IT</option>
-              </select>
-              <select value={filterTier} onChange={(e) => setFilterTier(e.target.value)} className={styles.filterSelect}>
-                <option value="">All Tiers</option>
-                <option value="gold">Gold</option>
-                <option value="silver">Silver</option>
-                <option value="bronze">Bronze</option>
-              </select>
+              <div className={styles.filterGroup}>
+                <Filter size={16} />
+                <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} className={styles.filterSelect}>
+                  <option value="">All Departments</option>
+                  <option value="CSE">CSE</option>
+                  <option value="ECE">ECE</option>
+                  <option value="EEE">EEE</option>
+                  <option value="IT">IT</option>
+                </select>
+              </div>
+              <div className={styles.filterGroup}>
+                <Users size={16} />
+                <select value={filterTier} onChange={(e) => setFilterTier(e.target.value)} className={styles.filterSelect}>
+                  <option value="">All Tiers</option>
+                  <option value="gold">Gold</option>
+                  <option value="silver">Silver</option>
+                  <option value="bronze">Bronze</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <div className={styles.leaderboardTable}>
             <div className={styles.tableHeader}>
-              <div className={styles.headerCell}>Position</div>
-              <div className={styles.headerCell}>Name</div>
+              <div className={styles.headerCell}>Rank</div>
+              <div className={styles.headerCell}>Student</div>
               <div className={styles.headerCell}>Department</div>
               <div className={styles.headerCell}>Tier</div>
-              <div className={styles.headerCell}>Hackathons</div>
+              <div className={styles.headerCell}>Contests</div>
               <div className={styles.headerCell}>Quizzes</div>
-              <div className={styles.headerCell}>Points</div>
+              <div className={styles.headerCell}>Total Points</div>
             </div>
-            
+
             <div className={styles.tableBody}>
               {paginatedData.map((user) => (
                 <div key={user.id} className={`${styles.tableRow} ${user.name === userProfile.name ? styles.currentUser : ''}`}>
-                  <div className={`${styles.tableCell} ${styles.positionCell}`}>
-                    <span className={styles.positionDisplay}>{getPositionIcon(user.position)}</span>
+                  <div className={styles.tableCell}>
+                    <div className={styles.rankCell}>
+                      <span className={styles.rankNumber}>#{user.position}</span>
+                      {user.position === 1 && <Crown size={16} color="#FFD700" />}
+                      {user.position === 2 && <Medal size={16} color="#C0C0C0" />}
+                      {user.position === 3 && <Award size={16} color="#CD7F32" />}
+                    </div>
                   </div>
-                  <div className={`${styles.tableCell} ${styles.nameCell}`}>
-                    <span className={styles.userAvatar}>{user.avatar}</span>
-                    <span className={styles.userName}>{user.name}</span>
+                  <div className={styles.tableCell}>
+                    <div className={styles.studentCell}>
+                      <div className={styles.studentAvatar}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className={styles.studentInfo}>
+                        <span className={styles.studentName}>{user.name}</span>
+                        {user.name === userProfile.name && (
+                          <span className={styles.youBadge}>You</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles.tableCell}>{user.department}</div>
-                  <div className={`${styles.tableCell} ${styles.tierCell}`}>
+                  <div className={styles.tableCell}>
+                    <span className={styles.departmentBadge}>{user.department}</span>
+                  </div>
+                  <div className={styles.tableCell}>
                     <div className={styles.tierBadge} style={{ backgroundColor: getTierColor(user.tier) }}>
                       {getTierIcon(user.tier)}
                     </div>
                   </div>
-                  <div className={styles.tableCell}>{user.hackathons}</div>
-                  <div className={styles.tableCell}>{user.quizzes}</div>
-                  <div className={`${styles.tableCell} ${styles.pointsCell}`}>
-                    <span className={styles.pointsValue}>{user.points}</span>
+                  <div className={styles.tableCell}>
+                    <span className={styles.activityCount}>{user.hackathons}</span>
+                  </div>
+                  <div className={styles.tableCell}>
+                    <span className={styles.activityCount}>{user.quizzes}</span>
+                  </div>
+                  <div className={styles.tableCell}>
+                    <div className={styles.pointsCell}>
+                      <Trophy size={14} />
+                      <span className={styles.pointsValue}>{user.points}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -202,20 +333,50 @@ const StudentLeader = () => {
           </div>
 
           <div className={styles.pagination}>
-            <button className={styles.paginationBtn} onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
-              ← Prev
+            <button
+              className={`${styles.pageBtn} ${currentPage === 1 ? styles.disabled : ''}`}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
             </button>
-            <div className={styles.paginationPages}>
+            <div className={styles.pageNumbers}>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                  <button key={pageNum} className={`${styles.paginationPage} ${currentPage === pageNum ? styles.active : ''}`} onClick={() => setCurrentPage(pageNum)}>
-                    {pageNum}
-                  </button>
+                <button
+                  key={pageNum}
+                  className={`${styles.pageNumber} ${currentPage === pageNum ? styles.active : ''}`}
+                  onClick={() => setCurrentPage(pageNum)}
+                >
+                  {pageNum}
+                </button>
               ))}
             </div>
-            <button className={styles.paginationBtn} onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
-              Next →
+            <button
+              className={`${styles.pageBtn} ${currentPage === totalPages ? styles.disabled : ''}`}
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
             </button>
           </div>
+        </div>
+
+        {/* Floating Action Buttons */}
+        <div className={styles.floatingActions}>
+          <button
+            className={styles.floatingBtn}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="Scroll to top"
+          >
+            <ArrowUp size={20} />
+          </button>
+          <button
+            className={styles.floatingBtn}
+            onClick={() => window.location.reload()}
+            title="Refresh leaderboard"
+          >
+            <RefreshCw size={20} />
+          </button>
         </div>
       </div>
     </div>

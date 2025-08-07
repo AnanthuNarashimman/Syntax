@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Search, Filter, BookOpen, Code, Clock, Users, Target, Play, Eye, Zap, Brain, TrendingUp, Star } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
-import styles from '../Styles/PageStyles/StudentPractice.module.css'; // Import as a 'styles' object
+import styles from '../Styles/PageStyles/StudentPractice.module.css';
 import pracImg from '../assets/Images/prac.jpg';
 
 const StudentPractice = () => {
@@ -118,23 +119,37 @@ const StudentPractice = () => {
     }
 
     return (
-        <div className={styles.studentPracticeContainer}>
+        <div className={styles.studentPractice}>
             <StudentNavbar />
-            <div className={styles.practiceContent}>
+            <div className={styles.practiceContainer}>
+                {/* Header Section */}
                 <div className={styles.practiceHeader}>
                     <div className={styles.headerContent}>
-                        <h1>Daily Practice.</h1>
-                        <h2>Consistent Growth.</h2>
-                        <p>Practice real-world problems designed for placements and skill-building.</p>
-                        <div className={styles.quickSearch}>
-                            <input
-                                type="text"
-                                placeholder="Enter Code..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className={styles.searchInput}
-                            />
-                            <button className={styles.findBtn}>Find</button>
+                        <div className={styles.headerText}>
+                            <h1 className={styles.pageTitle}>Daily Practice & Learning</h1>
+                            <p className={styles.pageSubtitle}>
+                                Master programming concepts through consistent practice and real-world problem solving
+                            </p>
+                        </div>
+                        <div className={styles.headerStats}>
+                            <div className={styles.statCard}>
+                                <div className={styles.statIcon}>
+                                    <Brain size={24} />
+                                </div>
+                                <div className={styles.statInfo}>
+                                    <h3>150+</h3>
+                                    <p>Practice Problems</p>
+                                </div>
+                            </div>
+                            <div className={styles.statCard}>
+                                <div className={styles.statIcon}>
+                                    <TrendingUp size={24} />
+                                </div>
+                                <div className={styles.statInfo}>
+                                    <h3>85%</h3>
+                                    <p>Success Rate</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div className={styles.headerIllustration}>
@@ -142,59 +157,144 @@ const StudentPractice = () => {
                     </div>
                 </div>
 
-                <div className={styles.filterSection}>
-                    <h3>Can't remember the code ?</h3>
-                    <p>Search and explore random practices that match your needs</p>
-                    <div className={styles.filters}>
-                        <div className={styles.filterGroup}>
-                            <select value={filterType} onChange={e => setFilterType(e.target.value)} className={styles.filterSelect}>
-                                {types.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
+                {/* Quick Access Section */}
+                <div className={styles.quickAccessSection}>
+                    <div className={styles.codeSearchCard}>
+                        <div className={styles.cardHeader}>
+                            <Zap size={20} />
+                            <h3>Quick Practice Access</h3>
                         </div>
-                        <div className={styles.filterGroup}>
-                            <input type="text" placeholder="Search by name..." value={filterSearch} onChange={e => setFilterSearch(e.target.value)} className={styles.filterInput} />
+                        <p>Have a specific practice code? Enter it below for instant access</p>
+                        <div className={styles.codeSearchInput}>
+                            <input
+                                type="text"
+                                placeholder="Enter practice code (e.g., PR2024001)"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className={styles.codeInput}
+                            />
+                            <button className={styles.codeFindBtn}>
+                                <Search size={18} />
+                                Find Practice
+                            </button>
                         </div>
-                        <div className={styles.filterGroup}>
-                            <select value={filterLanguage} onChange={e => setFilterLanguage(e.target.value)} className={styles.filterSelect}>
-                                {languages.map(l => <option key={l} value={l}>{l}</option>)}
-                            </select>
-                        </div>
-                        <div className={styles.filterGroup}>
-                            <select value={filterDepartment} onChange={e => setFilterDepartment(e.target.value)} className={styles.filterSelect}>
-                                {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
-                        </div>
-                        <button className={styles.filterBtn} onClick={handleFilter}>Filter</button>
                     </div>
                 </div>
 
+                {/* Filter Section */}
+                <div className={styles.filterSection}>
+                    <div className={styles.filterHeader}>
+                        <div className={styles.filterTitle}>
+                            <Target size={20} />
+                            <h3>Explore Practice Problems</h3>
+                        </div>
+                        <p>Discover problems that match your learning goals and skill level</p>
+                    </div>
+                    <div className={styles.filterControls}>
+                        <div className={styles.searchGroup}>
+                            <Search size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by title or topic..."
+                                value={filterSearch}
+                                onChange={(e) => setFilterSearch(e.target.value)}
+                                className={styles.searchInput}
+                            />
+                        </div>
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className={styles.filterSelect}
+                        >
+                            {types.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <select
+                            value={filterLanguage}
+                            onChange={(e) => setFilterLanguage(e.target.value)}
+                            className={styles.filterSelect}
+                        >
+                            {languages.map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+                        <select
+                            value={filterDepartment}
+                            onChange={(e) => setFilterDepartment(e.target.value)}
+                            className={styles.filterSelect}
+                        >
+                            {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                        <button className={styles.filterBtn} onClick={handleFilter}>
+                            <Target size={16} />
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+
+                {/* Practice Cards Grid */}
                 <div className={styles.practiceGrid}>
                     {problemsToShow.map(problem => (
                         <div key={problem.id} className={styles.practiceCard}>
-                            <div className={styles.cardHeader}>
-                                <span className={styles.typeBadge}>{problem.type}</span>
-                                <span className={styles.practiceBadge}>Practice</span>
-                            </div>
-                            <div className={styles.cardBody}>
-                                <div className={styles.cardInfo}>
-                                    <div><b>Title :</b> {problem.title}</div>
-                                    <div><b>Duration :</b> {problem.duration}</div>
-                                    <div><b>Department :</b> {problem.department}</div>
+                            <div className={styles.practiceCardHeader}>
+                                <div className={styles.practiceType}>
+                                    {problem.type === 'Coding Contest' ? <Code size={16} /> :
+                                     problem.type === 'Quiz' ? <Zap size={16} /> : <BookOpen size={16} />}
+                                    <span className={styles.typeLabel}>{problem.type}</span>
+                                </div>
+                                <div className={styles.practiceBadge}>
+                                    <Zap size={14} />
+                                    <span>Practice</span>
                                 </div>
                             </div>
-                            <div className={styles.cardFooter}>
-                                <button className={styles.viewBtn} onClick={() => handleView(problem)}>View</button>
+
+                            <div className={styles.practiceCardBody}>
+                                <h3 className={styles.practiceTitle}>{problem.title}</h3>
+                                <div className={styles.practiceDetails}>
+                                    <div className={styles.detailItem}>
+                                        <Clock size={16} />
+                                        <span>Duration: {problem.duration}</span>
+                                    </div>
+                                    <div className={styles.detailItem}>
+                                        <Users size={16} />
+                                        <span>Department: {problem.department}</span>
+                                    </div>
+                                    <div className={styles.detailItem}>
+                                        <Star size={16} />
+                                        <span>Difficulty: Medium</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={styles.practiceCardFooter}>
+                                <button
+                                    className={styles.startBtn}
+                                    onClick={() => handleStart(problem)}
+                                >
+                                    <Play size={16} />
+                                    Start Practice
+                                </button>
+                                <button
+                                    className={styles.viewBtn}
+                                    onClick={() => handleView(problem)}
+                                >
+                                    <Eye size={16} />
+                                    View Details
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className={styles.showMore}>
+                {/* Show More/Less Section */}
+                <div className={styles.loadMoreSection}>
                     {(!showAll && mockProblems.length > 9) && (
-                        <button className={styles.showMoreBtn} onClick={() => setShowAll(true)}>Show More...</button>
+                        <button className={styles.loadMoreBtn} onClick={() => setShowAll(true)}>
+                            <TrendingUp size={16} />
+                            Show More Problems
+                        </button>
                     )}
                     {(showAll && mockProblems.length > 9) && (
-                        <button className={styles.showMoreBtn} onClick={() => setShowAll(false)}>Show Less...</button>
+                        <button className={styles.loadMoreBtn} onClick={() => setShowAll(false)}>
+                            Show Less
+                        </button>
                     )}
                 </div>
             </div>

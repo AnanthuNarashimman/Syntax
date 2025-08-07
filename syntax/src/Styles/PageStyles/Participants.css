@@ -196,6 +196,18 @@
   background: #f7fafc;
 }
 
+.refresh-btn:hover {
+  border-color: #63b3ed;
+  background: #ebf8ff;
+  color: #3182ce;
+}
+
+.bulk-import-btn:hover {
+  border-color: #805ad5;
+  background: #faf5ff;
+  color: #553c9a;
+}
+
 .export-btn:hover {
   border-color: #e53e3e;
   color: #e53e3e;
@@ -453,6 +465,7 @@
   display: flex;
   gap: 0.5rem;
   justify-content: center;
+  margin-left: -200%;
 }
 
 .participant-action-btn {
@@ -469,6 +482,16 @@
 }
 
 .view-btn:hover {
+  border-color: #4299e1;
+  color: #4299e1;
+}
+
+.ban-btn:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.delete-btn:hover {
   border-color: #e53e3e;
   color: #e53e3e;
 }
@@ -563,4 +586,573 @@
   .participants-table-container {
     overflow-x: auto;
   }
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+/* Participants-specific Modal Styles */
+.participants-add-student-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.participants-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.participants-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.participants-modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.participants-close-btn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.participants-close-btn:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+/* Override any conflicting modal styles from other pages */
+.participants-management-container .add-student-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.participants-management-container .modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.participants-management-container .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.participants-management-container .modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.participants-management-container .close-btn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.participants-management-container .close-btn:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+/* Add Student Form */
+.add-student-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.form-group input {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.form-group input.error {
+  border-color: #e53e3e;
+}
+
+.error-message {
+  font-size: 0.8rem;
+  color: #e53e3e;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #4a5568;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.save-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: #4299e1;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.save-btn:hover {
+  background: #3182ce;
+}
+
+.add-student-btn {
+  background: #48bb78;
+  color: white;
+}
+
+.add-student-btn:hover {
+  background: #38a169;
+}
+
+/* Detail Labels */
+.detail-label {
+  font-weight: 500;
+  color: #4a5568;
+  margin-right: 0.5rem;
+}
+
+/* Ban Student Form */
+.ban-student-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ban-reason-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.2s;
+}
+
+.ban-reason-input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.ban-btn {
+  background: #e53e3e;
+  color: white;
+  border: none;
+}
+
+.ban-btn:hover {
+  background: #c53030;
+}
+
+/* Student Details View */
+.student-details-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.student-profile-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.student-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e53e3e;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.student-info h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.student-email {
+  color: #718096;
+  margin: 0 0 1rem 0;
+}
+
+.student-status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.student-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.detail-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.achievements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Bulk Import Styles */
+.bulk-import-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.file-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px dashed #e2e8f0;
+  border-radius: 6px;
+  background: #f7fafc;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.file-input:hover {
+  border-color: #4299e1;
+}
+
+.file-help {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 0.5rem;
+}
+
+.import-preview {
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.import-preview h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0 0 1rem 0;
+}
+
+.preview-table {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.preview-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f7fafc;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #4a5568;
+}
+
+.preview-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid #f7fafc;
+  font-size: 0.8rem;
+}
+
+.preview-row:last-child {
+  border-bottom: none;
+}
+
+.preview-more {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #718096;
+  font-style: italic;
+}
+
+/* Action Icons */
+.action-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+/* Participant Divider */
+.participant-divider {
+  border: none;
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 1rem 0;
+  opacity: 0.6;
+}
+
+/* Confirmation Modal */
+.confirm-modal-content {
+  padding: 1.5rem;
+}
+
+.confirm-modal-content p {
+  font-size: 1rem;
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+/* Confirmation Modal Buttons */
+.confirm-modal-content .form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.confirm-modal-content .cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confirm-modal-content .cancel-btn:hover {
+  background-color: #cbd5e0;
+  color: #2d3748;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-modal-content .delete-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confirm-modal-content .delete-btn:hover {
+  background-color: #c53030;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-modal-content .delete-btn .btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Ban Modal Button Styles */
+.ban-student-form .form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.ban-student-form .cancel-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ban-student-form .cancel-btn:hover {
+  background-color: #cbd5e0;
+  color: #2d3748;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ban-student-form .ban-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #f56565;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ban-student-form .ban-btn:hover {
+  background-color: #e53e3e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ban-student-form .ban-btn .btn-icon {
+  width: 16px;
+  height: 16px;
 }

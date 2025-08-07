@@ -18,7 +18,7 @@ import { useContestContext } from '../contexts/ContestContext';
 
 function AdminDashboard() {
   // Use ContestContext
-  const { getStats, getRecentContests, loading, adminName, fetchEvents } = useContestContext();
+  const { getStats, getRecentContests, loading, adminName, adminNameLoading, fetchEvents } = useContestContext();
 
   useEffect(() => {
     fetchEvents();
@@ -89,7 +89,7 @@ function AdminDashboard() {
       <div className="AdminDashboardMainContent column-dashboard">
         <header className="dashboard-header">
           <div className="header-content">
-            <h1>Welcome back, {adminName}!</h1>
+            <h1>Welcome back, {adminNameLoading ? '...' : adminName}!</h1>
             <p>Manage your coding contests and monitor participant activity</p>
           </div>
           <div className="header-actions">

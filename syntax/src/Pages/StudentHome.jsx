@@ -1,32 +1,92 @@
 import React, { useState, useEffect } from 'react';
-import { Award } from 'lucide-react';
+import { Award, TrendingUp, Users, Calendar, Clock, Target, Zap, BookOpen, Trophy } from 'lucide-react';
 import StudentNavbar from "../Components/StudentNavbar";
 import Loader from '../Components/Loader';
-import styles from "../Styles/PageStyles/StudentHome.module.css"; // Import as a 'styles' object
+import styles from "../Styles/PageStyles/StudentHome.module.css";
 import welcomeImg from '../assets/Images/welcome.jpg';
 import findImg from '../assets/Images/find.jpg';
+import { useAlert } from "../contexts/AlertContext";
+
+const getInitial = (name) => name && name.length > 0 ? name[0].toUpperCase() : '?';
 
 const StudentHome = () => {
+  const { showError } = useAlert();
   const [contestCode, setContestCode] = useState('');
   const [loading, setLoading] = useState(true);
-  const [performanceData, setPerformanceData] = useState({
-    quiz: [30, 35, 32, 38, 30, 35, 40],
-    codethon: [25, 30, 28, 35, 32, 30, 35],
-    practice: [20, 25, 30, 28, 35, 40, 38]
+  const [studentData, setStudentData] = useState({
+    userName: 'User',
+    department: '',
+    year: '',
+    section: '',
+    semester: '',
+    batch: '',
+    rollNumber: '',
+    college: '',
+    languages: [],
+    skills: []
   });
 
   const upcomingContests = [
-    { id: 1, title: "Weekly Contest", date: "Sunday 16:30 pm", participants: 150 },
-    { id: 2, title: "Daily Contest", date: "Monday - Friday 5:00 pm", participants: 200 },
-    { id: 3, title: "Aptitude Quiz", date: "Saturday 2:30 pm", participants: 180 }
+    { 
+      id: 1, 
+      title: "Weekly Coding Challenge", 
+      date: "Sunday 16:30", 
+      participants: 150,
+      type: "contest",
+      difficulty: "Medium",
+      duration: "2 hours"
+    },
+    { 
+      id: 2, 
+      title: "Daily Practice Session", 
+      date: "Mon-Fri 17:00", 
+      participants: 200,
+      type: "practice",
+      difficulty: "Easy",
+      duration: "1 hour"
+    },
+    { 
+      id: 3, 
+      title: "Aptitude Assessment", 
+      date: "Saturday 14:30", 
+      participants: 180,
+      type: "quiz",
+      difficulty: "Hard",
+      duration: "45 min"
+    }
   ];
 
   useEffect(() => {
-    // Simulate loading time
-    setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-  }, []);
+    const fetchStudentProfile = async () => {
+      try {
+        const response = await fetch('/api/student/profile', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch student profile');
+        }
+
+        const data = await response.json();
+        setStudentData({
+          ...data.profile,
+          languages: data.profile.languages || [],
+          skills: data.profile.skills || []
+        });
+      } catch (error) {
+        console.error('Error fetching student profile:', error);
+        showError('Failed to load student profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentProfile();
+  }, [showError]);
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {
@@ -46,200 +106,179 @@ const StudentHome = () => {
   return (
     <div className={styles.studentHome}>
       <StudentNavbar />
-      
       <div className={styles.homeContainer}>
-        {/* Welcome Section */}
-        <div className={styles.welcomeSection}>
-          <div className={styles.welcomeContent}>
-            <h1 className={styles.welcomeTitle}>Welcome Back, User!</h1>
-            <div className={styles.welcomeIllustration}>
-              <img src={welcomeImg} alt="Welcome" className={styles.welcomeImage} />
-            </div>
-          </div>
-          <div className={`${styles.overallInfo} ${styles.card}`}>
-            <div className={styles.overallHeader}>
-              <span>Overall Information</span>
-              <span className={styles.overallMenu}>&#8942;</span>
-            </div>
-            <div className={styles.overallMainStats}>
-              <div className={styles.mainStat}>
-                <div className={styles.mainStatNumber}>24</div>
-                <div className={styles.mainStatLabel}>Codathon attended</div>
-              </div>
-              <div className={styles.mainStat}>
-                <div className={styles.mainStatNumber}>45</div>
-                <div className={styles.mainStatLabel}>Quizzes answered</div>
-              </div>
-            </div>
-            <div className={styles.overallProgress}>
-              <span>100 points to level up!</span>
-              <span className={styles.overallProgressBar}><span style={{width: '66%'}}></span></span>
-              <span className={styles.overallProgressLabel}>200/300</span>
-              <span className={styles.overallTier}><Award size={18} style={{verticalAlign:'middle'}}/> Gold Tier</span>
-            </div>
-            <div className={styles.overallBadges}>
-              <div className={styles.badge}>
-                <div className={styles.badgeNumber}>5</div>
-                <div className={styles.badgeLabel}>Top 10</div>
-              </div>
-              <div className={styles.badge}>
-                <div className={styles.badgeNumber}>11</div>
-                <div className={styles.badgeLabel}>Top 10</div>
-              </div>
-              <div className={styles.badge}>
-                <div className={styles.badgeNumber}>33</div>
-                <div className={styles.badgeLabel}>Topics</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <hr className={styles.sectionDivider} />
-        
-        <div className={styles.performanceSectionstd}>
-          <h2 className={styles.performanceTitle}>Performance Overview</h2>
-          <div className={styles.performanceContent}>
-            <div className={styles.chartContainer}>
-              <div className={styles.chartHeader}>
-                <div className={styles.chartLegend}>
-                  <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.quiz}`}></div>
-                    <span>Quiz</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.codethon}`}></div>
-                    <span>Codethon</span>
-                  </div>
-                  <div className={styles.legendItem}>
-                    <div className={`${styles.legendColor} ${styles.practice}`}></div>
-                    <span>Practice</span>
+            {/* Header Section */}
+            <div className={styles.headerSection}>
+              <div className={styles.welcomeCard}>
+                <div className={styles.welcomeContent}>
+                  <h1 className={styles.welcomeTitle}>
+                    Welcome back, <span className={styles.highlight}>{studentData.userName}</span>!
+                  </h1>
+                  <p className={styles.welcomeSubtitle}>
+                    Ready to conquer today's coding challenges?
+                  </p>
+                  <div className={styles.studentInfo}>
+                    <span className={styles.infoTag}>{studentData.department}</span>
+                    <span className={styles.infoTag}>Year {studentData.year}</span>
+                    <span className={styles.infoTag}>Section {studentData.section}</span>
                   </div>
                 </div>
-              </div>
-              <div className={styles.chartArea}>
-                <div className={styles.chartGrid}>
-                  <div className={styles.yAxis}>
-                    <span>40</span>
-                    <span>30</span>
-                    <span>20</span>
-                    <span>10</span>
-                    <span>0</span>
-                  </div>
-                  <div className={styles.chartLines}>
-                    <svg viewBox="0 0 300 200" className={styles.chartSvg}>
-                      <polyline 
-                        points="0,140 50,125 100,136 150,124 200,140 250,125 300,120"
-                        fill="none" 
-                        stroke="#ff6b6b" 
-                        strokeWidth="2"
-                        className={`${styles.chartLine} ${styles.quiz}`}
-                      />
-                      <polyline 
-                        points="0,150 50,140 100,144 150,125 200,136 250,140 300,125"
-                        fill="none" 
-                        stroke="#4ecdc4" 
-                        strokeWidth="2"
-                        className={`${styles.chartLine} ${styles.codethon}`}
-                      />
-                      <polyline 
-                        points="0,160 50,150 100,140 150,144 200,125 250,120 300,124"
-                        fill="none" 
-                        stroke="#45b7d1" 
-                        strokeWidth="2"
-                        className={`${styles.chartLine} ${styles.practice}`}
-                      />
-                    </svg>
-                  </div>
-                  <div className={styles.xAxis}>
-                    <span>January</span>
-                    <span>February</span>
-                    <span>March</span>
-                    <span>April</span>
-                  </div>
+                <div className={styles.welcomeImage}>
+                  <img src={welcomeImg} alt="Welcome" />
                 </div>
               </div>
             </div>
-            <div className={`${styles.monthProgress} ${styles.card}`}>
-              <div className={styles.monthHeader}>
-                <span>Month Progress</span>
-                <span className={styles.monthMenu}>&#8942;</span>
-              </div>
-              <div className={styles.monthCompare}>Compared to last month*</div>
-              <div className={styles.monthOverview}>
-                <span className={styles.monthOverviewTitle}>OVERVIEW</span>
-                <ul className={styles.monthOverviewList}>
-                  <li><span className={`${styles.dot} ${styles.work}`}></span>Work</li>
-                  <li><span className={`${styles.dot} ${styles.meditation}`}></span>Meditation</li>
-                  <li><span className={`${styles.dot} ${styles.projects}`}></span>Project's</li>
-                </ul>
-              </div>
-              <div className={styles.monthProgressCircle}>
-                <svg width="100" height="100">
-                  <circle cx="50" cy="50" r="40" stroke="#eee" strokeWidth="10" fill="none" />
-                  <circle cx="50" cy="50" r="40" stroke="#ff6b6b" strokeWidth="10" fill="none" strokeDasharray="251.2" strokeDashoffset="50" />
-                </svg>
-                <span className={styles.monthProgressText}>120%</span>
-              </div>
-              <div className={styles.monthProgressButtons}>
-                <button className={`${styles.btn} ${styles.btnSecondary}`}>Find Contests</button>
-                <button className={`${styles.btn} ${styles.btnPrimary}`}>View Leaderboard</button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Contest Join Section */}
-        <div className={styles.contestJoinSection}>
-          <div className={styles.contestContent}>
-            <h2>Join contests and grow with peers</h2>
-            <p>Find and join coding contests with like-minded learners!</p>
-            <div className={styles.contestInput}>
-              <input
-                type="text"
-                placeholder="Enter Code..."
-                value={contestCode}
-                onChange={(e) => setContestCode(e.target.value)}
-                className={styles.contestCodeInput}
-              />
-              <button onClick={handleContestJoin} className={`${styles.btn} ${styles.btnPrimary}`}>
-                Find
-              </button>
-            </div>
-          </div>
-          <div className={styles.contestIllustration}>
-            <img src={findImg} alt="Find Contest" className={styles.findImage} />
-          </div>
-        </div>
-
-        {/* Upcoming Contests */}
-        <div className={styles.upcomingContests}>
-          <div className={styles.sectionHeader}>
-            <h2>Current/Upcoming Contest Highlight</h2>
-            <button className={`${styles.btn} ${styles.btnOutline}`}>Show More...</button>
-          </div>
-          <div className={styles.contestsGrid}>
-            {upcomingContests.map(contest => (
-              <div key={contest.id} className={styles.contestCard}>
-                <div className={styles.contestInfo}>
-                  <h3>{contest.title}</h3>
-                  <div className={styles.contestMeta}>
-                    <div className={styles.contestDate}>
-                      <span>🗓️</span> {/* Replaced Lucide icon for simplicity, add it back if you need it */}
-                      <span>{contest.date}</span>
-                    </div>
-                    <div className={styles.contestParticipants}>
-                       <span>👥</span> {/* Replaced Lucide icon */}
-                      <span>{contest.participants} participants</span>
-                    </div>
+            {/* Stats Overview */}
+            <div className={styles.statsSection}>
+              <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <Trophy size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>24</h3>
+                    <p className={styles.statLabel}>Contests Won</p>
                   </div>
                 </div>
-                <div className={styles.contestActions}>
-                  <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}>Join</button>
+                
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <Target size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>156</h3>
+                    <p className={styles.statLabel}>Problems Solved</p>
+                  </div>
+                </div>
+                
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <TrendingUp size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>89%</h3>
+                    <p className={styles.statLabel}>Success Rate</p>
+                  </div>
+                </div>
+                
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <Award size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>Gold</h3>
+                    <p className={styles.statLabel}>Current Tier</p>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Progress Section */}
+            <div className={styles.progressSection}>
+              <div className={styles.progressCard}>
+                <div className={styles.progressHeader}>
+                  <h2 className={styles.progressTitle}>Level Progress</h2>
+                  <div className={styles.progressBadge}>Gold Tier</div>
+                </div>
+                <div className={styles.progressBar}>
+                  <div className={styles.progressFill} style={{width: '66%'}}></div>
+                </div>
+                <div className={styles.progressStats}>
+                  <span>200 / 300 points</span>
+                  <span>100 points to next level</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className={styles.actionsSection}>
+              <h2 className={styles.sectionTitle}>Quick Actions</h2>
+              <div className={styles.actionsGrid}>
+                <button className={styles.actionCard}>
+                  <BookOpen size={24} />
+                  <span>Practice Problems</span>
+                </button>
+                <button className={styles.actionCard}>
+                  <Users size={24} />
+                  <span>Join Contest</span>
+                </button>
+                <button className={styles.actionCard}>
+                  <Trophy size={24} />
+                  <span>View Leaderboard</span>
+                </button>
+                <button className={styles.actionCard}>
+                  <Zap size={24} />
+                  <span>Daily Challenge</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Contest Join Section */}
+            <div className={styles.contestSection}>
+              <div className={styles.contestCard}>
+                <div className={styles.contestContent}>
+                  <h2 className={styles.contestTitle}>Join Live Contests</h2>
+                  <p className={styles.contestDescription}>
+                    Enter contest codes to participate in real-time coding challenges
+                  </p>
+                  <div className={styles.contestInput}>
+                    <input
+                      type="text"
+                      placeholder="Enter contest code..."
+                      value={contestCode}
+                      onChange={(e) => setContestCode(e.target.value)}
+                      className={styles.codeInput}
+                    />
+                    <button onClick={handleContestJoin} className={styles.joinButton}>
+                      Join Contest
+                    </button>
+                  </div>
+                </div>
+                <div className={styles.contestIllustration}>
+                  <img src={findImg} alt="Join Contest" />
+                </div>
+              </div>
+            </div>
+
+            {/* Upcoming Contests */}
+            <div className={styles.upcomingSection}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Upcoming Contests</h2>
+                <button className={styles.viewAllButton}>View All</button>
+              </div>
+              <div className={styles.contestsGrid}>
+                {upcomingContests.map(contest => (
+                  <div key={contest.id} className={styles.contestItem}>
+                    <div className={styles.contestHeader}>
+                      <div className={styles.contestType}>
+                        <span className={`${styles.typeBadge} ${styles[contest.type]}`}>
+                          {contest.type}
+                        </span>
+                        <span className={styles.difficulty}>{contest.difficulty}</span>
+                      </div>
+                      <div className={styles.contestTime}>
+                        <Clock size={16} />
+                        <span>{contest.duration}</span>
+                      </div>
+                    </div>
+                    <h3 className={styles.contestName}>{contest.title}</h3>
+                    <div className={styles.contestMeta}>
+                      <div className={styles.metaItem}>
+                        <Calendar size={16} />
+                        <span>{contest.date}</span>
+                      </div>
+                      <div className={styles.metaItem}>
+                        <Users size={16} />
+                        <span>{contest.participants} participants</span>
+                      </div>
+                    </div>
+                    <button className={styles.contestJoinBtn}>Join Now</button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
     </div>
   );
 };

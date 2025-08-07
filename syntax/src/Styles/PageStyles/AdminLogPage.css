@@ -56,6 +56,7 @@
   
   .student-text .highlight {
     color: #e95a49;
+    /* color: #9929EA; */
   }
   
   /* Admin Button (inside .admin-card) */
@@ -63,6 +64,7 @@
     width: 80%;
     height: 55px;
     background-color: #e95a49;
+    /* background-color: #9929EA; */
     color: #ffffff;
     font-size: 1.3rem;
     font-weight: 600;
@@ -82,6 +84,7 @@
     width: 50%;
     height: 100%;
     background-color: #f76c5e;
+    /* background: linear-gradient(45deg, #4c1d95, #7c3aed); */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -192,6 +195,7 @@
     width: 70%;
     height: 45px;
     background-color: #385A64;
+    /* background: linear-gradient(45deg, #f59e0b, #fbbf24) !important; */
     margin-left: 50%;
     transform: translateX(-50%);
     color: #ffffff;

@@ -1,6 +1,5 @@
 // Having a lot of comments doesn't mean it is made using AI. 
 // We really spent time to write meaningful comments, trying to explain what each block or function does.
-// You can find some grammar mistakes too!
 
 // The server is "Stateless" meaning there won't be any information stored on server about users.
 // Make sure to take a glance on how "JWT" authentication works before diving deep.
@@ -13,6 +12,8 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const multer = require('multer');
+const XLSX = require('xlsx');
 
 const security_key = process.env.SECURITY_KEY
 
@@ -25,6 +26,23 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+// Multer configuration for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+            file.mimetype === 'application/vnd.ms-excel') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only Excel files are allowed!'), false);
+        }
+    },
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
 
 // Password Hashing Utilities
 
@@ -135,6 +153,91 @@ async function loginAdminUser(email, password) {
     }
 }
 
+
+// Authentication Service Logic (JWT) for "Students"
+// 1) Takes email and password and checks their data types.
+// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be throwed.
+// 3) Compares the password using the function "comparePasswords (Line:52)". If it isnt'a match, an error will be throwed.
+// 4) Creates "payload" with necessary datas {userId, userName, email, isStudent} which will encrypted as token.
+// 5) Creates a token that expires in 3 hours.
+// 6) If an error occurs, appropriate messages will be shown.
+async function loginStudentUser(email, password) {
+    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
+        throw new Error('Email and password are required and must be strings.');
+    }
+
+    try {
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+
+        if (snapshot.empty) {
+            throw new Error('Invalid credentials.');
+        }
+
+        const userDoc = snapshot.docs[0];
+        const userData = userDoc.data();
+        const userId = userDoc.id;
+
+        const isPasswordValid = await comparePasswords(password, userData.hashedPassword);
+
+        if (!isPasswordValid) {
+            throw new Error('Invalid credentials.');
+        }
+
+        if (userData.isStudent !== true) {
+            throw new Error('Access denied: User is not a registered student.');
+        }
+
+        // Check if student is banned
+        if (userData.status === 'banned') {
+            throw new Error('Account is banned. Please contact administrator.');
+        }
+
+        const payload = {
+            userId: userId,
+            userName: userData.userName,
+            email: userData.email,
+            isStudent: userData.isStudent,
+            department: userData.department,
+            year: userData.year,
+            section: userData.section,
+            semester: userData.semester,
+            batch: userData.batch
+        };
+
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            throw new Error('JWT_SECRET is not configured in environment variables.');
+        }
+
+        const tokenOptions = {
+            expiresIn: '3h'
+        };
+
+        const token = jwt.sign(payload, jwtSecret, tokenOptions);
+
+        return {
+            id: userId,
+            email: userData.email,
+            userName: userData.userName,
+            isStudent: userData.isStudent,
+            department: userData.department,
+            year: userData.year,
+            section: userData.section,
+            semester: userData.semester,
+            batch: userData.batch,
+            token: token,
+            message: 'Student login successful!'
+        };
+
+    } catch (error) {
+        console.error('Student login attempt failed:', error.message);
+        if (error.message.includes('Invalid credentials') || error.message.includes('Access denied') || error.message.includes('User is not a registered student') || error.message.includes('Account is banned')) {
+            throw error;
+        }
+        throw new Error('An unexpected server error occurred during login. Please try again.');
+    }
+}
 
 // Authentication Service Logic (JWT) for "Super Admins".
 // 1) Takes email and password and checks their data types.
@@ -260,6 +363,48 @@ function requireAdminAuth(req, res, next) {
 }
 
 
+// Middleware for Student-Only Route Protection 
+// Used by functionalities like "participating in contests, viewing student dashboard" to ensure the request is made by a student.
+// 1) Gets the encrypted 'auth-token' from the browser cookies and decodes it.
+// 2) Checks for "isStudent" in the token. It is a boolean value from our firebase db. 
+// 3) If the requested user is actually a student, then the function "next()" will be executed. 
+//    next() : This is a handler that lets express knows that the current middleware is executed and returned success.
+// 4) If the user is not a student, if any data is missing or if the server collapses, then corresponding errors will be logged
+function requireStudentAuth(req, res, next) {
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized: No token provided.' });
+    }
+
+    try {
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            throw new Error('JWT_SECRET is not configured on the server.');
+        }
+
+        const decoded = jwt.verify(token, jwtSecret);
+
+        req.user = decoded;
+
+        if (!req.user.isStudent) {
+            return res.status(403).json({ message: 'Forbidden: Student access required.' });
+        }
+
+        next();
+
+    } catch (error) {
+        console.error('JWT verification failed:', error.message);
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Unauthorized: Token expired.' });
+        }
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
+        }
+        return res.status(500).json({ message: 'Internal server error during authentication.' });
+    }
+}
+
 // Middleware for SuperAdmin-Only Route Protection 
 // Used by functionalities like "creating admins, managing contests, super-admin profile" to ensure the request is made by a super admin.
 // 1) Gets the encrypted 'auth-token' from the browser cookies and decodes it.
@@ -313,8 +458,8 @@ function requireSuperAdminAuth(req, res, next) {
 // httpOnly: true => This prevents the cookie to be accessed from client-side javaScript
 // secure: process.env.NODE_ENV === 'production' => Decides whether the cookie be passed only in HTTPS connection if the "NODE_ENV" is set as 'production' in env.
 // maxAge: 1000 * 60 * 180 => The lifetime of the cookie. Set as 3 hours
-//sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
-//path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
+// sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
+// path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
 app.post('/api/auth/admin-login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -341,6 +486,50 @@ app.post('/api/auth/admin-login', async (req, res) => {
 
 
 
+// API for Student authentication
+
+// Gets email and password from the frontend "StudentLogPage.jsx"
+// Passes the email and password to the function "loginStudentUser" to check credentials
+// Gets the encrypted token from the function "loginStudentUser" and stores it in cookies with the name "auth_token" with some security measures
+// httpOnly: true => This prevents the cookie to be accessed from client-side javaScript
+// secure: process.env.NODE_ENV === 'production' => Decides whether the cookie be passed only in HTTPS connection if the "NODE_ENV" is set as 'production' in env.
+// maxAge: 1000 * 60 * 180 => The lifetime of the cookie. Set as 3 hours
+// sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
+// path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
+app.post('/api/auth/student-login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const { id, email: userEmail, userName, isStudent, department, year, section, semester, batch, token } = await loginStudentUser(email, password);
+
+        res.cookie('auth_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1000 * 60 * 180,
+            sameSite: 'Lax',
+            path: '/'
+        });
+
+        res.status(200).json({
+            message: 'Student login successful!',
+            user: { 
+                id: id, 
+                email: userEmail, 
+                userName: userName,
+                isStudent: isStudent,
+                department: department,
+                year: year,
+                section: section,
+                semester: semester,
+                batch: batch
+            }
+        });
+
+    } catch (error) {
+        console.error('Student login failed:', error.message);
+        res.status(401).json({ message: error.message || 'Authentication failed. Please check your credentials.' });
+    }
+});
+
 // API for Super Admin authentication
 
 // Gets email and password from the frontend "SuperAdminLogPage.jsx"
@@ -349,8 +538,8 @@ app.post('/api/auth/admin-login', async (req, res) => {
 // httpOnly: true => This prevents the cookie to be accessed from client-side javaScript
 // secure: process.env.NODE_ENV === 'production' => Decides whether the cookie be passed only in HTTPS connection if the "NODE_ENV" is set as 'production' in env.
 // maxAge: 1000 * 60 * 180 => The lifetime of the cookie. Set as 3 hours
-//sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
-//path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
+// sameSite: 'Lax' => Ensures the cookie is not sent accross other sites. Keeps the cookie only accessible from the native website.
+// path: '/' => Specifies the URL path for which the cookie is valid. '/' means it is valid for any URL.
 app.post('/api/auth/super-login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -423,6 +612,33 @@ app.get('/api/user/profile', (req, res) => {
     } catch (error) {
         console.error('Token verification failed for user profile:', error.message);
         return res.status(401).json({ message: 'Unauthorized: Invalid or expired token.' });
+    }
+});
+
+// API for fetching and passing profile of Students
+
+// 1) Gets a bodyless request from "StudentProfilePage.jsx"
+// 2) Checks the "auth_token" from cookies and decodes it.
+// 3) If there is a token and the "isStudent" is true in token, then the student details are decrypted from the token itself and sent back to the profile page
+// 4) If either there is not a token or the user is not a student, the profile won't be passed and corresponding errors will be logged
+app.get('/api/student/profile', requireStudentAuth, (req, res) => {
+    try {
+        // req.user is set by requireStudentAuth middleware
+        const { userName, email, department, year, section, semester, batch } = req.user;
+        res.status(200).json({
+            profile: {
+                userName,
+                email,
+                department,
+                year,
+                section,
+                semester,
+                batch
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching student profile:', error);
+        res.status(500).json({ message: 'Failed to fetch student profile.' });
     }
 });
 
@@ -1397,6 +1613,306 @@ app.put('/api/super-admin/profile', requireSuperAdminAuth, async (req, res) => {
     } catch (error) {
         console.error('Error updating super admin password:', error);
         res.status(500).json({ message: 'Failed to update password.' });
+    }
+});
+
+// Admin API for adding Students
+
+// 1) Gets a request from frontend with student details (name, email, department, year, section, semester, batch).
+// 2) The function "requireAdminAuth" is executed to check if the requested user is "Admin".
+// 3) Checks if there is already a user with same email.
+// 4) Generates a custom password in format "Name@YearBatch" and hashes it.
+// 5) Creates a new student record in the "users" collection with isStudent = true and hashedPassword.
+// 6) If any errors, messages will be logged.
+app.post('/api/admin/students', requireAdminAuth, async (req, res) => {
+    try {
+        const { name, email, department, year, section, semester, batch } = req.body;
+        
+        if (!name || !email || !department || !year || !section || !semester || !batch) {
+            return res.status(400).json({ message: 'All fields (name, email, department, year, section, semester, batch) are required.' });
+        }
+
+        // Check for duplicate email
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+        if (!snapshot.empty) {
+            return res.status(409).json({ message: 'A user with this email already exists.' });
+        }
+
+        // Generate custom password in format "Name@YearBatch"
+        const customPassword = `${name.replace(/\s/g, '')}@${year}${section}`;
+        console.log(customPassword);
+        
+        // Hash the custom password
+        const hashedPassword = await hashPassword(customPassword);
+
+        // Create new student
+        const newStudent = {
+            userName: name,
+            email,
+            department,
+            year: parseInt(year),
+            section,
+            semester: parseInt(semester),
+            batch,
+            hashedPassword: hashedPassword, // Store the hashed password
+            isStudent: true,
+            isAdmin: false,
+            isSuper: false,
+            status: 'active',
+            contestsParticipated: 0,
+            totalScore: 0,
+            joinDate: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        const docRef = await usersRef.add(newStudent);
+        res.status(201).json({ 
+            message: 'Student added successfully!', 
+            id: docRef.id,
+            student: {
+                id: docRef.id,
+                ...newStudent,
+                joinDate: new Date().toISOString()
+            },
+            generatedPassword: customPassword // Return the generated password for admin reference
+        });
+    } catch (error) {
+        console.error('Error adding student:', error);
+        res.status(500).json({ message: 'Failed to add student.', error: error.message });
+    }
+});
+
+// Admin API for fetching Students
+
+// 1) Gets a bodyless request from frontend.
+// 2) The function "requireAdminAuth" is executed to check if the requested user is "Admin".
+// 3) Gets all students from collection "users" using "isStudent:true".
+// 4) Returns student details back to frontend.
+// 5) If any errors, messages will be logged appropriately.
+app.get('/api/admin/students', requireAdminAuth, async (req, res) => {
+    try {
+        const snapshot = await db.collection('users').where('isStudent', '==', true).get();
+        const students = [];
+        snapshot.forEach(doc => {
+            const studentData = doc.data();
+            students.push({
+                id: doc.id,
+                name: studentData.userName,
+                email: studentData.email,
+                department: studentData.department,
+                year: studentData.year,
+                section: studentData.section,
+                semester: studentData.semester,
+                batch: studentData.batch,
+                status: studentData.status || 'active',
+                contestsParticipated: studentData.contestsParticipated || 0,
+                totalScore: studentData.totalScore || 0,
+                joinDate: studentData.joinDate ? studentData.joinDate.toDate().toISOString() : new Date().toISOString(),
+                lastActive: studentData.lastActive || 'Recently',
+                achievements: studentData.achievements || []
+            });
+        });
+        res.status(200).json({ students });
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ message: 'Failed to fetch students.', error: error.message });
+    }
+});
+
+// Admin API for deleting a Student
+
+// 1) Gets a request with student ID from frontend.
+// 2) The function "requireAdminAuth" is executed to check if the requested user is "Admin".
+// 3) Deletes the student document from the "users" collection.
+// 4) Returns success message back to frontend.
+// 5) If any errors, messages will be logged appropriately.
+app.delete('/api/admin/students/:studentId', requireAdminAuth, async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        
+        const studentRef = db.collection('users').doc(studentId);
+        const studentDoc = await studentRef.get();
+        
+        if (!studentDoc.exists) {
+            return res.status(404).json({ message: 'Student not found.' });
+        }
+        
+        const studentData = studentDoc.data();
+        if (!studentData.isStudent) {
+            return res.status(400).json({ message: 'This user is not a student.' });
+        }
+        
+        await studentRef.delete();
+        res.status(200).json({ message: 'Student deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting student:', error);
+        res.status(500).json({ message: 'Failed to delete student.', error: error.message });
+    }
+});
+
+// Admin API for banning a Student
+
+// 1) Gets a request with student ID and ban reason from frontend.
+// 2) The function "requireAdminAuth" is executed to check if the requested user is "Admin".
+// 3) Updates the student status to "banned" and stores the ban reason.
+// 4) Returns success message back to frontend.
+// 5) If any errors, messages will be logged appropriately.
+app.put('/api/admin/students/:studentId/ban', requireAdminAuth, async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { reason } = req.body;
+        
+        if (!reason || reason.trim() === '') {
+            return res.status(400).json({ message: 'Ban reason is required.' });
+        }
+        
+        const studentRef = db.collection('users').doc(studentId);
+        const studentDoc = await studentRef.get();
+        
+        if (!studentDoc.exists) {
+            return res.status(404).json({ message: 'Student not found.' });
+        }
+        
+        const studentData = studentDoc.data();
+        if (!studentData.isStudent) {
+            return res.status(400).json({ message: 'This user is not a student.' });
+        }
+        
+        await studentRef.update({
+            status: 'banned',
+            banReason: reason,
+            bannedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        res.status(200).json({ message: 'Student banned successfully.' });
+    } catch (error) {
+        console.error('Error banning student:', error);
+        res.status(500).json({ message: 'Failed to ban student.', error: error.message });
+    }
+});
+
+// Admin API for bulk importing Students
+
+// 1) Gets a request with Excel file from frontend.
+// 2) The function "requireAdminAuth" is executed to check if the requested user is "Admin".
+// 3) Parses the Excel file and adds multiple students to the "users" collection.
+// 4) Returns success message with count of imported students back to frontend.
+// 5) If any errors, messages will be logged appropriately.
+app.post('/api/admin/students/bulk-import', requireAdminAuth, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded.' });
+        }
+
+        // Parse the Excel file
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(worksheet);
+
+        if (data.length === 0) {
+            return res.status(400).json({ message: 'Excel file is empty or has no data.' });
+        }
+
+        // Validate required columns
+        const requiredColumns = ['Name', 'Email', 'Department', 'Year', 'Section', 'Semester', 'Batch'];
+        const firstRow = data[0];
+        const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+
+        if (missingColumns.length > 0) {
+            return res.status(400).json({ 
+                message: `Missing required columns: ${missingColumns.join(', ')}. Please ensure your Excel file has all required columns.` 
+            });
+        }
+
+        const usersRef = db.collection('users');
+        const importedStudents = [];
+        const errors = [];
+
+        // Process each row
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            const rowNumber = i + 2; // +2 because Excel rows start at 1 and we have header
+
+            try {
+                // Validate required fields
+                if (!row.Name || !row.Email || !row.Department || !row.Year || !row.Section || !row.Semester || !row.Batch) {
+                    errors.push(`Row ${rowNumber}: Missing required fields`);
+                    continue;
+                }
+
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(row.Email)) {
+                    errors.push(`Row ${rowNumber}: Invalid email format`);
+                    continue;
+                }
+
+                // Check if email already exists
+                const existingUser = await usersRef.where('email', '==', row.Email).limit(1).get();
+                if (!existingUser.empty) {
+                    errors.push(`Row ${rowNumber}: Email ${row.Email} already exists`);
+                    continue;
+                }
+
+                // Generate custom password in format "Name@YearBatch"
+                const customPassword = `${row.Name.trim()}@${row.Year.toString().trim()}${row.Batch.trim()}`;
+                
+                // Hash the custom password
+                const hashedPassword = await hashPassword(customPassword);
+
+                // Create student document
+                const studentData = {
+                    userName: row.Name.trim(),
+                    email: row.Email.trim().toLowerCase(),
+                    department: row.Department.trim(),
+                    year: parseInt(row.Year.toString().trim()),
+                    section: row.Section.trim(),
+                    semester: parseInt(row.Semester.toString().trim()),
+                    batch: row.Batch.trim(),
+                    hashedPassword: hashedPassword, // Store the hashed password
+                    isStudent: true,
+                    isAdmin: false,
+                    isSuper: false,
+                    status: 'active',
+                    contestsParticipated: 0,
+                    totalScore: 0,
+                    lastActive: 'Never',
+                    joinDate: admin.firestore.FieldValue.serverTimestamp(),
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                };
+
+                const docRef = await usersRef.add(studentData);
+                importedStudents.push({
+                    id: docRef.id,
+                    ...studentData
+                });
+
+            } catch (error) {
+                errors.push(`Row ${rowNumber}: ${error.message}`);
+            }
+        }
+
+        const response = {
+            message: `Bulk import completed. ${importedStudents.length} students imported successfully.`,
+            importedCount: importedStudents.length,
+            totalRows: data.length,
+            errors: errors
+        };
+
+        if (errors.length > 0) {
+            response.message += ` ${errors.length} rows had errors.`;
+        }
+
+        res.status(200).json(response);
+
+    } catch (error) {
+        console.error('Error bulk importing students:', error);
+        res.status(500).json({ message: 'Failed to import students.', error: error.message });
     }
 });
 

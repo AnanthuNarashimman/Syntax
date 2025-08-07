@@ -15,11 +15,13 @@ export const ContestProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adminName, setAdminName] = useState('');
+  const [adminNameLoading, setAdminNameLoading] = useState(true);
 
   // Fetch current admin's name
   useEffect(() => {
     const fetchAdminName = async () => {
       try {
+        setAdminNameLoading(true);
         const response = await fetch('/api/user/profile', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
@@ -28,9 +30,13 @@ export const ContestProvider = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           setAdminName(data.userName || 'Admin');
+        } else {
+          setAdminName('Admin');
         }
       } catch (err) {
         setAdminName('Admin');
+      } finally {
+        setAdminNameLoading(false);
       }
     };
     fetchAdminName();
@@ -238,7 +244,8 @@ export const ContestProvider = ({ children }) => {
     updateEventData,
     addNewEvent,
     transformEventData,
-    adminName
+    adminName,
+    adminNameLoading
   };
 
   return (

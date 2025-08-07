@@ -3,17 +3,22 @@ import styles from '../Styles/ComponentStyles/Loader.module.css';
 
 const Loader = () => {
   return (
-    <div className={styles.styledWrapper}>
-      <div className={styles.terminalLoader}>
-        <div className={styles.terminalHeader}>
-          <div className={styles.terminalTitle}>Status</div>
-          <div className={styles.terminalControls}>
-            <div className={`${styles.control} ${styles.close}`} />
-            <div className={`${styles.control} ${styles.minimize}`} />
-            <div className={`${styles.control} ${styles.maximize}`} />
-          </div>
+    <div className={styles.loaderContainer}>
+      <div className={styles.loaderWrapper}>
+        <div className={styles.spinner}>
+          <div className={styles.spinnerRing}></div>
+          <div className={styles.spinnerRing}></div>
+          <div className={styles.spinnerRing}></div>
+          <div className={styles.codeElement}>&lt;/&gt;</div>
         </div>
-        <div className={styles.text}>Loading...</div>
+        <div className={styles.loaderText}>
+          <span className={styles.loadingText}>Loading</span>
+          <span className={styles.dots}>
+            <span className={styles.dot}>.</span>
+            <span className={styles.dot}>.</span>
+            <span className={styles.dot}>.</span>
+          </span>
+        </div>
       </div>
     </div>
   );

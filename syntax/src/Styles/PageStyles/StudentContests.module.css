@@ -1,579 +1,568 @@
-/* StudentContests.module.css */
-/* Note: All class names are converted to camelCase for easier use with CSS Modules. */
-
+/* Professional StudentContests Design */
 .studentContests {
-    min-height: 100vh;
-    background-color: #f8f9fa;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-  
-  .contestsContainer {
-    max-width: 1200px;
-    margin: 4rem auto 0 auto;
-    padding: 2rem 1rem;
-  }
-  
-  /* Header Section */
-  .contestsHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding: 2.5rem 2rem;
-    background: #fff;
-    border-radius: 18px;
-    color: #222;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    border: 1px solid #ececec;
-  }
-  
-  .headerContent h1 {
-    font-size: 2.3rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-    color: #222;
-  }
-  
-  .headerContent p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    margin: 0;
-    color: #444;
-  }
-  
-  .headerIllustration {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .contestsImage {
-    max-width: 220px;
-    width: 100%;
-    height: 160px;
-    object-fit: contain;
-    display: block;
-    margin: 0 0 0 32px;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    background: #fff;
-  }
-  
-  .contestIcon {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    backdrop-filter: blur(10px);
-  }
-  
-  /* Search and Filter Section */
-  .searchFilterBar {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: #fff;
-    border-radius: 32px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    padding: 1.2rem 2rem;
-    margin-bottom: 2.5rem;
-  }
-  
-  .searchFilterBar .searchInput,
-  .searchFilterBar .filterSelect {
-    color: #222;
-    background: #fff;
-  }
-  
-  .searchInput {
-    flex: 2;
-    padding: 0.75rem 1.2rem;
-    border: 1.5px solid #e9ecef;
-    border-radius: 24px;
-    font-size: 1rem;
-  }
-  
-  .searchInput::placeholder {
-    color: #444 !important;
-    opacity: 1;
-    font-weight: 500;
-  }
-  
-  .searchInputVisible::placeholder {
-    color: #444 !important;
-    opacity: 1;
-    font-weight: 500;
-  }
-  
-  .searchInput:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-  
-  .filterSelect {
-    flex: 1;
-    min-width: 140px;
-    padding: 0.7rem 1rem;
-    border: 1.5px solid #e9ecef;
-    border-radius: 24px;
-    font-size: 1rem;
-  }
-  
-  .filterSelect:focus {
-    outline: none;
-    border-color: #667eea;
-  }
-  
-  .filterBtn {
-    padding: 0.7rem 2rem;
-    background: #ff6b6b;
-    color: #fff;
-    border: none;
-    border-radius: 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .filterBtn:hover {
-    background: #ff5252;
-  }
-  
-  /* Contest Groups */
-  .contestGroup {
-    margin-bottom: 2.5rem;
-  }
-  
-  .groupTitle {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 1.2rem;
-    margin-left: 0.2rem;
-  }
-  
-  .contestsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 2rem;
-  }
-  
-  /* Contest Card */
-  .contestCard {
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    border: 1px solid #ececec;
-    padding: 2rem 2rem 1.5rem 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .contestCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  }
-  
-  .contestCard.completed {
-    opacity: 0.7;
-  }
-  
-  .contestBadges {
-    display: flex;
-    gap: 0.7rem;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-  
-  .statusBadge, .difficultyBadge {
-    padding: 0.3rem 1.1rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  
-  .contestTitle {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #222;
-    margin-bottom: 0.2rem;
-  }
-  
-  .contestDescription {
-    color: #666;
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .contestDetailsBox {
-    background: #f3f6fa;
-    color: #444;
-    border-radius: 10px;
-    padding: 0.8rem 1rem;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem 1.5rem;
-    font-size: 0.98rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .contestDetailsBox b {
-    color: #222;
-  }
-  
-  .contestParticipantsBar {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-size: 0.95rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .progressBar {
-    flex: 1;
-    height: 7px;
-    background: #e9ecef;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  
-  .progressFill {
-    height: 100%;
-    background: #667eea;
-    border-radius: 4px;
-    transition: width 0.3s;
-  }
-  
-  .contestTags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .tag {
-    padding: 0.25rem 0.9rem;
-    background: #e9ecef;
-    color: #495057;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-  
-  .contestActions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 0.5rem;
-  }
-  
-  .btnOutline {
-    padding: 0.7rem 1.5rem;
-    background: #fff;
-    color: #667eea;
-    border: 2px solid #667eea;
-    border-radius: 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btnOutline:hover {
-    background: #f8f9fa;
-    color: #5a67d8;
-  }
-  
-  .btnPrimary {
-    padding: 0.7rem 1.5rem;
-    background: #667eea;
-    color: #fff;
-    border: none;
-    border-radius: 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .btnPrimary:hover:not(.disabled) {
-    background: #5a67d8;
-  }
-  
-  .btnPrimary.disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-  }
-  
-  /* Loading State */
-  .loadingContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 50vh;
-    gap: 1rem;
-  }
-  
-  .loadingSpinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-.strictBadge {
-  background: #4caab3;
-  color: #111;
-  font-weight: bold;
-  font-size: 1.1rem;
-  border-radius: 16px;
-  padding: 6px 18px;
-  margin-left: auto;
-  box-shadow: 2px 4px 8px #bdbdbd40;
-  display: inline-block;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #2d3748;
 }
 
-.codeFindBar {
+.contestsContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  padding-top: 6rem;
+}
+
+/* Header Section */
+.contestsHeader {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 3rem;
+}
+
+.headerContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.headerText {
+  flex: 1;
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  line-height: 1.2;
+}
+
+.pageSubtitle {
+  font-size: 1.1rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.headerStats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f7fafc;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  min-width: 120px;
+}
+
+.statIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  background: #fff;
-  border-radius: 32px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  padding: 1.2rem 2rem;
-  margin: 2rem auto 2.5rem auto;
-  max-width: 600px;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  flex-shrink: 0;
 }
 
-.codeInput {
-  flex: 2;
-  padding: 0.75rem 1.2rem;
-  border: 1.5px solid #e9ecef;
-  border-radius: 24px;
-  font-size: 1rem;
-  color: #222;
-  background: #fff;
+.statInfo h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+  line-height: 1.2;
 }
 
-.codeInput::placeholder {
-  color: #444 !important;
-  opacity: 1;
-  font-weight: 500;
+.statInfo p {
+  font-size: 0.85rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.2;
 }
 
-.codeInput:focus {
-  outline: none;
-  border-color: #ff6b6b;
+.headerIllustration {
+  flex-shrink: 0;
 }
 
-.codeFindBtn {
-  padding: 0.7rem 2rem;
-  background: #ff6b6b;
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+.contestsImage {
+  width: 200px;
+  height: 200px;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+/* Quick Access Section */
+.quickAccessSection {
+  margin-bottom: 2rem;
 }
 
-.codeFindBtn:hover {
-  background: #ff5252;
-}
-
-.practiceGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
-}
-
-.practiceCard {
-  background-color: white;
-  border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid #f0f0f0;
-}
-
-.practiceCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+.codeSearchCard {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 .cardHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.typeBadge {
-  background: #4caab3;
-  color: #111;
-  font-weight: bold;
-  font-size: 1.3rem;
-  border-radius: 24px;
-  padding: 8px 24px;
-  margin-right: 12px;
-  margin-top: 8px;
-  display: inline-block;
-}
-
-.practiceBadge {
-  background: #ff6b57;
-  color: #fff;
+.cardHeader h3 {
+  font-size: 1.25rem;
   font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.cardHeader svg {
+  color: #ff8a65;
+}
+
+.codeSearchCard p {
+  color: #718096;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.codeSearchInput {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.codeInput {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 1rem;
-  border-radius: 16px;
-  padding: 6px 18px;
-  margin-top: 8px;
-  margin-left: auto;
-  box-shadow: 2px 4px 8px #bdbdbd40;
-  display: inline-block;
-}
-
-.cardBody {
-  background: #d6a5a5;
-  border-radius: 32px;
-  padding: 32px 24px;
-  margin: 18px 0;
-}
-
-.cardInfo {
-}
-
-.cardFooter {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 18px;
-}
-
-.startBtn {
-  background: #a86c6c;
-  color: #222;
-  font-weight: bold;
-  font-size: 1.3rem;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 36px;
-  cursor: pointer;
-  box-shadow: 2px 4px 8px #bdbdbd40;
-  transition: background 0.2s, color 0.2s, transform 0.1s;
-}
-
-.startBtn:hover, .startBtn:focus {
-  background: #8d5555;
-  color: #fff;
-  transform: translateY(-2px) scale(1.04);
-}
-
-.viewBtn {
-  background: #ff6b57;
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.3rem;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 36px;
-  cursor: pointer;
-  box-shadow: 2px 4px 8px #bdbdbd40;
-  transition: background 0.2s, color 0.2s, transform 0.1s;
-}
-
-.viewBtn:hover, .viewBtn:focus {
-  background: #ff3b1f;
-  color: #fff;
-  transform: translateY(-2px) scale(1.04);
-}
-
-.cardFooter button {
   outline: none;
-  border: none;
+  transition: all 0.2s ease;
+  background: #f7fafc;
 }
 
-@media (max-width: 600px) {
-  .cardFooter {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
+.codeInput:focus {
+  border-color: #ff8a65;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.1);
 }
 
-.quickSearch {
+.codeFindBtn {
   display: flex;
-  gap: 10px;
-  max-width: 400px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+}
+
+.codeFindBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 138, 101, 0.4);
+}
+/* Filter Section */
+.filterSection {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.filterHeader {
+  margin-bottom: 1.5rem;
+}
+
+.filterTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.filterTitle h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.filterTitle svg {
+  color: #8b5cf6;
+}
+
+.filterHeader p {
+  color: #718096;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.filterControls {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.searchGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchGroup svg {
+  position: absolute;
+  left: 1rem;
+  color: #718096;
+  z-index: 1;
 }
 
 .searchInput {
-  flex: 1;
-  padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-radius: 25px;
+  width: 100%;
+  padding: 0.875rem 1.25rem 0.875rem 2.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 1rem;
   outline: none;
-  background-color: #fff;
-  color: #222;
+  transition: all 0.2s ease;
+  background: #f7fafc;
 }
 
-.findBtn {
-  padding: 12px 25px;
-  background-color: #ff6b6b;
+.searchInput:focus {
+  border-color: #8b5cf6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.filterSelect {
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  background: #f7fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterSelect:focus {
+  border-color: #8b5cf6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border: none;
-  border-radius: 25px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  white-space: nowrap;
 }
 
-.findBtn:hover {
-  background-color: #ff5252;
+.filterBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+/* Contest Cards Grid */
+.contestsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.showMore {
+.contestCard {
+  background: white;
+  border-radius: 20px;
+  padding: 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.contestCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.contestCardHeader {
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.contestType {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f7fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.contestType svg {
+  color: #8b5cf6;
+}
+
+.typeLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.contestBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.contestCardBody {
+  padding: 1.5rem;
+}
+
+.contestTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+}
+
+.contestDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.detailItem svg {
+  color: #4299e1;
+  flex-shrink: 0;
+}
+
+.contestCardFooter {
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.joinBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+}
+
+.joinBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 138, 101, 0.4);
+}
+
+.detailsBtn {
+  padding: 0.75rem 1rem;
+  background: #f7fafc;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detailsBtn:hover {
+  background: #edf2f7;
+  transform: translateY(-1px);
+}
+/* Load More Section */
+.loadMoreSection {
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: 2rem;
 }
 
-.showMoreBtn {
-  padding: 15px 30px;
-  background-color: transparent;
-  color: #667eea;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  font-weight: 600;
+.loadMoreBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: white;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.showMoreBtn:hover {
-  background-color: #667eea;
-  color: white;
+.loadMoreBtn:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .contestsContainer {
+    padding: 1.5rem;
+    padding-top: 5.5rem;
+  }
+
+  .contestsHeader {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .headerContent {
+    align-items: center;
+  }
+
+  .headerStats {
+    justify-content: center;
+  }
+
+  .filterControls {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .contestsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .contestsContainer {
+    padding: 1rem;
+    padding-top: 5rem;
+  }
+
+  .contestsHeader {
+    padding: 2rem;
+  }
+
+  .pageTitle {
+    font-size: 2rem;
+  }
+
+  .headerStats {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .statCard {
+    justify-content: center;
+  }
+
+  .codeSearchCard,
+  .filterSection {
+    padding: 1.5rem;
+  }
+
+  .codeSearchInput {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .contestsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .contestCardFooter {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contestsContainer {
+    padding: 0.5rem;
+    padding-top: 4.5rem;
+  }
+
+  .contestsHeader {
+    padding: 1.5rem;
+  }
+
+  .pageTitle {
+    font-size: 1.75rem;
+  }
+
+  .codeSearchCard,
+  .filterSection {
+    padding: 1rem;
+  }
+
+  .contestCard {
+    margin: 0;
+  }
+
+  .contestCardHeader,
+  .contestCardBody,
+  .contestCardFooter {
+    padding: 1rem;
+  }
+}
+

@@ -1,14 +1,41 @@
 import React, { useState } from 'react';
-import { User, Menu, X } from 'lucide-react';
+import { User, Menu, X, LogOut } from 'lucide-react';
 import styles from "../Styles/ComponentStyles/StudentNavbar.module.css"; // Updated import
 import { useNavigate, NavLink } from 'react-router-dom';
+import { useAlert } from '../contexts/AlertContext';
 
 const StudentNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useAlert();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        showSuccess('Logged out successfully!');
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      } else {
+        showError('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      showError('Logout failed');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -34,6 +61,16 @@ const StudentNavbar = () => {
               <User size={20} />
             </div>
           </div>
+
+          {/* Logout Button */}
+          <button 
+            className={styles['logout-btn']} 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            title="Logout"
+          >
+            <LogOut size={20} />
+          </button>
 
           {/* Mobile Menu Button */}
           <button className={styles['mobile-menu-btn']} onClick={toggleMenu}>

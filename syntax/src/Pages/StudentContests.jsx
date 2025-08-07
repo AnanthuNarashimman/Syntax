@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Search, Filter, Trophy, Clock, Users, Code, BookOpen, Target, Calendar, Award } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
-import styles from '../Styles/PageStyles/StudentContests.module.css'; // Import as a 'styles' object
+import styles from '../Styles/PageStyles/StudentContests.module.css';
 import contestsImg from '../assets/Images/contests.jpg';
 
 const StudentContests = () => {
@@ -172,89 +173,174 @@ const StudentContests = () => {
         {/* Header Section */}
         <div className={styles.contestsHeader}>
           <div className={styles.headerContent}>
-            <h1>Contests</h1>
-            <p>Join coding contests and quizzes to test your skills</p>
+            <div className={styles.headerText}>
+              <h1 className={styles.pageTitle}>Contests & Competitions</h1>
+              <p className={styles.pageSubtitle}>
+                Challenge yourself with coding contests and quizzes designed to enhance your skills
+              </p>
+            </div>
+            <div className={styles.headerStats}>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <Trophy size={24} />
+                </div>
+                <div className={styles.statInfo}>
+                  <h3>24</h3>
+                  <p>Active Contests</p>
+                </div>
+              </div>
+              <div className={styles.statCard}>
+                <div className={styles.statIcon}>
+                  <Users size={24} />
+                </div>
+                <div className={styles.statInfo}>
+                  <h3>1.2k</h3>
+                  <p>Participants</p>
+                </div>
+              </div>
+            </div>
           </div>
           <div className={styles.headerIllustration}>
             <img src={contestsImg} alt="Contests" className={styles.contestsImage} />
           </div>
         </div>
 
-        {/* Code Find Bar */}
-        <div className={styles.codeFindBar}>
-          <input
-            type="text"
-            placeholder="Enter contest code..."
-            value={codeSearch}
-            onChange={(e) => setCodeSearch(e.target.value)}
-            className={styles.codeInput}
-          />
-          <button className={styles.codeFindBtn} onClick={handleFindCode}>
-            Find Contest
-          </button>
+        {/* Quick Access Section */}
+        <div className={styles.quickAccessSection}>
+          <div className={styles.codeSearchCard}>
+            <div className={styles.cardHeader}>
+              <Target size={20} />
+              <h3>Quick Access</h3>
+            </div>
+            <p>Have a contest code? Enter it below for instant access</p>
+            <div className={styles.codeSearchInput}>
+              <input
+                type="text"
+                placeholder="Enter contest code (e.g., CC2024001)"
+                value={codeSearch}
+                onChange={(e) => setCodeSearch(e.target.value)}
+                className={styles.codeInput}
+              />
+              <button className={styles.codeFindBtn} onClick={handleFindCode}>
+                <Search size={18} />
+                Find Contest
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filter Section */}
-        <div className={styles.searchFilterBar}>
-          <input
-            type="text"
-            placeholder="Search contests..."
-            value={filterSearch}
-            onChange={(e) => setFilterSearch(e.target.value)}
-            className={styles.searchInput}
-          />
-          <select
-            value={filterLanguage}
-            onChange={(e) => setFilterLanguage(e.target.value)}
-            className={styles.filterSelect}
-          >
-            {languageOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className={styles.filterSelect}
-          >
-            {typeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-          <select
-            value={filterDepartment}
-            onChange={(e) => setFilterDepartment(e.target.value)}
-            className={styles.filterSelect}
-          >
-            {departmentOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-          <button className={styles.filterBtn} onClick={handleFilter}>Filter</button>
+        <div className={styles.filterSection}>
+          <div className={styles.filterHeader}>
+            <div className={styles.filterTitle}>
+              <Filter size={20} />
+              <h3>Explore Contests</h3>
+            </div>
+            <p>Discover contests that match your interests and skill level</p>
+          </div>
+          <div className={styles.filterControls}>
+            <div className={styles.searchGroup}>
+              <Search size={18} />
+              <input
+                type="text"
+                placeholder="Search by title or description..."
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className={styles.filterSelect}
+            >
+              {typeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+            <select
+              value={filterLanguage}
+              onChange={(e) => setFilterLanguage(e.target.value)}
+              className={styles.filterSelect}
+            >
+              {languageOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              className={styles.filterSelect}
+            >
+              {departmentOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+            <button className={styles.filterBtn} onClick={handleFilter}>
+              <Filter size={16} />
+              Apply Filters
+            </button>
+          </div>
         </div>
 
-        {/* Mock Contest Cards Section (Practice Card Style) */}
-        <div className={styles.practiceGrid}>
+        {/* Contest Cards Grid */}
+        <div className={styles.contestsGrid}>
           {contestCardsToShow.map(contest => (
-            <div key={contest.id} className={styles.practiceCard}>
-              <div className={styles.cardHeader}>
-                <span className={styles.typeBadge}>{contest.type}</span>
-                <span className={styles.practiceBadge}>Contest</span>
-              </div>
-              <div className={styles.cardBody}>
-                <div className={styles.cardInfo}>
-                  <div><b>Title :</b> {contest.title}</div>
-                  <div><b>Duration :</b> {contest.duration}</div>
-                  <div><b>Department :</b> {contest.department}</div>
+            <div key={contest.id} className={styles.contestCard}>
+              <div className={styles.contestCardHeader}>
+                <div className={styles.contestType}>
+                  {contest.type === 'Coding Contest' ? <Code size={16} /> : <BookOpen size={16} />}
+                  <span className={styles.typeLabel}>{contest.type}</span>
+                </div>
+                <div className={styles.contestBadge}>
+                  <Award size={14} />
+                  <span>Contest</span>
                 </div>
               </div>
-              <div className={styles.cardFooter}>
-                <button className={styles.viewBtn} onClick={() => handleViewContest(contest)}>View</button>
+
+              <div className={styles.contestCardBody}>
+                <h3 className={styles.contestTitle}>{contest.title}</h3>
+                <div className={styles.contestDetails}>
+                  <div className={styles.detailItem}>
+                    <Clock size={16} />
+                    <span>Duration: {contest.duration}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <Users size={16} />
+                    <span>Department: {contest.department}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <Calendar size={16} />
+                    <span>Status: Active</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.contestCardFooter}>
+                <button
+                  className={styles.joinBtn}
+                  onClick={() => handleViewContest(contest)}
+                >
+                  <Trophy size={16} />
+                  Join Contest
+                </button>
+                <button
+                  className={styles.detailsBtn}
+                  onClick={() => handleViewDetails(contest.id)}
+                >
+                  View Details
+                </button>
               </div>
             </div>
           ))}
         </div>
 
-        <div className={styles.showMore}>
+        {/* Show More/Less Section */}
+        <div className={styles.loadMoreSection}>
           {(!showAllContests && mockContestCards.length > 9) && (
-            <button className={styles.showMoreBtn} onClick={() => setShowAllContests(true)}>Show More...</button>
+            <button className={styles.loadMoreBtn} onClick={() => setShowAllContests(true)}>
+              <Target size={16} />
+              Show More Contests
+            </button>
           )}
           {(showAllContests && mockContestCards.length > 9) && (
-            <button className={styles.showMoreBtn} onClick={() => setShowAllContests(false)}>Show Less...</button>
+            <button className={styles.loadMoreBtn} onClick={() => setShowAllContests(false)}>
+              Show Less
+            </button>
           )}
         </div>
 

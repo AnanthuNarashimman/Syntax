@@ -49,7 +49,11 @@ function SuperAdminNavbar() {
   return (
     <nav className="SuperAdminNavbar">
       <div className="NavbarHeader">
-        <div className="NavbarLogo">&lt; SYNTAX /&gt;</div>
+        <div className="NavbarLogo">
+          <span className="LogoBracket">&lt;</span>
+          <span className="LogoText">SYNTAX</span>
+          <span className="LogoBracket">/&gt;</span>
+        </div>
         <p className="NavbarLogoSubtitle">System Administration</p>
       </div>
 
