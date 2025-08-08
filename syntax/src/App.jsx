@@ -19,6 +19,7 @@ import StudentHome from "./Pages/StudentHome.jsx";
 import StudentLeader from "./Pages/StudentLeader.jsx";  
 import StudentPractice from"./Pages/StudentPractice.jsx";
 import StudentUser from "./Pages/StudentUser.jsx";
+import ContestsPreview from "./Pages/ContestsPreview.jsx";
 
 
 
@@ -47,6 +48,7 @@ function App() {
             <Route path="/create-quiz-questions" element={<CreateQuizQuestions />} />
             <Route path="/create-contest-questions" element={<CreateContestQuestions />} />
             <Route path="/student-contests" element={<StudentContests />} />
+            <Route path="/student-contests-preview" element={<ContestsPreview />} />
             <Route path="/student-home" element={<StudentHome />} />
             <Route path="/student-leader" element={<StudentLeader />} />
             <Route path="/student-practice" element={<StudentPractice />} />

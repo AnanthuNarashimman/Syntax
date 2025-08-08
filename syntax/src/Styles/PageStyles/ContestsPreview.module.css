@@ -1,0 +1,232 @@
+/* NOTE: Do NOT add styles here that target .student-navbar, .navbar-container, or any StudentNavbar classes. Navbar styles are managed in StudentNavbar.module.css for consistency. */
+
+.studentContests {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #2d3748;
+  /* Ensure navbar is above all content */
+  position: relative;
+  z-index: 1;
+}
+
+.contestsContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  padding-top: 6rem;
+  /* Ensure content doesn't overlap with fixed navbar */
+  position: relative;
+  z-index: 1;
+}
+
+.errorMessage {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.errorMessage h2 {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.errorMessage p {
+  color: #718096;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.errorMessage button {
+  background: #3182ce;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.errorMessage button:hover {
+  background: #2c5aa0;
+  transform: translateY(-2px);
+}
+
+.contest-card {
+  display: flex;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 1200px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.contest-details {
+  padding: 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.contest-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.contest-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+}
+
+.difficulty {
+  font-weight: 600;
+  color: #4caf50;
+  padding: 2px 10px;
+  background-color: #e8f5e9;
+  border-radius: 16px;
+}
+
+.contest-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+  margin-bottom: 24px;
+}
+
+.contest-tags {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.tag {
+  background-color: #e0e0e0;
+  color: #555;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.tag:hover {
+  background-color: #d1d1d1;
+}
+
+.contest-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.action-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  color: white;
+}
+
+.start-btn:hover {
+  background-color: #1e88e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #555;
+  border: 1px solid #ddd;
+}
+
+.cancel-btn:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.contest-image-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: #fafafa;
+}
+
+.contest-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+}
+
+.contest-image img {
+  width: 100%;
+  height: auto;
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .contest-card {
+    flex-direction: column;
+  }
+  
+  .contest-image-container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contest-details {
+    padding: 24px;
+  }
+  
+  .contest-title {
+    font-size: 2rem;
+  }
+  
+  .contest-meta {
+    gap: 10px;
+  }
+  
+  .action-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contest-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .action-btn {
+    width: 100%;
+  }
+}

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Trophy, Clock, Users, Code, BookOpen, Target, Calendar, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
 import styles from '../Styles/PageStyles/StudentContests.module.css';
 import contestsImg from '../assets/Images/contests.jpg';
 
 const StudentContests = () => {
+  const navigate = useNavigate();
   const [contests, setContests] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLanguage, setFilterLanguage] = useState('All Language');
@@ -143,7 +145,7 @@ const StudentContests = () => {
   };
 
   const handleViewContest = (contest) => {
-    alert(`View clicked for ${contest.type}: ${contest.title}`);
+    navigate('/student-contests-preview');
   };
 
   const handleViewDetails = (contestId) => {
