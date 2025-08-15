@@ -1,89 +1,153 @@
-import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts';
-import { User, Mail, Calendar, MapPin, Award, Trophy, Target, TrendingUp, Edit3, Settings, BookOpen, Code, Star, Activity } from 'lucide-react';
-import styles from '../Styles/PageStyles/StudentUser.module.css';
-import StudentNavbar from '../Components/StudentNavbar';
-import Loader from '../Components/Loader';
+import React, { useState, useEffect } from "react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+} from "recharts";
+import {
+  User,
+  Mail,
+  Calendar,
+  MapPin,
+  Award,
+  Trophy,
+  Target,
+  TrendingUp,
+  Edit3,
+  Settings,
+  BookOpen,
+  Code,
+  Star,
+  Activity,
+} from "lucide-react";
+import styles from "../Styles/PageStyles/StudentUser.module.css";
+import StudentNavbar from "../Components/StudentNavbar";
+import Loader from "../Components/Loader";
 import { useAlert } from "../contexts/AlertContext";
+import SkillEditModal from "../Components/SkillEditModal";
+import SettingsModal from "../Components/SettingsModal";
 
-const getInitial = (name) => name && name.length > 0 ? name[0].toUpperCase() : '?';
+const getInitial = (name) =>
+  name && name.length > 0 ? name[0].toUpperCase() : "?";
 
 const StudentUser = () => {
   const { showError } = useAlert();
   const [loading, setLoading] = useState(true);
   const [studentData, setStudentData] = useState({
-    userName: 'User',
-    email: '',
-    department: '',
-    year: '',
-    section: '',
-    semester: '',
-    batch: '',
+    userName: "User",
+    email: "",
+    department: "",
+    year: "",
+    section: "",
+    semester: "",
+    batch: "",
     contestsParticipated: 0,
     totalScore: 0,
-    joinDate: '',
-    lastActive: 'Recently'
+    joinDate: "",
+    lastActive: "Recently",
   });
 
   // Sample data for charts and components
   const performanceData = [
-    { date: 'Jan 15', practice: 25, contests: 15, avgScore: 78 },
-    { date: 'Jan 20', practice: 35, contests: 22, avgScore: 82 },
-    { date: 'Jan 25', practice: 28, contests: 18, avgScore: 75 },
-    { date: 'Feb 01', practice: 42, contests: 28, avgScore: 85 },
-    { date: 'Feb 05', practice: 38, contests: 25, avgScore: 88 },
-    { date: 'Feb 10', practice: 45, contests: 32, avgScore: 90 },
-    { date: 'Feb 15', practice: 52, contests: 38, avgScore: 92 }
+    { date: "Jan 15", practice: 25, contests: 15, avgScore: 78 },
+    { date: "Jan 20", practice: 35, contests: 22, avgScore: 82 },
+    { date: "Jan 25", practice: 28, contests: 18, avgScore: 75 },
+    { date: "Feb 01", practice: 42, contests: 28, avgScore: 85 },
+    { date: "Feb 05", practice: 38, contests: 25, avgScore: 88 },
+    { date: "Feb 10", practice: 45, contests: 32, avgScore: 90 },
+    { date: "Feb 15", practice: 52, contests: 38, avgScore: 92 },
   ];
 
-  const skillsData = [
-    { skill: 'Arrays', level: 85 },
-    { skill: 'Trees', level: 72 },
-    { skill: 'Graphs', level: 68 },
-    { skill: 'Dynamic Programming', level: 45 },
-    { skill: 'Algorithms', level: 78 }
-  ];
+  // const skillsData = [
+  //   { skill: "Arrays", level: 85 },
+  //   { skill: "Trees", level: 72 },
+  //   { skill: "Graphs", level: 68 },
+  //   { skill: "Dynamic Programming", level: 45 },
+  //   { skill: "Algorithms", level: 78 },
+  // ];
 
   const recentActivity = [
-    { type: 'contest', title: 'Weekly Coding Challenge', score: 95, date: '2 days ago' },
-    { type: 'practice', title: 'Array Problems Set', score: 88, date: '3 days ago' },
-    { type: 'quiz', title: 'Data Structures Quiz', score: 92, date: '5 days ago' },
-    { type: 'contest', title: 'Monthly Contest', score: 76, date: '1 week ago' }
+    {
+      type: "contest",
+      title: "Weekly Coding Challenge",
+      score: 95,
+      date: "2 days ago",
+    },
+    {
+      type: "practice",
+      title: "Array Problems Set",
+      score: 88,
+      date: "3 days ago",
+    },
+    {
+      type: "quiz",
+      title: "Data Structures Quiz",
+      score: 92,
+      date: "5 days ago",
+    },
+    {
+      type: "contest",
+      title: "Monthly Contest",
+      score: 76,
+      date: "1 week ago",
+    },
   ];
 
   const achievements = [
-    { icon: '🏆', title: 'Top 10 Performer', description: 'Ranked in top 10 this month' },
-    { icon: '🎯', title: 'Problem Solver', description: 'Solved 100+ problems' },
-    { icon: '⚡', title: 'Speed Demon', description: 'Fastest submission in contest' },
-    { icon: '🔥', title: 'Streak Master', description: '30-day practice streak' }
+    {
+      icon: "🏆",
+      title: "Top 10 Performer",
+      description: "Ranked in top 10 this month",
+    },
+    {
+      icon: "🎯",
+      title: "Problem Solver",
+      description: "Solved 100+ problems",
+    },
+    {
+      icon: "⚡",
+      title: "Speed Demon",
+      description: "Fastest submission in contest",
+    },
+    {
+      icon: "🔥",
+      title: "Streak Master",
+      description: "30-day practice streak",
+    },
   ];
+
+  const [languages, setLanguages] = useState([]);
+  const [skillsData, setSkillsData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchStudentProfile = async () => {
       try {
-        const response = await fetch('/api/student/profile', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
+        const res = await fetch("/api/student/profile", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch student profile');
-        }
+        if (!res.ok) throw new Error("Failed to fetch student profile");
 
-        const data = await response.json();
-        setStudentData({
-          ...data.profile,
-          contestsParticipated: data.profile.contestsParticipated || 0,
-          totalScore: data.profile.totalScore || 0,
-          joinDate: data.profile.joinDate || new Date().toISOString(),
-          lastActive: data.profile.lastActive || 'Recently'
-        });
+        const data = await res.json();
+
+        setStudentData(data.profile);
+        setLanguages(data.profile.languages || []);
+        setSkillsData(data.profile.skills || []);
       } catch (error) {
-        console.error('Error fetching student profile:', error);
-        showError('Failed to load student profile');
+        console.error(error);
+        showError("Failed to load student profile");
       } finally {
         setLoading(false);
       }
@@ -91,6 +155,28 @@ const StudentUser = () => {
 
     fetchStudentProfile();
   }, [showError]);
+
+  const handleSaveSkills = async ({ languages, skills }) => {
+    try {
+      const res = await fetch("/api/student/profile/skills", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ languages, skills }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save skills");
+
+      const data = await res.json();
+
+      setLanguages(data.profile.languages || []);
+      setSkillsData(data.profile.skills || []);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      showError("Failed to save skills");
+    }
+  };
 
   if (loading) {
     return (
@@ -127,7 +213,9 @@ const StudentUser = () => {
               <div className={styles.detailItem}>
                 <MapPin size={16} />
                 <span className={styles.detailLabel}>Department:</span>
-                <span className={styles.detailValue}>{studentData.department}</span>
+                <span className={styles.detailValue}>
+                  {studentData.department}
+                </span>
               </div>
               <div className={styles.detailItem}>
                 <Calendar size={16} />
@@ -137,7 +225,9 @@ const StudentUser = () => {
               <div className={styles.detailItem}>
                 <User size={16} />
                 <span className={styles.detailLabel}>Section:</span>
-                <span className={styles.detailValue}>{studentData.section}</span>
+                <span className={styles.detailValue}>
+                  {studentData.section}
+                </span>
               </div>
               <div className={styles.detailItem}>
                 <BookOpen size={16} />
@@ -149,9 +239,17 @@ const StudentUser = () => {
             <div className={styles.detailSection}>
               <h3 className={styles.sectionTitle}>Programming Languages</h3>
               <div className={styles.languageTags}>
-                <span className={styles.languageTag}>C++</span>
-                <span className={styles.languageTag}>Python</span>
-                <span className={styles.languageTag}>Java</span>
+                {languages.length > 0 ? (
+                  languages.map((lang, index) => (
+                    <span key={index} className={styles.languageTag}>
+                      {lang}
+                    </span>
+                  ))
+                ) : (
+                  <span className={styles.noLanguages}>
+                    No languages added yet
+                  </span>
+                )}
               </div>
             </div>
 
@@ -174,9 +272,28 @@ const StudentUser = () => {
                 ))}
               </div>
             </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className={styles.editSkillsButton}
+            >
+              <Edit3 size={16} />
+              Edit Skills & Languages
+            </button>
+
+            {isModalOpen && (
+              <SkillEditModal
+                initialLanguages={languages}
+                initialSkills={skillsData}
+                onSave={handleSaveSkills}
+                onClose={() => setIsModalOpen(false)}
+              />
+            )}
 
             <div className={styles.profileActions}>
-              <button className={styles.editButton}>
+              <button
+                className={styles.editButton}
+                onClick={() => setIsSettingsModalOpen(true)}
+              >
                 <Edit3 size={16} />
                 Edit Profile
               </button>
@@ -204,7 +321,9 @@ const StudentUser = () => {
                   <Trophy size={24} />
                 </div>
                 <div className={styles.statInfo}>
-                  <h3 className={styles.statNumber}>{studentData.contestsParticipated}</h3>
+                  <h3 className={styles.statNumber}>
+                    {studentData.contestsParticipated}
+                  </h3>
                   <p className={styles.statLabel}>Contests</p>
                 </div>
               </div>
@@ -213,7 +332,9 @@ const StudentUser = () => {
                   <Target size={24} />
                 </div>
                 <div className={styles.statInfo}>
-                  <h3 className={styles.statNumber}>{studentData.totalScore}</h3>
+                  <h3 className={styles.statNumber}>
+                    {studentData.totalScore}
+                  </h3>
                   <p className={styles.statLabel}>Total Score</p>
                 </div>
               </div>
@@ -236,15 +357,24 @@ const StudentUser = () => {
                 <h2 className={styles.chartTitle}>Performance Analytics</h2>
                 <div className={styles.chartLegend}>
                   <div className={styles.legendItem}>
-                    <div className={styles.legendColor} style={{ backgroundColor: '#8b5cf6' }}></div>
+                    <div
+                      className={styles.legendColor}
+                      style={{ backgroundColor: "#8b5cf6" }}
+                    ></div>
                     <span>Practice Sessions</span>
                   </div>
                   <div className={styles.legendItem}>
-                    <div className={styles.legendColor} style={{ backgroundColor: '#7c3aed' }}></div>
+                    <div
+                      className={styles.legendColor}
+                      style={{ backgroundColor: "#7c3aed" }}
+                    ></div>
                     <span>Contest Participation</span>
                   </div>
                   <div className={styles.legendItem}>
-                    <div className={styles.legendColor} style={{ backgroundColor: '#4299e1' }}></div>
+                    <div
+                      className={styles.legendColor}
+                      style={{ backgroundColor: "#4299e1" }}
+                    ></div>
                     <span>Average Score</span>
                   </div>
                 </div>
@@ -257,15 +387,35 @@ const StudentUser = () => {
                     <YAxis stroke="#718096" fontSize={12} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'white',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+                        backgroundColor: "white",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
                       }}
                     />
-                    <Area type="monotone" dataKey="practice" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.7} />
-                    <Area type="monotone" dataKey="contests" stackId="2" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.7} />
-                    <Line type="monotone" dataKey="avgScore" stroke="#4299e1" strokeWidth={3} dot={{ fill: '#4299e1', strokeWidth: 2, r: 5 }} />
+                    <Area
+                      type="monotone"
+                      dataKey="practice"
+                      stackId="1"
+                      stroke="#8b5cf6"
+                      fill="#8b5cf6"
+                      fillOpacity={0.7}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="contests"
+                      stackId="2"
+                      stroke="#7c3aed"
+                      fill="#7c3aed"
+                      fillOpacity={0.7}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="avgScore"
+                      stroke="#4299e1"
+                      strokeWidth={3}
+                      dot={{ fill: "#4299e1", strokeWidth: 2, r: 5 }}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -283,16 +433,18 @@ const StudentUser = () => {
                 {recentActivity.map((activity, index) => (
                   <div key={index} className={styles.activityItem}>
                     <div className={styles.activityIcon}>
-                      {activity.type === 'contest' && <Trophy size={16} />}
-                      {activity.type === 'practice' && <Code size={16} />}
-                      {activity.type === 'quiz' && <BookOpen size={16} />}
+                      {activity.type === "contest" && <Trophy size={16} />}
+                      {activity.type === "practice" && <Code size={16} />}
+                      {activity.type === "quiz" && <BookOpen size={16} />}
                     </div>
                     <div className={styles.activityContent}>
                       <h4 className={styles.activityTitle}>{activity.title}</h4>
                       <p className={styles.activityDate}>{activity.date}</p>
                     </div>
                     <div className={styles.activityScore}>
-                      <span className={styles.scoreValue}>{activity.score}%</span>
+                      <span className={styles.scoreValue}>
+                        {activity.score}%
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -311,8 +463,12 @@ const StudentUser = () => {
                       {achievement.icon}
                     </div>
                     <div className={styles.achievementContent}>
-                      <h4 className={styles.achievementTitle}>{achievement.title}</h4>
-                      <p className={styles.achievementDescription}>{achievement.description}</p>
+                      <h4 className={styles.achievementTitle}>
+                        {achievement.title}
+                      </h4>
+                      <p className={styles.achievementDescription}>
+                        {achievement.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -345,7 +501,14 @@ const StudentUser = () => {
                 <div className={styles.progressVisualization}>
                   <div className={styles.circularProgress}>
                     <svg width="120" height="120" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="45" fill="none" stroke="#e2e8f0" strokeWidth="10"/>
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="45"
+                        fill="none"
+                        stroke="#e2e8f0"
+                        strokeWidth="10"
+                      />
                       <circle
                         cx="60"
                         cy="60"
@@ -358,12 +521,25 @@ const StudentUser = () => {
                         transform="rotate(-90 60 60)"
                         className={styles.progressCircle}
                       />
-                      <text x="60" y="65" textAnchor="middle" fontSize="18" fontWeight="600" fill="#2d3748">75%</text>
+                      <text
+                        x="60"
+                        y="65"
+                        textAnchor="middle"
+                        fontSize="18"
+                        fontWeight="600"
+                        fill="#2d3748"
+                      >
+                        75%
+                      </text>
                     </svg>
                   </div>
                   <div className={styles.progressLabels}>
-                    <span className={styles.progressLabel}>Overall Progress</span>
-                    <span className={styles.progressDescription}>Keep up the great work!</span>
+                    <span className={styles.progressLabel}>
+                      Overall Progress
+                    </span>
+                    <span className={styles.progressDescription}>
+                      Keep up the great work!
+                    </span>
                   </div>
                 </div>
               </div>
@@ -371,6 +547,14 @@ const StudentUser = () => {
           </div>
         </main>
       </div>
+
+      {/* Settings Modal */}
+      {isSettingsModalOpen && (
+        <SettingsModal
+          onClose={() => setIsSettingsModalOpen(false)}
+          currentUsername={studentData.userName}
+        />
+      )}
     </div>
   );
 };
