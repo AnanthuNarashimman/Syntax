@@ -1001,13 +1001,13 @@ app.post("/api/update/pass-update", async (req, res) => {
     const { newPassword } = req.body;
 
     if (!newPassword) {
-      return res.status(400).json({ messgae: "New Password is required." });
+      return res.status(400).json({ message: "New Password is required." });
     }
 
     const token = req.cookies.auth_token;
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized: PLease log in." });
+      return res.status(401).json({ message: "Unauthorized: Please log in." });
     }
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -1380,21 +1380,22 @@ async function handleCodingContestCreation(req, res, data) {
 // 4) If the event is of type "quiz" then function "handleQuizCreation (line : 574)" will be executed.
 // 5) If the event is of type "contest" then function "handleCodingContestCreation (line : 677)" will be executed.
 // 6) If any error occurs, corresponding errors will be logged.
-app.post("/api/admin/create-contest", requireAdminAuth, async (req, res) => {
-  try {
-    const {
-      contestTitle,
-      contestDescription,
-      duration,
-      numberOfQuestions,
-      pointsPerProgram,
-      questions,
-      selectedLanguage,
-      contestType,
-      contestMode,
-      topicsCovered,
-      allowedDepartments,
-    } = req.body;
+app.post('/api/admin/create-contest', requireAdminAuth, async (req, res) => {
+    try {
+
+        const {
+            contestTitle,
+            contestDescription,
+            duration,
+            numberOfQuestions,
+            pointsPerProgram,
+            questions,
+            selectedLanguage,
+            contestType,
+            contestMode,
+            topicsCovered,
+            allowedDepartments
+        } = req.body;
 
     if (
       !contestTitle ||
@@ -2054,12 +2055,12 @@ app.post("/api/admin/students", requireAdminAuth, async (req, res) => {
     const usersRef = db.collection("users");
     const snapshot = await usersRef.where("email", "==", email).limit(1).get();
     if (!snapshot.empty) {
-      return res
-        .status(409)
-        .json({ message: "A user with this email already exists." });
+      return res.status(409).json({
+        message: "A user with this email already exists.",
+      });
     }
 
-    // Generate custom password in format "Name@YearBatch"
+    // Generate custom password in format "Name@YearSection"
     const customPassword = `${name.replace(/\s/g, "")}@${year}${section}`;
     console.log(customPassword);
 
@@ -2379,13 +2380,104 @@ app.post(
 
       res.status(200).json(response);
     } catch (error) {
-      console.error("Error bulk importing students:", error);
-      res
-        .status(500)
-        .json({ message: "Failed to import students.", error: error.message });
+      console.error("Error during bulk import:", error);
+      res.status(500).json({
+        message: "Failed to import students.",
+        error: error.message,
+      });
     }
   }
 );
+
+
+
+
+
+app.get('/api/student/events', requireStudentAuth, async (req, res) => {
+    try {
+        const eventsSnapShot = await db.collection('events')
+            .where('allowedDepartments', 'in', [req.user.department, 'Any department'])
+            .where('status', '==', 'active')
+            .get();
+
+        const events = [] // Added 'const' declaration
+
+        eventsSnapShot.forEach(doc => {
+            const eventData = doc.data()
+
+            // Process questions if they exist
+            if (eventData.questions && Array.isArray(eventData.questions)) {
+                eventData.questions = eventData.questions.map(question => {
+                    const { correctAnswer, ...questionWithoutAnswer } = question; // Fixed destructuring
+                    return questionWithoutAnswer; // Return the object without correctAnswer
+                });
+            }
+
+            
+            console.log("EventData:", eventData);
+            events.push({
+                id: doc.id,
+                ...eventData
+            });
+        })
+
+        events.sort((a, b) => {
+            const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt?._seconds * 1000) || new Date(0);
+            const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt?._seconds * 1000) || new Date(0);
+            return bTime - aTime;
+        })
+
+        res.status(200).json({
+            message: 'Events retrieved successfully!',
+            events
+        });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({
+            message: 'Failed to fetch events. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+
+app.get('/api/student/articles', requireStudentAuth, async (req, res) => {
+    try {
+        const articlesSnapshot = await db.collection('articles')
+            .where('allowedDepartments', 'in', [req.user.department, 'Any department'])
+            .get();
+
+        const articles = []
+
+        articlesSnapshot.forEach(doc => {
+            articles.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        }); // ✅ Close the forEach loop here
+
+        // ✅ Sort and respond OUTSIDE the loop
+        articles.sort((a, b) => {
+            const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt?._seconds * 1000) || new Date(0);
+            const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt?._seconds * 1000) || new Date(0);
+            return bTime - aTime;
+        });
+
+        res.status(200).json({
+            message: 'Articles retrieved successfully!',
+            articles
+        });
+
+    } catch (error) {
+        console.error('Error fetching articles:', error);
+        res.status(500).json({
+            message: 'Failed to fetch articles. Please try again.',
+            error: error.message
+        });
+    }
+});
+
+
 
 // Starting up Express Server
 const PORT = process.env.PORT || 5000;

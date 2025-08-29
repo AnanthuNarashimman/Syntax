@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Award, TrendingUp, Users, Calendar, Clock, Target, Zap, BookOpen, Trophy } from 'lucide-react';
 import StudentNavbar from "../Components/StudentNavbar";
 import Loader from '../Components/Loader';
+import { useContestContext } from '../contexts/ContestContext';
 import styles from "../Styles/PageStyles/StudentHome.module.css";
 import welcomeImg from '../assets/Images/welcome.jpg';
 import findImg from '../assets/Images/find.jpg';
@@ -11,6 +12,17 @@ const getInitial = (name) => name && name.length > 0 ? name[0].toUpperCase() : '
 
 const StudentHome = () => {
   const { showError } = useAlert();
+
+  // Get data from context
+  const {
+    studentContests,
+    studentContestsLoading,
+    getRecentStudentContests,
+    formatStudentDate,
+    getStudentContestStatus,
+    fetchStudentContests
+  } = useContestContext();
+
   const [contestCode, setContestCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [studentData, setStudentData] = useState({
@@ -26,29 +38,31 @@ const StudentHome = () => {
     skills: []
   });
 
-  const upcomingContests = [
-    { 
-      id: 1, 
-      title: "Weekly Coding Challenge", 
-      date: "Sunday 16:30", 
+  // Get recent contests from context (fallback to mock data)
+  const recentContests = getRecentStudentContests();
+  const upcomingContests = recentContests.length > 0 ? recentContests : [
+    {
+      id: 1,
+      title: "Weekly Coding Challenge",
+      date: "Sunday 16:30",
       participants: 150,
       type: "contest",
       difficulty: "Medium",
       duration: "2 hours"
     },
-    { 
-      id: 2, 
-      title: "Daily Practice Session", 
-      date: "Mon-Fri 17:00", 
+    {
+      id: 2,
+      title: "Daily Practice Session",
+      date: "Mon-Fri 17:00",
       participants: 200,
       type: "practice",
       difficulty: "Easy",
       duration: "1 hour"
     },
-    { 
-      id: 3, 
-      title: "Aptitude Assessment", 
-      date: "Saturday 14:30", 
+    {
+      id: 3,
+      title: "Aptitude Assessment",
+      date: "Saturday 14:30",
       participants: 180,
       type: "quiz",
       difficulty: "Hard",
@@ -87,6 +101,10 @@ const StudentHome = () => {
 
     fetchStudentProfile();
   }, [showError]);
+
+  useEffect(() => {
+    fetchStudentContests()
+  })
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {
@@ -248,34 +266,54 @@ const StudentHome = () => {
                 <button className={styles.viewAllButton}>View All</button>
               </div>
               <div className={styles.contestsGrid}>
-                {upcomingContests.map(contest => (
-                  <div key={contest.id} className={styles.contestItem}>
-                    <div className={styles.contestHeader}>
-                      <div className={styles.contestType}>
-                        <span className={`${styles.typeBadge} ${styles[contest.type]}`}>
-                          {contest.type}
-                        </span>
-                        <span className={styles.difficulty}>{contest.difficulty}</span>
+                {upcomingContests.map(contest => {
+                  const isApiData = contest.eventTitle; // Check if it's API data
+                  const statusInfo = isApiData ? getStudentContestStatus(contest.status || 'active') : null;
+
+                  return (
+                    <div key={contest.id} className={styles.contestItem}>
+                      <div className={styles.contestHeader}>
+                        <div className={styles.contestType}>
+                          <span className={`${styles.typeBadge} ${styles[isApiData ? contest.eventType : contest.type]}`}>
+                            {isApiData ? (contest.eventType === 'quiz' ? 'Quiz' : 'Contest') : contest.type}
+                          </span>
+                          {isApiData && statusInfo ? (
+                            <span className={styles.difficulty} style={{ color: statusInfo.color }}>
+                              {statusInfo.label}
+                            </span>
+                          ) : (
+                            <span className={styles.difficulty}>{contest.difficulty}</span>
+                          )}
+                        </div>
+                        <div className={styles.contestTime}>
+                          <Clock size={16} />
+                          <span>{isApiData ? `${contest.durationMinutes} min` : contest.duration}</span>
+                        </div>
                       </div>
-                      <div className={styles.contestTime}>
-                        <Clock size={16} />
-                        <span>{contest.duration}</span>
+                      <h3 className={styles.contestName}>
+                        {isApiData ? contest.eventTitle : contest.title}
+                      </h3>
+                      <div className={styles.contestMeta}>
+                        <div className={styles.metaItem}>
+                          <Calendar size={16} />
+                          <span>
+                            {isApiData ? formatStudentDate(contest.createdAt) : contest.date}
+                          </span>
+                        </div>
+                        <div className={styles.metaItem}>
+                          <Users size={16} />
+                          <span>
+                            {isApiData ?
+                              `${contest.participants?.length || 0} participants` :
+                              `${contest.participants} participants`
+                            }
+                          </span>
+                        </div>
                       </div>
+                      <button className={styles.contestJoinBtn}>Join Now</button>
                     </div>
-                    <h3 className={styles.contestName}>{contest.title}</h3>
-                    <div className={styles.contestMeta}>
-                      <div className={styles.metaItem}>
-                        <Calendar size={16} />
-                        <span>{contest.date}</span>
-                      </div>
-                      <div className={styles.metaItem}>
-                        <Users size={16} />
-                        <span>{contest.participants} participants</span>
-                      </div>
-                    </div>
-                    <button className={styles.contestJoinBtn}>Join Now</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

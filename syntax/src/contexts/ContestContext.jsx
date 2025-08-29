@@ -11,11 +11,22 @@ export const useContestContext = () => {
 };
 
 export const ContestProvider = ({ children }) => {
+  // Admin-specific state
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adminName, setAdminName] = useState('');
   const [adminNameLoading, setAdminNameLoading] = useState(true);
+
+  // Student-specific state
+  const [studentContests, setStudentContests] = useState([]);
+  const [studentArticles, setStudentArticles] = useState([]);
+  const [studentContestsLoading, setStudentContestsLoading] = useState(true);
+  const [studentArticlesLoading, setStudentArticlesLoading] = useState(true);
+  const [studentContestsError, setStudentContestsError] = useState(null);
+  const [studentArticlesError, setStudentArticlesError] = useState(null);
+  const [isStudentAuthenticated, setIsStudentAuthenticated] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   // Fetch current admin's name
   useEffect(() => {
@@ -70,6 +81,113 @@ export const ContestProvider = ({ children }) => {
     }
   };
 
+  // Check student authentication status
+  const checkStudentAuth = async () => {
+    try {
+      const response = await fetch('/api/user/student-profile', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        setIsStudentAuthenticated(true);
+        return true;
+      } else {
+        setIsStudentAuthenticated(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Student auth check failed:', error);
+      setIsStudentAuthenticated(false);
+      return false;
+    } finally {
+      setAuthCheckComplete(true);
+    }
+  };
+
+  // Fetch student contests from the backend with retry logic
+  const fetchStudentContests = async (retryCount = 0) => {
+    try {
+      setStudentContestsLoading(true);
+      setStudentContestsError(null);
+
+      const response = await fetch('/api/student/events', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.status === 403 && retryCount < 2) {
+        // Wait a bit and retry for 403 errors (authentication timing issues)
+        console.log(`403 error, retrying... (attempt ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchStudentContests(retryCount + 1);
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.events) {
+        setStudentContests(data.events);
+      } else {
+        setStudentContests([]);
+      }
+    } catch (error) {
+      console.error('Error fetching student contests:', error);
+      setStudentContestsError(error.message);
+      setStudentContests([]);
+    } finally {
+      setStudentContestsLoading(false);
+    }
+  };
+
+  // Fetch student articles from the backend with retry logic
+  const fetchStudentArticles = async (retryCount = 0) => {
+    try {
+      setStudentArticlesLoading(true);
+      setStudentArticlesError(null);
+
+      const response = await fetch('/api/student/articles', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.status === 403 && retryCount < 2) {
+        // Wait a bit and retry for 403 errors (authentication timing issues)
+        console.log(`403 error, retrying... (attempt ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchStudentArticles(retryCount + 1);
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.articles) {
+        setStudentArticles(data.articles);
+      } else {
+        setStudentArticles([]);
+      }
+    } catch (error) {
+      console.error('Error fetching student articles:', error);
+      setStudentArticlesError(error.message);
+      setStudentArticles([]);
+    } finally {
+      setStudentArticlesLoading(false);
+    }
+  };
+
   // Transform backend event data to frontend display format
   const transformEventData = (backendEvent) => {
     const now = new Date();
@@ -115,7 +233,7 @@ export const ContestProvider = ({ children }) => {
       title: backendEvent.eventTitle,
       description: backendEvent.eventDescription,
       mode: backendEvent.eventMode === "strict" ? "strict" : "practice",
-      eventMode: backendEvent.eventMode, // <-- Add this line
+      eventMode: backendEvent.eventMode, 
       status: status,
       participants: backendEvent.participants ? backendEvent.participants.length : 0,
       timeLeft: timeLeft,
@@ -227,12 +345,69 @@ export const ContestProvider = ({ children }) => {
     setEvents(prevEvents => [newEvent, ...prevEvents]);
   };
 
-  // Initial fetch
+  // Get recent student contests (3 latest for home page)
+  const getRecentStudentContests = () => {
+    return studentContests
+      .sort((a, b) => {
+        const dateA = a.createdAt?._seconds || 0;
+        const dateB = b.createdAt?._seconds || 0;
+        return dateB - dateA;
+      })
+      .slice(0, 3);
+  };
+
+  // Helper function to format date for student data
+  const formatStudentDate = (timestamp) => {
+    if (!timestamp) return 'No date';
+    const date = new Date(timestamp._seconds * 1000);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Helper function to get contest status badge
+  const getStudentContestStatus = (status) => {
+    const statusMap = {
+      'active': { label: 'Active', color: '#10b981' },
+      'upcoming': { label: 'Upcoming', color: '#3b82f6' },
+      'ended': { label: 'Ended', color: '#6b7280' },
+      'draft': { label: 'Draft', color: '#f59e0b' }
+    };
+    return statusMap[status] || { label: status, color: '#6b7280' };
+  };
+
+  // Initial fetch for admin events
   useEffect(() => {
     fetchEvents();
   }, []);
 
+  // Initial fetch for student data with small delay to ensure authentication is ready
+  useEffect(() => {
+    const initializeStudentData = async () => {
+      // Small delay to ensure authentication cookie is properly set
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Check authentication first
+      const isAuth = await checkStudentAuth();
+
+      if (isAuth) {
+        // If authenticated, fetch data
+        fetchStudentContests();
+        fetchStudentArticles();
+      } else {
+        // If not authenticated, try fetching anyway (will handle 403 with retry)
+        fetchStudentContests();
+        fetchStudentArticles();
+      }
+    };
+
+    initializeStudentData();
+  }, []);
+
   const value = {
+    // Admin data
     events,
     loading,
     error,
@@ -245,7 +420,23 @@ export const ContestProvider = ({ children }) => {
     addNewEvent,
     transformEventData,
     adminName,
-    adminNameLoading
+    adminNameLoading,
+
+    // Student data
+    studentContests,
+    studentArticles,
+    studentContestsLoading,
+    studentArticlesLoading,
+    studentContestsError,
+    studentArticlesError,
+    fetchStudentContests,
+    fetchStudentArticles,
+    getRecentStudentContests,
+    formatStudentDate,
+    getStudentContestStatus,
+    isStudentAuthenticated,
+    authCheckComplete,
+    checkStudentAuth
   };
 
   return (
