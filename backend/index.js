@@ -579,7 +579,7 @@ app.post("/api/auth/student-login", async (req, res) => {
       section,
       semester,
       batch,
-      token,
+      // token
     } = await loginStudentUser(email, password);
 
     res.cookie("auth_token", token, {
@@ -2388,10 +2388,6 @@ app.post(
     }
   }
 );
-
-
-
-
 
 app.get('/api/student/events', requireStudentAuth, async (req, res) => {
     try {
