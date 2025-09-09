@@ -161,6 +161,8 @@ const fetchAdminEvents = async(req, res) => {
       .where("createdBy", "==", req.user.userId)
       .get();
 
+    console.log("Making firebase call from admin side.")
+
     const events = [];
     eventsSnapshot.forEach((doc) => {
       events.push({
@@ -202,6 +204,8 @@ const fetchEvents = async (req, res) => {
             .where('allowedDepartments', 'in', [req.user.department, 'Any department'])
             .where('status', '==', 'active')
             .get();
+
+        console.log("Making firebase call from student side.")
 
         const events = [] 
 
@@ -286,6 +290,9 @@ const fetchSuperEvent = async (req, res) => {
             .collection("events")
             .orderBy("createdAt", "desc")
             .get();
+
+        console.log("Making firebase call from super admin side");
+        
         const contests = [];
         snapshot.forEach((doc) => {
             const contestData = doc.data();

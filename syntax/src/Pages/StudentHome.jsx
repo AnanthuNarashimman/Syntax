@@ -104,7 +104,7 @@ const StudentHome = () => {
 
   useEffect(() => {
     fetchStudentContests()
-  })
+  }, [])
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {
