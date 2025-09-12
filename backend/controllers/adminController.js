@@ -1,4 +1,6 @@
 const { db, admin } = require("../config/firebase");
+const bcrypt = require("bcrypt");
+const passwordUtils = require("../utils/passwordUtil");
 
 const createAdmin = async (req, res) => {
     try {
@@ -59,7 +61,7 @@ const updateAdmin = async (req, res) => {
         if (userName) updateData.userName = userName;
         if (email) updateData.email = email;
         if (newPassword) {
-            updateData.hashedPassword = await hashPassword(newPassword);
+            updateData.hashedPassword = await passwordUtils.hashPasswords(newPassword);
         }
 
         updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
