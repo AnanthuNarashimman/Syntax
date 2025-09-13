@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, CheckCircle, Home, RotateCcw } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import styles from '../Styles/PageStyles/StudentQuiz.module.css';
+import axios from 'axios';
 
 const StudentQuiz = () => {
   const location = useLocation();
@@ -17,6 +18,8 @@ const StudentQuiz = () => {
   const [showResults, setShowResults] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [quizStartTime] = useState(Date.now());
+  const [quizResults, setQuizResults] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize timer and load saved answers
   useEffect(() => {
@@ -101,21 +104,92 @@ const StudentQuiz = () => {
     setCurrentQuestion(questionIndex);
   };
 
-  const handleSubmit = () => {
-    // Clear localStorage
-    localStorage.removeItem(`quiz_${quizData.id}_answers`);
-    localStorage.removeItem(`quiz_${quizData.id}_current`);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    try {
+      // Convert selectedAnswers indices to actual answer values
+      const studentAnswerValues = {};
+      Object.keys(selectedAnswers).forEach(questionIndex => {
+        const answerIndex = selectedAnswers[questionIndex];
+        studentAnswerValues[questionIndex] = questions[questionIndex].options[answerIndex];
+      });
 
-    // Save final answers with timestamp
-    const finalAnswers = {
-      quizId: quizData.id,
-      answers: selectedAnswers,
-      submittedAt: new Date().toISOString(),
-      timeTaken: quizData.durationMinutes * 60 - timeRemaining
-    };
+      // Create studentSubmission data structure
+      const studentSubmission = {
+        quizId: quizData.id,
+        quizTitle: quizData.eventTitle || quizData.title || 'Quiz',
+        studentAnswers: studentAnswerValues, // Now contains the actual answer text values
+        submittedAt: new Date().toISOString(),
+        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
+        totalQuestions: questions.length,
+        answeredQuestions: Object.keys(selectedAnswers).length,
+        questionDetails: questions.map((question, index) => ({
+          questionIndex: index,
+          question: question.question,
+          options: question.options,
+          selectedAnswer: selectedAnswers[index] !== undefined ? selectedAnswers[index] : null,
+          selectedAnswerText: selectedAnswers[index] !== undefined ? question.options[selectedAnswers[index]] : null,
+          correctAnswer: question.correctAnswer,
+          correctAnswerText: question.options[question.correctAnswer],
+          isCorrect: selectedAnswers[index] === question.correctAnswer
+        }))
+      };
 
-    localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
-    setShowResults(true);
+      // Log the studentSubmission data to console
+      console.log('Student Submission Data:', studentSubmission);
+
+      // Make API request to validate quiz
+      const response = await axios.post('/api/student/validate-quiz', studentSubmission, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Quiz Validation Response:', response.data);
+      
+      // Store the quiz results
+      setQuizResults(response.data);
+
+      // Clear localStorage
+      localStorage.removeItem(`quiz_${quizData.id}_answers`);
+      localStorage.removeItem(`quiz_${quizData.id}_current`);
+
+      // Save final answers with timestamp
+      const finalAnswers = {
+        quizId: quizData.id,
+        answers: selectedAnswers,
+        submittedAt: new Date().toISOString(),
+        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
+        validationResults: response.data
+      };
+
+      localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
+      setShowResults(true);
+      
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      
+      // Fallback to local calculation if API fails
+      alert('There was an error submitting your quiz. Showing local results.');
+      
+      // Clear localStorage and show results anyway
+      localStorage.removeItem(`quiz_${quizData.id}_answers`);
+      localStorage.removeItem(`quiz_${quizData.id}_current`);
+      
+      const finalAnswers = {
+        quizId: quizData.id,
+        answers: selectedAnswers,
+        submittedAt: new Date().toISOString(),
+        timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining
+      };
+
+      localStorage.setItem(`quiz_${quizData.id}_final`, JSON.stringify(finalAnswers));
+      setShowResults(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRestart = () => {
@@ -168,6 +242,12 @@ const StudentQuiz = () => {
 
   // Calculate score for results
   const calculateScore = () => {
+    // Use API results if available
+    if (quizResults) {
+      return quizResults.CorrectAnswerCount;
+    }
+    
+    // Fallback to local calculation
     let correct = 0;
     questions.forEach((question, index) => {
       if (selectedAnswers[index] === question.correctAnswer) {
@@ -204,6 +284,11 @@ const StudentQuiz = () => {
                 <div className={styles.scorePercentage}>
                   {percentage.toFixed(1)}% Score
                 </div>
+                {quizResults && (
+                  <div className={styles.pointsDisplay}>
+                    <strong>Total Points: {quizResults.Points}</strong>
+                  </div>
+                )}
                 <div className={`${styles.scoreMessage} ${styles[scoreMessage.class]}`}>
                   {scoreMessage.text}
                 </div>
@@ -213,7 +298,19 @@ const StudentQuiz = () => {
                 <h3 className={styles.reviewTitle}>Answer Review</h3>
                 {questions.map((question, index) => {
                   const userAnswer = selectedAnswers[index];
-                  const isCorrect = userAnswer === question.correctAnswer;
+                  let isCorrect;
+                  let correctAnswerIndex;
+                  
+                  // Use API results if available
+                  if (quizResults && quizResults.QuizResult && quizResults.QuizResult[index]) {
+                    const apiResult = quizResults.QuizResult[index];
+                    isCorrect = apiResult.studentAnswer === apiResult.correctAnswer;
+                    correctAnswerIndex = question.options.indexOf(apiResult.correctAnswer);
+                  } else {
+                    // Fallback to local calculation
+                    isCorrect = userAnswer === question.correctAnswer;
+                    correctAnswerIndex = question.correctAnswer;
+                  }
 
                   return (
                     <div
@@ -228,7 +325,7 @@ const StudentQuiz = () => {
                       </div>
                       {!isCorrect && (
                         <div className={styles.reviewCorrect}>
-                          Correct answer: {question.options[question.correctAnswer]}
+                          Correct answer: {question.options[correctAnswerIndex]}
                         </div>
                       )}
                     </div>
@@ -297,93 +394,145 @@ const StudentQuiz = () => {
           </div>
         </div>
 
-        {/* Progress Section */}
-        <div className={styles.progressSection}>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className={styles.progressInfo}>
-            <span className={styles.questionCounter}>
-              Question {currentQuestion + 1} of {questions.length}
-            </span>
-            <div className={styles.questionsOverview}>
-              {questions.map((_, index) => (
+        {/* Main Quiz Layout */}
+        <div className={styles.quizLayout}>
+          {/* Left Panel - Question and Options */}
+          <div className={styles.leftPanel}>
+            {/* Progress Section */}
+            <div className={styles.progressSection}>
+              <div className={styles.progressBar}>
                 <div
-                  key={index}
-                  className={`${styles.questionDot} ${
-                    index === currentQuestion ? styles.current :
-                    selectedAnswers[index] !== undefined ? styles.answered : ''
-                  }`}
-                  onClick={() => handleQuestionJump(index)}
-                  title={`Question ${index + 1}`}
+                  className={styles.progressFill}
+                  style={{ width: `${progress}%` }}
                 />
-              ))}
+              </div>
+              <div className={styles.progressInfo}>
+                <span className={styles.questionCounter}>
+                  Question {currentQuestion + 1} of {questions.length}
+                </span>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Quiz Card */}
-        <div className={styles.quizCard}>
-          <div className={styles.questionSection}>
-            <div className={styles.questionNumber}>
-              Question {currentQuestion + 1}
-            </div>
-            <div className={styles.questionText}>
-              {currentQ.question}
-            </div>
-          </div>
+            {/* Quiz Card */}
+            <div className={styles.quizCard}>
+              <div className={styles.questionSection}>
+                <div className={styles.questionNumber}>
+                  Question {currentQuestion + 1}
+                </div>
+                <div className={styles.questionText}>
+                  {currentQ.question}
+                </div>
+              </div>
 
-          <div className={styles.optionsContainer}>
-            {currentQ.options.map((option, index) => (
-              <div
-                key={index}
-                className={`${styles.option} ${
-                  selectedAnswers[currentQuestion] === index ? styles.selected : ''
-                }`}
-                onClick={() => handleAnswerSelect(currentQuestion, index)}
-              >
-                <div className={styles.optionIndicator}>
-                  {String.fromCharCode(65 + index)}
-                </div>
-                <div className={styles.optionText}>
-                  {option}
-                </div>
-                {selectedAnswers[currentQuestion] === index && (
-                  <CheckCircle className={styles.selectedIcon} size={20} />
+              <div className={styles.optionsContainer}>
+                {currentQ.options.map((option, index) => (
+                  <div
+                    key={index}
+                    className={`${styles.option} ${
+                      selectedAnswers[currentQuestion] === index ? styles.selected : ''
+                    }`}
+                    onClick={() => handleAnswerSelect(currentQuestion, index)}
+                  >
+                    <div className={styles.optionIndicator}>
+                      {String.fromCharCode(65 + index)}
+                    </div>
+                    <div className={styles.optionText}>
+                      {option}
+                    </div>
+                    {selectedAnswers[currentQuestion] === index && (
+                      <CheckCircle className={styles.selectedIcon} size={20} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Navigation Controls */}
+              <div className={styles.navigationControls}>
+                <button
+                  className={`${styles.navButton} ${styles.secondary}`}
+                  onClick={handlePrevious}
+                  disabled={currentQuestion === 0}
+                >
+                  <ArrowLeft size={16} />
+                  Previous
+                </button>
+
+                {currentQuestion === questions.length - 1 ? (
+                  <button
+                    className={styles.submitButton}
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+                  </button>
+                ) : (
+                  <button
+                    className={`${styles.navButton} ${styles.primary}`}
+                    onClick={handleNext}
+                  >
+                    Next
+                    <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+                  </button>
                 )}
               </div>
-            ))}
+            </div>
           </div>
 
-          <div className={styles.navigationControls}>
-            <button
-              className={`${styles.navButton} ${styles.secondary}`}
-              onClick={handlePrevious}
-              disabled={currentQuestion === 0}
-            >
-              <ArrowLeft size={16} />
-              Previous
-            </button>
-
-            {currentQuestion === questions.length - 1 ? (
-              <button
-                className={styles.submitButton}
-                onClick={handleSubmit}
-              >
-                Submit Quiz
-              </button>
-            ) : (
-              <button
-                className={`${styles.navButton} ${styles.primary}`}
-                onClick={handleNext}
-              >
-                Next
-                <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
-              </button>
-            )}
+          {/* Right Panel - Question Navigation */}
+          <div className={styles.rightPanel}>
+            <div className={styles.questionNavigationCard}>
+              <div className={styles.navigationHeader}>
+                <h3 className={styles.navigationTitle}>Questions</h3>
+                <div className={styles.navigationLegend}>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.current}`}></div>
+                    <span>Current</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.answered}`}></div>
+                    <span>Answered</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <div className={`${styles.legendDot} ${styles.unanswered}`}></div>
+                    <span>Unanswered</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={styles.questionsGrid}>
+                {questions.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`${styles.questionNumberBtn} ${
+                      index === currentQuestion ? styles.currentQuestion :
+                      selectedAnswers[index] !== undefined ? styles.answeredQuestion : styles.unansweredQuestion
+                    }`}
+                    onClick={() => handleQuestionJump(index)}
+                    title={`Question ${index + 1} ${
+                      index === currentQuestion ? '(Current)' :
+                      selectedAnswers[index] !== undefined ? '(Answered)' : '(Unanswered)'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+              
+              <div className={styles.navigationSummary}>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Total Questions:</span>
+                  <span className={styles.summaryValue}>{questions.length}</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Answered:</span>
+                  <span className={styles.summaryValue}>{Object.keys(selectedAnswers).length}</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryLabel}>Remaining:</span>
+                  <span className={styles.summaryValue}>{questions.length - Object.keys(selectedAnswers).length}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

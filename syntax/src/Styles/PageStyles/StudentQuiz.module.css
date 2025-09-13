@@ -78,12 +78,31 @@
   font-size: 1rem;
 }
 
-/* Progress Section */
+/* Main Quiz Layout - Two Column Design */
+.quizLayout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Left Panel - Question and Options */
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Right Panel - Question Navigation */
+.rightPanel {
+  position: sticky;
+  top: 6rem;
+  height: fit-content;
+}
 .progressSection {
   background: white;
   border-radius: 16px;
   padding: 1.5rem;
-  margin-bottom: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
 }
@@ -370,8 +389,19 @@
 .scorePercentage {
   font-size: 1.25rem;
   color: #64748b;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   font-weight: 500;
+}
+
+.pointsDisplay {
+  font-size: 1.5rem;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border: 1px solid #38bdf8;
+  border-radius: 12px;
+  font-weight: 600;
 }
 
 .scoreMessage {
@@ -571,4 +601,190 @@
   .questionsOverview {
     justify-content: center;
   }
+
+  /* Mobile adjustments for new layout */
+  .quizLayout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .rightPanel {
+    position: static;
+    order: -1; /* Show question navigation above on mobile */
+  }
+
+  .questionsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .questionNumberBtn {
+    width: 40px;
+    height: 40px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Question Navigation Card */
+.questionNavigationCard {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.questionNavigationCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.navigationHeader {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.navigationTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+}
+
+.navigationLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendDot.current {
+  background: #f59e0b;
+}
+
+.legendDot.answered {
+  background: #3b82f6;
+}
+
+.legendDot.unanswered {
+  background: #e2e8f0;
+}
+
+.questionsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.questionNumberBtn {
+  width: 45px;
+  height: 45px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.questionNumberBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #cbd5e1;
+}
+
+.questionNumberBtn.currentQuestion {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transform: scale(1.1);
+}
+
+.questionNumberBtn.currentQuestion:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.questionNumberBtn.answeredQuestion {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.questionNumberBtn.answeredQuestion:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.questionNumberBtn.unansweredQuestion {
+  background: white;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+.questionNumberBtn.unansweredQuestion:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.navigationSummary {
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.summaryLabel {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.summaryValue {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Hide old question dots on all screen sizes */
+.questionsOverview {
+  display: none !important;
+}
+
+.questionDot {
+  display: none !important;
 }

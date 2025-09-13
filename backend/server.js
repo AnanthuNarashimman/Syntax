@@ -46,6 +46,7 @@ const eventRoutes = require('./routes/eventRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const superRoutes = require('./routes/superRoutes');
+const validationRoutes = require('./routes/validationRoutes');
 
 
 app.use('/api/auth', authRoutes);
@@ -54,6 +55,7 @@ app.use('/api', eventRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/super-admin', superRoutes);
+app.use('/api/student', validationRoutes);
 
 
 // Starting up Express Server
