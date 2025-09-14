@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import contestsImg from '../assets/Images/contests.png';
+import axios from 'axios';
 
 const ContestsPreview = () => {
   const navigate = useNavigate();
@@ -16,6 +17,11 @@ const ContestsPreview = () => {
   const [contestData, setContestData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [eventStatus, setEventStatus] = useState('not_started');
+  const [eventResults, setEventResults] = useState(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [userAttemptData, setUserAttemptData] = useState(null);
 
   // Get contest data from navigation state
   const passedContestData = location.state?.contestData;
@@ -33,6 +39,11 @@ const ContestsPreview = () => {
         // Use passed data if available
         if (passedContestData) {
           setContestData(passedContestData);
+          
+          // Check event status after loading contest data
+          if (passedContestData.id) {
+            await checkEventStatus(passedContestData.id);
+          }
         } else {
           setError('No contest data provided. Please select a contest from the list.');
         }
@@ -46,6 +57,68 @@ const ContestsPreview = () => {
 
     loadContestData();
   }, [passedContestData, location.state]);
+
+  // Function to check event status
+  const checkEventStatus = async (eventId) => {
+    try {
+      setStatusLoading(true);
+      const response = await axios.post('/api/student/check-status', {
+        eventId: eventId
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Event Status Response:', response.data);
+      setEventStatus(response.data.eventStatus);
+      
+      // Store user attempt data if available
+      if (response.data.data) {
+        setUserAttemptData(response.data.data);
+      }
+
+      // If completed, fetch results from the new API
+      if (response.data.eventStatus === 'completed') {
+        await fetchEventResults(eventId);
+      }
+    } catch (error) {
+      console.error('Error checking event status:', error);
+      setEventStatus('not_started'); // Default to not started on error
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  // Function to fetch event results
+  const fetchEventResults = async (eventId) => {
+    try {
+      const response = await axios.post('/api/student/event-result', {
+        eventId: eventId
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Event Results Response:', response.data);
+      if (response.data.result) {
+        setEventResults(response.data.result);
+      }
+    } catch (error) {
+      console.error('Error fetching event results:', error);
+      // Try fallback to localStorage
+      const savedResults = localStorage.getItem(`quiz_${eventId}_final`);
+      if (savedResults) {
+        const parsedResults = JSON.parse(savedResults);
+        if (parsedResults.validationResults) {
+          setEventResults(parsedResults.validationResults);
+        }
+      }
+    }
+  };
 
   // Utility functions for real data structure
   const formatDate = (timestamp) => {
@@ -153,25 +226,67 @@ const ContestsPreview = () => {
 
 
   const handleStartContest = async () => {
-    try {
-      // Check if it's mock data
+    if (eventStatus === 'completed') {
+      // Do nothing for completed events
+      return;
+    }
+
+    if (eventStatus === 'in_progress') {
+      // Allow resuming the event
       const isMockData = contestData.title && !contestData.eventTitle;
       const eventType = isMockData ?
         (contestData.type === 'Quiz' ? 'quiz' : 'contest') :
         contestData.eventType;
 
-      console.log(`Starting ${eventType}...`, contestData.id);
-
-      // Navigate to appropriate page based on type
       if (eventType === 'quiz') {
         navigate('/student-quiz', { state: { quizData: contestData } });
       } else {
-        // For contests, show alert since we don't have a contest page yet
-        alert(`Contest functionality coming soon! This would start the ${eventType}.`);
+        alert(`Resume contest functionality coming soon!`);
+      }
+      return;
+    }
+
+    // Start new event
+    try {
+      setIsStarting(true);
+      
+      // Make API call to start event
+      const response = await axios.post('/api/student/start-event', {
+        eventId: contestData.id
+      }, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        console.log('Event started successfully');
+        setEventStatus('in_progress');
+
+        // Check if it's mock data
+        const isMockData = contestData.title && !contestData.eventTitle;
+        const eventType = isMockData ?
+          (contestData.type === 'Quiz' ? 'quiz' : 'contest') :
+          contestData.eventType;
+
+        console.log(`Starting ${eventType}...`, contestData.id);
+
+        // Navigate to appropriate page based on type
+        if (eventType === 'quiz') {
+          navigate('/student-quiz', { state: { quizData: contestData } });
+        } else {
+          // For contests, show alert since we don't have a contest page yet
+          alert(`Contest functionality coming soon! This would start the ${eventType}.`);
+        }
+      } else {
+        throw new Error('Failed to start event');
       }
     } catch (error) {
       console.error('Error starting event:', error);
-      alert(`Failed to start ${eventType}. Please try again.`);
+      alert(`Failed to start event. Please try again.`);
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -269,17 +384,29 @@ const ContestsPreview = () => {
                       <span
                         className={styles.statusBadge}
                         style={{
-                          color: statusInfo.color,
-                          backgroundColor: statusInfo.bgColor
+                          color: eventStatus === 'completed' ? '#10b981' : statusInfo.color,
+                          backgroundColor: eventStatus === 'completed' ? '#ecfdf5' : statusInfo.bgColor
                         }}
                       >
-                        <StatusIcon size={14} />
-                        {statusInfo.label}
+                        {eventStatus === 'completed' ? <CheckCircle size={14} /> : <StatusIcon size={14} />}
+                        {eventStatus === 'completed' ? 'Completed' : statusInfo.label}
                       </span>
                       <span className={styles.modeBadge}>
                         <Award size={14} />
                         {eventInfo.mode === 'strict' ? 'Strict Mode' : 'Practice Mode'}
                       </span>
+                      {eventStatus === 'completed' && (
+                        <span 
+                          className={styles.statusBadge}
+                          style={{
+                            color: '#059669',
+                            backgroundColor: '#d1fae5'
+                          }}
+                        >
+                          <Trophy size={14} />
+                          {isQuiz ? 'Quiz' : 'Contest'} Completed
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -330,6 +457,138 @@ const ContestsPreview = () => {
                   )}
                 </ul>
               </div>
+              {/* Results Display for Completed Events */}
+              {eventStatus === 'completed' && (
+                <div className={styles.resultsCard}>
+                  <h3 className={styles.resultsTitle}>
+                    <Trophy size={24} />
+                    Your Results
+                  </h3>
+                  {eventResults ? (
+                    <div className={styles.resultsContent}>
+                      {/* Check if it's API data (from eventResults collection) or localStorage data */}
+                      {eventResults.points !== undefined ? (
+                        // API data format
+                        <div className={styles.apiResultsLayout}>
+                          <div className={styles.leftResultsPanel}>
+                            <div className={styles.pointsSection}>
+                              <div className={styles.pointsDisplay}>
+                                <div className={styles.pointsIcon}>
+                                  <Trophy size={32} />
+                                </div>
+                                <div className={styles.pointsInfo}>
+                                  <div className={styles.pointsValue}>{eventResults.points}</div>
+                                  <div className={styles.pointsLabel}>Points Earned</div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className={styles.submissionSection}>
+                              <div className={styles.submissionHeader}>
+                                <CheckCircle size={20} />
+                                <span>Successfully Submitted</span>
+                              </div>
+                              <div className={styles.submissionDetails}>
+                                <div className={styles.submissionItem}>
+                                  <Calendar size={16} />
+                                  <div className={styles.submissionInfo}>
+                                    <span className={styles.submissionLabel}>Submitted on</span>
+                                    <span className={styles.submissionValue}>
+                                      {(() => {
+                                        try {
+                                          let date;
+
+                                          const submitted = eventResults.submittedAt;
+
+                                          // 1) Firestore Timestamp-like object with toDate() method
+                                          if (submitted?.toDate && typeof submitted.toDate === 'function') {
+                                            date = submitted.toDate();
+                                          }
+                                          // 2) Firestore-like raw object with seconds/_seconds and nanoseconds/_nanoseconds
+                                          else if (submitted && (submitted.seconds !== undefined || submitted._seconds !== undefined)) {
+                                            const secs = submitted.seconds !== undefined ? submitted.seconds : submitted._seconds;
+                                            const nanos = submitted.nanoseconds !== undefined ? submitted.nanoseconds : (submitted._nanoseconds || 0);
+                                            const ms = Number(secs) * 1000 + Math.floor(Number(nanos) / 1e6);
+                                            date = new Date(ms);
+                                          }
+                                          // 3) Firebase formatted string like "14 September 2025 at 17:29:40 UTC+5:30"
+                                          else if (typeof submitted === 'string' && submitted.includes(' at ')) {
+                                            const cleaned = submitted.replace(/ UTC[+-]\d{1,2}:\d{2}$/, '').replace(' at ', ' ');
+                                            date = new Date(cleaned);
+                                          }
+                                          // 4) Direct Date or ISO/number string
+                                          else if (submitted instanceof Date) {
+                                            date = submitted;
+                                          } else if (typeof submitted === 'number' || typeof submitted === 'string') {
+                                            date = new Date(submitted);
+                                          } else {
+                                            return 'Date not available';
+                                          }
+
+                                          // Validate
+                                          if (!date || isNaN(date.getTime())) {
+                                            return 'Invalid Date';
+                                          }
+
+                                          return date.toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          });
+                                        } catch (error) {
+                                          console.error('Date parsing error:', error, 'for value:', eventResults.submittedAt);
+                                          return 'Date parsing error';
+                                        }
+                                      })()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className={styles.submissionItem}>
+                                  <Target size={16} />
+                                  <div className={styles.submissionInfo}>
+                                    <span className={styles.submissionLabel}>Event ID</span>
+                                    <span className={styles.submissionValue}>{eventResults.eventId}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        // localStorage data format (fallback)
+                        <div className={styles.scoreOverview}>
+                          <div className={styles.scoreItem}>
+                            <div className={styles.scoreLabel}>Score</div>
+                            <div className={styles.scoreValue}>
+                              {eventResults.CorrectAnswerCount} / {Object.keys(eventResults.QuizResult || {}).length}
+                            </div>
+                          </div>
+                          <div className={styles.scoreItem}>
+                            <div className={styles.scoreLabel}>Percentage</div>
+                            <div className={styles.scoreValue}>
+                              {Object.keys(eventResults.QuizResult || {}).length > 0 
+                                ? ((eventResults.CorrectAnswerCount / Object.keys(eventResults.QuizResult).length) * 100).toFixed(1)
+                                : 0}%
+                            </div>
+                          </div>
+                          <div className={styles.scoreItem}>
+                            <div className={styles.scoreLabel}>Points</div>
+                            <div className={styles.scoreValue}>{eventResults.Points || 0}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={styles.resultsPlaceholder}>
+                      <CheckCircle size={24} />
+                      <p>You have successfully completed this {isQuiz ? 'quiz' : 'contest'}!</p>
+                      <p className={styles.placeholderSubtext}>Results have been recorded.</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Right Column - Stats and Actions */}
@@ -415,23 +674,40 @@ const ContestsPreview = () => {
 
               {/* Action Buttons */}
               <div className={styles.actionCard}>
-                <button
-                  className={styles.primaryBtn}
-                  onClick={handleStartContest}
-                  disabled={eventInfo.status === 'ended'}
-                >
-                  <Play size={20} />
-                  {eventInfo.status === 'ended' ? `${isQuiz ? 'Quiz' : 'Contest'} Ended` :
-                   eventInfo.status === 'active' ? `Start ${isQuiz ? 'Quiz' : 'Contest'}` :
-                   `Join ${isQuiz ? 'Quiz' : 'Contest'}`}
-                </button>
+                {statusLoading ? (
+                  <button className={styles.primaryBtn} disabled>
+                    <Play size={20} />
+                    Checking Status...
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className={`${styles.primaryBtn} ${eventStatus === 'completed' ? styles.submittedBtn : ''}`}
+                      onClick={handleStartContest}
+                      disabled={isStarting || eventStatus === 'completed' || (eventInfo.status === 'ended' && eventStatus !== 'in_progress')}
+                    >
+                      {eventStatus === 'completed' ? (
+                        <>
+                          <CheckCircle size={20} />
+                          Submitted
+                        </>
+                      ) : (
+                        <>
+                          <Play size={20} />
+                          {isStarting ? 'Starting...' :
+                           eventStatus === 'in_progress' ? `Resume ${isQuiz ? 'Quiz' : 'Contest'}` :
+                           eventInfo.status === 'ended' ? `${isQuiz ? 'Quiz' : 'Contest'} Ended` :
+                           `Start ${isQuiz ? 'Quiz' : 'Contest'}`}
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
                 <button className={styles.secondaryBtn} onClick={handleBack}>
                   <ArrowLeft size={16} />
                   Back to List
                 </button>
               </div>
-
-
             </div>
           </div>
         </div>

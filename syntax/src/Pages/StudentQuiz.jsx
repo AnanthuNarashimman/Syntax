@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, CheckCircle, Home, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Home } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import styles from '../Styles/PageStyles/StudentQuiz.module.css';
 import axios from 'axios';
@@ -193,15 +193,7 @@ const StudentQuiz = () => {
   };
 
   const handleRestart = () => {
-    // Clear all saved data
-    localStorage.removeItem(`quiz_${quizData.id}_answers`);
-    localStorage.removeItem(`quiz_${quizData.id}_current`);
-    localStorage.removeItem(`quiz_${quizData.id}_final`);
-
-    setCurrentQuestion(0);
-    setSelectedAnswers({});
-    setShowResults(false);
-    setTimeRemaining((quizData.durationMinutes || 30) * 60);
+    // Restart functionality removed
   };
 
   const handleBackToContests = () => {
@@ -334,10 +326,6 @@ const StudentQuiz = () => {
               </div>
 
               <div className={styles.actionButtons}>
-                <button className={styles.restartButton} onClick={handleRestart}>
-                  <RotateCcw size={20} />
-                  Restart Quiz
-                </button>
                 <button className={styles.homeButton} onClick={handleBackToContests}>
                   <Home size={20} />
                   Back to Contests
