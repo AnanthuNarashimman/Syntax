@@ -22,6 +22,7 @@ import "../Styles/PageStyles/ManageContest.css";
 import { useNavigate } from "react-router-dom";
 import { useContestContext } from "../contexts/ContestContext";
 import { useAlert } from "../contexts/AlertContext";
+import { useMemo } from "react";
 
 function ManageContest() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,14 +37,25 @@ function ManageContest() {
   const [editFormData, setEditFormData] = useState({});
   const [startEventLoading, setStartEventLoading] = useState(false);
 
+  // Add these new state variables
+
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState("overview");
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [sortConfig, setSortConfig] = useState({
+    key: "points",
+    direction: "descending",
+  });
+
   // Use ContestContext
-  const { 
-    loading, 
-    error, 
-    getCategorizedEvents, 
-    updateEventStatus, 
+  const {
+    loading,
+    error,
+    getCategorizedEvents,
+    updateEventStatus,
     updateEventData,
-    fetchEvents
+    fetchEvents,
   } = useContestContext();
   const { showError, showSuccess } = useAlert();
 
@@ -80,13 +92,9 @@ function ManageContest() {
     fetchEvents();
   }, []); // Empty dependency array - only run on mount
 
-
-
-
-
   // Get categorized events from context
   const categorizedEvents = getCategorizedEvents();
-  
+
   const filteredEvents = categorizedEvents.all.filter((event) => {
     const matchesSearch = event.title
       .toLowerCase()
@@ -130,7 +138,7 @@ function ManageContest() {
       await updateEventStatus(selectedEventId, "ended");
       setShowEndConfirm(false);
       setSelectedEventId(null);
-      showSuccess('Event ended successfully!');
+      showSuccess("Event ended successfully!");
     } catch (err) {
       showError(`Error ending event: ${err.message}`);
     }
@@ -141,22 +149,19 @@ function ManageContest() {
     setSelectedEventId(null);
   };
 
+  // In ManageContest.js
+
   const handleViewEvent = async (eventId) => {
     try {
       setViewLoading(true);
       setSelectedEventId(eventId);
 
       const response = await fetch(`/api/admin/events/${eventId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch event details");
+        throw new Error("Failed to fetch event details");
       }
 
       const data = await response.json();
@@ -170,9 +175,72 @@ function ManageContest() {
   };
 
   const closeViewModal = () => {
+    // Also clear leaderboard data on close
     setShowViewModal(false);
     setSelectedEvent(null);
     setSelectedEventId(null);
+    setLeaderboardData([]);
+  };
+
+  const handleViewParticipants = async (eventId, eventTitle) => {
+    try {
+      setIsLeaderboardLoading(true);
+      // We pass eventTitle to show in the modal header
+      setSelectedEvent({ eventTitle: eventTitle });
+      setShowLeaderboardModal(true);
+
+      const response = await fetch(`/api/events/${eventId}/results`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        console.warn("Could not fetch leaderboard data, might be empty.");
+        setLeaderboardData([]);
+      } else {
+        const data = await response.json();
+        setLeaderboardData(data);
+      }
+    } catch (err) {
+      showError(`Error fetching participants: ${err.message}`);
+    } finally {
+      setIsLeaderboardLoading(false);
+    }
+  };
+
+  const closeLeaderboardModal = () => {
+    setShowLeaderboardModal(false);
+    setLeaderboardData([]);
+    setSelectedEvent(null);
+    // Reset sort to default when closing
+    setSortConfig({ key: "points", direction: "descending" });
+  };
+
+  const sortedLeaderboardData = useMemo(() => {
+    let sortableItems = [...leaderboardData];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        // Handle different data types (string vs number)
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [leaderboardData, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
   };
 
   const handleStartEvent = async (eventId) => {
@@ -195,7 +263,7 @@ function ManageContest() {
 
       const data = await response.json();
       setEditingEvent(data.event);
-      
+
       // Initialize edit form data with basic event info
       const initialEditData = {
         eventTitle: data.event.eventTitle,
@@ -207,7 +275,7 @@ function ManageContest() {
       };
 
       // Add questions or problems based on event type
-      if (data.event.eventType === 'quiz') {
+      if (data.event.eventType === "quiz") {
         initialEditData.questions = data.event.questions || [];
       } else {
         initialEditData.problems = data.event.problems || [];
@@ -223,101 +291,101 @@ function ManageContest() {
   };
 
   const handleEditFormChange = (field, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleQuestionChange = (questionIndex, field, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      questions: prev.questions.map((q, index) => 
+      questions: prev.questions.map((q, index) =>
         index === questionIndex ? { ...q, [field]: value } : q
-      )
+      ),
     }));
   };
 
   const handleOptionChange = (questionIndex, optionIndex, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      questions: prev.questions.map((q, index) => 
-        index === questionIndex 
-          ? { 
-              ...q, 
-              options: q.options.map((opt, optIndex) => 
+      questions: prev.questions.map((q, index) =>
+        index === questionIndex
+          ? {
+              ...q,
+              options: q.options.map((opt, optIndex) =>
                 optIndex === optionIndex ? value : opt
-              )
-            } 
+              ),
+            }
           : q
-      )
+      ),
     }));
   };
 
   const handleProblemChange = (problemIndex, field, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      problems: prev.problems.map((p, index) => 
+      problems: prev.problems.map((p, index) =>
         index === problemIndex ? { ...p, [field]: value } : p
-      )
+      ),
     }));
   };
 
   const handleProblemDetailChange = (problemIndex, detailField, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      problems: prev.problems.map((p, index) => 
-        index === problemIndex 
-          ? { 
-              ...p, 
-              problemDetails: { ...p.problemDetails, [detailField]: value }
-            } 
+      problems: prev.problems.map((p, index) =>
+        index === problemIndex
+          ? {
+              ...p,
+              problemDetails: { ...p.problemDetails, [detailField]: value },
+            }
           : p
-      )
+      ),
     }));
   };
 
   const handleStarterCodeChange = (problemIndex, language, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      problems: prev.problems.map((p, index) => 
-        index === problemIndex 
-          ? { 
-              ...p, 
-              starterCode: { ...p.starterCode, [language]: value }
-            } 
+      problems: prev.problems.map((p, index) =>
+        index === problemIndex
+          ? {
+              ...p,
+              starterCode: { ...p.starterCode, [language]: value },
+            }
           : p
-      )
+      ),
     }));
   };
 
   const handleExampleChange = (problemIndex, field, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      problems: prev.problems.map((p, index) => 
-        index === problemIndex 
-          ? { 
-              ...p, 
-              examples: [{ ...p.examples[0], [field]: value }]
-            } 
+      problems: prev.problems.map((p, index) =>
+        index === problemIndex
+          ? {
+              ...p,
+              examples: [{ ...p.examples[0], [field]: value }],
+            }
           : p
-      )
+      ),
     }));
   };
 
   const handleTestCaseChange = (problemIndex, testCaseIndex, field, value) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      problems: prev.problems.map((p, index) => 
-        index === problemIndex 
-          ? { 
-              ...p, 
-              testCases: p.testCases.map((tc, tcIndex) => 
+      problems: prev.problems.map((p, index) =>
+        index === problemIndex
+          ? {
+              ...p,
+              testCases: p.testCases.map((tc, tcIndex) =>
                 tcIndex === testCaseIndex ? { ...tc, [field]: value } : tc
-              )
-            } 
+              ),
+            }
           : p
-      )
+      ),
     }));
   };
 
@@ -326,13 +394,13 @@ function ManageContest() {
       setStartEventLoading(true);
       await updateEventData(selectedEventId, {
         ...editFormData,
-        status: "active"
+        status: "active",
       });
       setShowStartModal(false);
       setSelectedEventId(null);
       setEditingEvent(null);
       setEditFormData({});
-      showSuccess('Event started successfully!');
+      showSuccess("Event started successfully!");
     } catch (err) {
       showError(`Error starting event: ${err.message}`);
     } finally {
@@ -350,10 +418,10 @@ function ManageContest() {
   const copyContestId = async (contestId) => {
     try {
       await navigator.clipboard.writeText(contestId);
-      showSuccess('Contest ID copied to clipboard!');
+      showSuccess("Contest ID copied to clipboard!");
     } catch (err) {
-      console.error('Failed to copy contest ID:', err);
-      showError('Failed to copy contest ID to clipboard');
+      console.error("Failed to copy contest ID:", err);
+      showError("Failed to copy contest ID to clipboard");
     }
   };
 
@@ -480,7 +548,7 @@ function ManageContest() {
                             <div className="contest-id-label">Contest ID:</div>
                             <div className="contest-id-container">
                               <span className="contest-id-text">{item.id}</span>
-                              <button 
+                              <button
                                 className="copy-button"
                                 onClick={() => copyContestId(item.id)}
                                 title="Copy Contest ID"
@@ -492,7 +560,7 @@ function ManageContest() {
 
                           <div className="card-actions">
                             {item.status === "queue" && (
-                              <button 
+                              <button
                                 className="btn-success"
                                 onClick={() => handleStartEvent(item.id)}
                               >
@@ -500,16 +568,31 @@ function ManageContest() {
                               </button>
                             )}
                             {item.status === "ongoing" && (
-                              <button 
+                              <button
                                 className="btn-danger"
                                 onClick={() => handleEndEvent(item.id)}
                               >
                                 End
                               </button>
                             )}
-                            <button className="btn-primary" onClick={() => handleViewEvent(item.id)}>
+                            <button
+                              className="btn-primary"
+                              onClick={() => handleViewEvent(item.id)}
+                            >
                               View
                             </button>
+
+                            {(item.status === "ongoing" ||
+                              item.status === "ended") && (
+                              <button
+                                className="btn-secondary"
+                                onClick={() =>
+                                  handleViewParticipants(item.id, item.title)
+                                }
+                              >
+                                Participants
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -531,7 +614,10 @@ function ManageContest() {
           <div className="modal-overlay">
             <div className="modal-content">
               <h3>End Event</h3>
-              <p>Are you sure you want to end this event? This action cannot be undone.</p>
+              <p>
+                Are you sure you want to end this event? This action cannot be
+                undone.
+              </p>
               <div className="modal-actions">
                 <button className="btn-secondary" onClick={cancelEndEvent}>
                   Cancel
@@ -544,15 +630,131 @@ function ManageContest() {
           </div>
         )}
 
+        {/* Leaderboard / Participants Modal */}
+        {showLeaderboardModal && (
+          <div className="modal-overlay">
+            <div className="modal-content event-details-modal">
+              <div className="modal-header">
+                <h3>Participants for: {selectedEvent?.eventTitle}</h3>
+                <button
+                  className="close-button"
+                  onClick={closeLeaderboardModal}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="participants-content">
+                {isLeaderboardLoading ? (
+                  <div className="loading-state">Loading participants...</div>
+                ) : sortedLeaderboardData.length > 0 ? (
+                  <div className="leaderboard-table-container">
+                    <table className="leaderboard-table">
+                      <thead>
+                        <tr>
+                          {/* Clickable Table Headers for Sorting */}
+                          <th>Rank</th>
+                          <th>
+                            <button
+                              onClick={() => requestSort("userName")}
+                              className="sort-button"
+                            >
+                              Name{" "}
+                              {sortConfig.key === "userName"
+                                ? sortConfig.direction === "ascending"
+                                  ? "▲"
+                                  : "▼"
+                                : ""}
+                            </button>
+                          </th>
+                          <th>
+                            <button
+                              onClick={() => requestSort("userDepartment")}
+                              className="sort-button"
+                            >
+                              Department{" "}
+                              {sortConfig.key === "userDepartment"
+                                ? sortConfig.direction === "ascending"
+                                  ? "▲"
+                                  : "▼"
+                                : ""}
+                            </button>
+                          </th>
+                          <th>
+                            <button
+                              onClick={() => requestSort("points")}
+                              className="sort-button"
+                            >
+                              Score{" "}
+                              {sortConfig.key === "points"
+                                ? sortConfig.direction === "ascending"
+                                  ? "▲"
+                                  : "▼"
+                                : ""}
+                            </button>
+                          </th>
+                          <th>
+                            <button
+                              onClick={() => requestSort("submittedAt")}
+                              className="sort-button"
+                            >
+                              Submitted At{" "}
+                              {sortConfig.key === "submittedAt"
+                                ? sortConfig.direction === "ascending"
+                                  ? "▲"
+                                  : "▼"
+                                : ""}
+                            </button>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sortedLeaderboardData.map((user, index) => (
+                          <tr key={user.resultId}>
+                            <td>{index + 1}</td>
+                            <td>{user.userName}</td>
+                            <td>{user.userDepartment}</td>
+                            <td>{user.points}</td>
+                            <td>
+                              {new Date(user.submittedAt).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <p>
+                      No participants have submitted results for this event yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={closeLeaderboardModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Event Details View Modal */}
         {showViewModal && selectedEvent && (
           <div className="modal-overlay">
             <div className="modal-content event-details-modal">
               <div className="modal-header">
                 <h3>{selectedEvent.eventTitle}</h3>
-                <button className="close-button" onClick={closeViewModal}>×</button>
+                <button className="close-button" onClick={closeViewModal}>
+                  ×
+                </button>
               </div>
-              
+
               <div className="event-details-content">
                 {/* Event Overview */}
                 <div className="detail-section">
@@ -560,31 +762,45 @@ function ManageContest() {
                   <div className="detail-grid">
                     <div className="detail-item">
                       <span className="detail-label">Type:</span>
-                      <span className="detail-value">{selectedEvent.eventType?.toUpperCase()}</span>
+                      <span className="detail-value">
+                        {selectedEvent.eventType?.toUpperCase()}
+                      </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Mode:</span>
-                      <span className="detail-value">{selectedEvent.eventMode?.toUpperCase()}</span>
+                      <span className="detail-value">
+                        {selectedEvent.eventMode?.toUpperCase()}
+                      </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Duration:</span>
-                      <span className="detail-value">{selectedEvent.durationMinutes} minutes</span>
+                      <span className="detail-value">
+                        {selectedEvent.durationMinutes} minutes
+                      </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Status:</span>
-                      <span className="detail-value">{selectedEvent.active ? 'Active' : 'Ended'}</span>
+                      <span className="detail-value">
+                        {selectedEvent.active ? "Active" : "Ended"}
+                      </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Topics:</span>
-                      <span className="detail-value">{selectedEvent.topicsCovered}</span>
+                      <span className="detail-value">
+                        {selectedEvent.topicsCovered}
+                      </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Allowed Departments:</span>
-                      <span className="detail-value">{selectedEvent.allowedDepartments || 'Any department'}</span>
+                      <span className="detail-value">
+                        {selectedEvent.allowedDepartments || "Any department"}
+                      </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Participants:</span>
-                      <span className="detail-value">{selectedEvent.participants?.length || 0}</span>
+                      <span className="detail-value">
+                        {selectedEvent.participants?.length || 0}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -592,33 +808,54 @@ function ManageContest() {
                 {/* Event Description */}
                 <div className="detail-section">
                   <h4>Description</h4>
-                  <p className="event-description">{selectedEvent.eventDescription}</p>
+                  <p className="event-description">
+                    {selectedEvent.eventDescription}
+                  </p>
                 </div>
 
                 {/* Questions/Problems Section */}
                 <div className="detail-section">
-                  <h4>{selectedEvent.eventType === 'quiz' ? 'Questions' : 'Problems'}</h4>
-                  
-                  {selectedEvent.eventType === 'quiz' ? (
+                  <h4>
+                    {selectedEvent.eventType === "quiz"
+                      ? "Questions"
+                      : "Problems"}
+                  </h4>
+
+                  {selectedEvent.eventType === "quiz" ? (
                     // Quiz Questions
                     <div className="questions-list">
                       {selectedEvent.questions?.map((question, index) => (
-                        <div key={question.questionId} className="question-item">
+                        <div
+                          key={question.questionId}
+                          className="question-item"
+                        >
                           <div className="question-header">
-                            <span className="question-number">Q{index + 1}</span>
-                            <span className="question-points">{selectedEvent.pointsPerQuestion} points</span>
+                            <span className="question-number">
+                              Q{index + 1}
+                            </span>
+                            <span className="question-points">
+                              {selectedEvent.pointsPerQuestion} points
+                            </span>
                           </div>
                           <p className="question-text">{question.question}</p>
                           <div className="options-list">
                             {question.options?.map((option, optIndex) => (
-                              <div 
-                                key={optIndex} 
-                                className={`option-item ${option === question.correctAnswer ? 'correct' : ''}`}
+                              <div
+                                key={optIndex}
+                                className={`option-item ${
+                                  option === question.correctAnswer
+                                    ? "correct"
+                                    : ""
+                                }`}
                               >
-                                <span className="option-label">{String.fromCharCode(65 + optIndex)}.</span>
+                                <span className="option-label">
+                                  {String.fromCharCode(65 + optIndex)}.
+                                </span>
                                 <span className="option-text">{option}</span>
                                 {option === question.correctAnswer && (
-                                  <span className="correct-badge">✓ Correct</span>
+                                  <span className="correct-badge">
+                                    ✓ Correct
+                                  </span>
                                 )}
                               </div>
                             ))}
@@ -632,12 +869,18 @@ function ManageContest() {
                       {selectedEvent.problems?.map((problem, index) => (
                         <div key={problem.questionId} className="problem-item">
                           <div className="problem-header">
-                            <span className="problem-code">{problem.contestProblemCode}</span>
-                            <span className="problem-points">{problem.points} points</span>
+                            <span className="problem-code">
+                              {problem.contestProblemCode}
+                            </span>
+                            <span className="problem-points">
+                              {problem.points} points
+                            </span>
                           </div>
                           <h5 className="problem-title">{problem.title}</h5>
-                          <p className="problem-description">{problem.description}</p>
-                          
+                          <p className="problem-description">
+                            {problem.description}
+                          </p>
+
                           {/* Input/Output Format */}
                           <div className="problem-details">
                             <div className="io-section">
@@ -673,24 +916,37 @@ function ManageContest() {
                             <div className="code-tabs">
                               <div className="code-tab">
                                 <span className="tab-label">Python</span>
-                                <pre className="code-block">{problem.starterCode?.python}</pre>
+                                <pre className="code-block">
+                                  {problem.starterCode?.python}
+                                </pre>
                               </div>
                               <div className="code-tab">
                                 <span className="tab-label">Java</span>
-                                <pre className="code-block">{problem.starterCode?.java}</pre>
+                                <pre className="code-block">
+                                  {problem.starterCode?.java}
+                                </pre>
                               </div>
                             </div>
                           </div>
 
                           {/* Test Cases */}
                           <div className="test-cases-section">
-                            <h6>Test Cases ({problem.testCases?.length || 0})</h6>
+                            <h6>
+                              Test Cases ({problem.testCases?.length || 0})
+                            </h6>
                             <div className="test-cases-list">
                               {problem.testCases?.map((testCase, tcIndex) => (
-                                <div key={testCase.testCaseId} className="test-case-item">
+                                <div
+                                  key={testCase.testCaseId}
+                                  className="test-case-item"
+                                >
                                   <div className="test-case-header">
-                                    <span className="test-case-number">Test Case {tcIndex + 1}</span>
-                                    <span className="test-case-hidden">Hidden</span>
+                                    <span className="test-case-number">
+                                      Test Case {tcIndex + 1}
+                                    </span>
+                                    <span className="test-case-hidden">
+                                      Hidden
+                                    </span>
                                   </div>
                                   <div className="test-case-content">
                                     <div className="test-input">
@@ -698,7 +954,9 @@ function ManageContest() {
                                       <pre>{testCase.input}</pre>
                                     </div>
                                     <div className="test-output">
-                                      <span className="test-label">Expected Output:</span>
+                                      <span className="test-label">
+                                        Expected Output:
+                                      </span>
                                       <pre>{testCase.expectedOutput}</pre>
                                     </div>
                                   </div>
@@ -728,21 +986,26 @@ function ManageContest() {
             <div className="modal-content start-event-modal">
               <div className="modal-header">
                 <h3>Start Event: {editingEvent.eventTitle}</h3>
-                <button className="close-button" onClick={cancelStartEvent}>×</button>
+                <button className="close-button" onClick={cancelStartEvent}>
+                  ×
+                </button>
               </div>
-              
+
               <div className="start-event-content">
                 <p className="start-event-description">
-                  Review and edit the event details before starting. Once started, the event will be active and participants can join.
+                  Review and edit the event details before starting. Once
+                  started, the event will be active and participants can join.
                 </p>
-                
+
                 <div className="edit-form">
                   <div className="form-group">
                     <p>Event Title</p>
                     <input
                       type="text"
-                      value={editFormData.eventTitle || ''}
-                      onChange={(e) => handleEditFormChange('eventTitle', e.target.value)}
+                      value={editFormData.eventTitle || ""}
+                      onChange={(e) =>
+                        handleEditFormChange("eventTitle", e.target.value)
+                      }
                       placeholder="Enter event title"
                     />
                   </div>
@@ -750,8 +1013,10 @@ function ManageContest() {
                   <div className="form-group">
                     <p>Event Description</p>
                     <textarea
-                      value={editFormData.eventDescription || ''}
-                      onChange={(e) => handleEditFormChange('eventDescription', e.target.value)}
+                      value={editFormData.eventDescription || ""}
+                      onChange={(e) =>
+                        handleEditFormChange("eventDescription", e.target.value)
+                      }
                       placeholder="Enter event description"
                       rows="3"
                     />
@@ -762,8 +1027,13 @@ function ManageContest() {
                       <p>Duration (minutes)</p>
                       <input
                         type="number"
-                        value={editFormData.durationMinutes || ''}
-                        onChange={(e) => handleEditFormChange('durationMinutes', parseInt(e.target.value))}
+                        value={editFormData.durationMinutes || ""}
+                        onChange={(e) =>
+                          handleEditFormChange(
+                            "durationMinutes",
+                            parseInt(e.target.value)
+                          )
+                        }
                         placeholder="Duration in minutes"
                         min="1"
                       />
@@ -772,8 +1042,10 @@ function ManageContest() {
                     <div className="form-group">
                       <p>Event Mode</p>
                       <select
-                        value={editFormData.eventMode || ''}
-                        onChange={(e) => handleEditFormChange('eventMode', e.target.value)}
+                        value={editFormData.eventMode || ""}
+                        onChange={(e) =>
+                          handleEditFormChange("eventMode", e.target.value)
+                        }
                       >
                         <option value="practice">Practice Mode</option>
                         <option value="strict">Strict Mode</option>
@@ -785,8 +1057,10 @@ function ManageContest() {
                     <p>Topics Covered</p>
                     <input
                       type="text"
-                      value={editFormData.topicsCovered || ''}
-                      onChange={(e) => handleEditFormChange('topicsCovered', e.target.value)}
+                      value={editFormData.topicsCovered || ""}
+                      onChange={(e) =>
+                        handleEditFormChange("topicsCovered", e.target.value)
+                      }
                       placeholder="e.g., Algorithms, Data Structures, Web Development"
                     />
                   </div>
@@ -794,8 +1068,13 @@ function ManageContest() {
                   <div className="form-group">
                     <p>Allowed Departments</p>
                     <select
-                      value={editFormData.allowedDepartments || ''}
-                      onChange={(e) => handleEditFormChange('allowedDepartments', e.target.value)}
+                      value={editFormData.allowedDepartments || ""}
+                      onChange={(e) =>
+                        handleEditFormChange(
+                          "allowedDepartments",
+                          e.target.value
+                        )
+                      }
                     >
                       <option value="">Select Departments</option>
                       <option value="Any department">Any department</option>
@@ -809,233 +1088,366 @@ function ManageContest() {
                 </div>
 
                 {/* Quiz Questions Section */}
-                {editingEvent.eventType === 'quiz' && editFormData.questions && (
-                  <div className="questions-edit-section">
-                    <h4>Quiz Questions</h4>
-                    <div className="questions-list">
-                      {editFormData.questions.map((question, qIndex) => (
-                        <div key={question.questionId} className="question-edit-item">
-                          <div className="question-header">
-                            <span className="question-number">Question {qIndex + 1}</span>
-                            <span className="question-points">{editingEvent.pointsPerQuestion} points</span>
-                          </div>
-                          
-                          <div className="form-group">
-                            <p>Question Text</p>
-                            <textarea
-                              value={question.question || ''}
-                              onChange={(e) => handleQuestionChange(qIndex, 'question', e.target.value)}
-                              placeholder="Enter the question text"
-                              rows="3"
-                            />
-                          </div>
+                {editingEvent.eventType === "quiz" &&
+                  editFormData.questions && (
+                    <div className="questions-edit-section">
+                      <h4>Quiz Questions</h4>
+                      <div className="questions-list">
+                        {editFormData.questions.map((question, qIndex) => (
+                          <div
+                            key={question.questionId}
+                            className="question-edit-item"
+                          >
+                            <div className="question-header">
+                              <span className="question-number">
+                                Question {qIndex + 1}
+                              </span>
+                              <span className="question-points">
+                                {editingEvent.pointsPerQuestion} points
+                              </span>
+                            </div>
 
-                          <div className="options-section">
-                            <p>Options</p>
-                            <div className="options-list">
-                              {question.options?.map((option, optIndex) => (
-                                <div key={optIndex} className="option-edit-item">
-                                  <span className="option-label">{String.fromCharCode(65 + optIndex)}.</span>
-                                  <input
-                                    type="text"
-                                    value={option || ''}
-                                    onChange={(e) => handleOptionChange(qIndex, optIndex, e.target.value)}
-                                    placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
-                                    className={option === question.correctAnswer ? 'correct-option' : ''}
-                                  />
-                                  <input
-                                    type="radio"
-                                    name={`correct-${qIndex}`}
-                                    checked={option === question.correctAnswer}
-                                    onChange={() => handleQuestionChange(qIndex, 'correctAnswer', option)}
-                                    className="correct-radio"
-                                  />
-                                  <span className="correct-label">Correct</span>
-                                </div>
-                              ))}
+                            <div className="form-group">
+                              <p>Question Text</p>
+                              <textarea
+                                value={question.question || ""}
+                                onChange={(e) =>
+                                  handleQuestionChange(
+                                    qIndex,
+                                    "question",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Enter the question text"
+                                rows="3"
+                              />
+                            </div>
+
+                            <div className="options-section">
+                              <p>Options</p>
+                              <div className="options-list">
+                                {question.options?.map((option, optIndex) => (
+                                  <div
+                                    key={optIndex}
+                                    className="option-edit-item"
+                                  >
+                                    <span className="option-label">
+                                      {String.fromCharCode(65 + optIndex)}.
+                                    </span>
+                                    <input
+                                      type="text"
+                                      value={option || ""}
+                                      onChange={(e) =>
+                                        handleOptionChange(
+                                          qIndex,
+                                          optIndex,
+                                          e.target.value
+                                        )
+                                      }
+                                      placeholder={`Option ${String.fromCharCode(
+                                        65 + optIndex
+                                      )}`}
+                                      className={
+                                        option === question.correctAnswer
+                                          ? "correct-option"
+                                          : ""
+                                      }
+                                    />
+                                    <input
+                                      type="radio"
+                                      name={`correct-${qIndex}`}
+                                      checked={
+                                        option === question.correctAnswer
+                                      }
+                                      onChange={() =>
+                                        handleQuestionChange(
+                                          qIndex,
+                                          "correctAnswer",
+                                          option
+                                        )
+                                      }
+                                      className="correct-radio"
+                                    />
+                                    <span className="correct-label">
+                                      Correct
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Coding Contest Problems Section */}
-                {editingEvent.eventType === 'contest' && editFormData.problems && (
-                  <div className="problems-edit-section">
-                    <h4>Coding Problems</h4>
-                    <div className="problems-list">
-                      {editFormData.problems.map((problem, pIndex) => (
-                        <div key={problem.questionId} className="problem-edit-item">
-                          <div className="problem-header">
-                            <span className="problem-code">{problem.contestProblemCode}</span>
-                            <span className="problem-points">{problem.points} points</span>
-                          </div>
-                          
-                          <div className="form-group">
-                            <p>Problem Title</p>
-                            <input
-                              type="text"
-                              value={problem.title || ''}
-                              onChange={(e) => handleProblemChange(pIndex, 'title', e.target.value)}
-                              placeholder="Enter problem title"
-                            />
-                          </div>
+                {editingEvent.eventType === "contest" &&
+                  editFormData.problems && (
+                    <div className="problems-edit-section">
+                      <h4>Coding Problems</h4>
+                      <div className="problems-list">
+                        {editFormData.problems.map((problem, pIndex) => (
+                          <div
+                            key={problem.questionId}
+                            className="problem-edit-item"
+                          >
+                            <div className="problem-header">
+                              <span className="problem-code">
+                                {problem.contestProblemCode}
+                              </span>
+                              <span className="problem-points">
+                                {problem.points} points
+                              </span>
+                            </div>
 
-                          <div className="form-group">
-                            <p>Problem Description</p>
-                            <textarea
-                              value={problem.description || ''}
-                              onChange={(e) => handleProblemChange(pIndex, 'description', e.target.value)}
-                              placeholder="Enter problem description"
-                              rows="4"
-                            />
-                          </div>
-
-                          <div className="form-row">
                             <div className="form-group">
-                              <p>Input Format</p>
-                              <textarea
-                                value={problem.problemDetails?.inputFormat || ''}
-                                onChange={(e) => handleProblemDetailChange(pIndex, 'inputFormat', e.target.value)}
-                                placeholder="Describe the input format"
-                                rows="3"
+                              <p>Problem Title</p>
+                              <input
+                                type="text"
+                                value={problem.title || ""}
+                                onChange={(e) =>
+                                  handleProblemChange(
+                                    pIndex,
+                                    "title",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Enter problem title"
                               />
                             </div>
+
                             <div className="form-group">
-                              <p>Output Format</p>
+                              <p>Problem Description</p>
                               <textarea
-                                value={problem.problemDetails?.outputFormat || ''}
-                                onChange={(e) => handleProblemDetailChange(pIndex, 'outputFormat', e.target.value)}
-                                placeholder="Describe the output format"
-                                rows="3"
+                                value={problem.description || ""}
+                                onChange={(e) =>
+                                  handleProblemChange(
+                                    pIndex,
+                                    "description",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Enter problem description"
+                                rows="4"
                               />
                             </div>
-                          </div>
 
-                          <div className="example-section">
-                            <p>Example</p>
                             <div className="form-row">
                               <div className="form-group">
-                                <p>Input</p>
+                                <p>Input Format</p>
                                 <textarea
-                                  value={problem.examples?.[0]?.input || ''}
-                                  onChange={(e) => handleExampleChange(pIndex, 'input', e.target.value)}
-                                  placeholder="Example input"
+                                  value={
+                                    problem.problemDetails?.inputFormat || ""
+                                  }
+                                  onChange={(e) =>
+                                    handleProblemDetailChange(
+                                      pIndex,
+                                      "inputFormat",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Describe the input format"
                                   rows="3"
                                 />
                               </div>
                               <div className="form-group">
-                                <p>Output</p>
+                                <p>Output Format</p>
                                 <textarea
-                                  value={problem.examples?.[0]?.output || ''}
-                                  onChange={(e) => handleExampleChange(pIndex, 'output', e.target.value)}
-                                  placeholder="Example output"
+                                  value={
+                                    problem.problemDetails?.outputFormat || ""
+                                  }
+                                  onChange={(e) =>
+                                    handleProblemDetailChange(
+                                      pIndex,
+                                      "outputFormat",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Describe the output format"
                                   rows="3"
                                 />
                               </div>
                             </div>
-                          </div>
 
-                          <div className="starter-code-section">
-                            <p>Starter Code</p>
-                            <div className="code-tabs">
-                              <div className="code-tab">
-                                <p>Python</p>
-                                <textarea
-                                  value={problem.starterCode?.python || ''}
-                                  onChange={(e) => handleStarterCodeChange(pIndex, 'python', e.target.value)}
-                                  placeholder="Python starter code"
-                                  rows="6"
-                                  className="code-textarea"
-                                />
-                              </div>
-                              <div className="code-tab">
-                                <p>Java</p>
-                                <textarea
-                                  value={problem.starterCode?.java || ''}
-                                  onChange={(e) => handleStarterCodeChange(pIndex, 'java', e.target.value)}
-                                  placeholder="Java starter code"
-                                  rows="6"
-                                  className="code-textarea"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="test-cases-section">
-                            <p>Test Cases</p>
-                            <div className="test-cases-list">
-                              {problem.testCases?.map((testCase, tcIndex) => (
-                                <div key={testCase.testCaseId} className="test-case-edit-item">
-                                  <div className="test-case-header">
-                                    <span className="test-case-number">Test Case {tcIndex + 1}</span>
-                                    <span className="test-case-hidden">Hidden</span>
-                                  </div>
-                                  <div className="form-row">
-                                    <div className="form-group">
-                                      <p>Input</p>
-                                      <textarea
-                                        value={testCase.input || ''}
-                                        onChange={(e) => handleTestCaseChange(pIndex, tcIndex, 'input', e.target.value)}
-                                        placeholder="Test case input"
-                                        rows="3"
-                                      />
-                                    </div>
-                                    <div className="form-group">
-                                      <p>Expected Output</p>
-                                      <textarea
-                                        value={testCase.expectedOutput || ''}
-                                        onChange={(e) => handleTestCaseChange(pIndex, tcIndex, 'expectedOutput', e.target.value)}
-                                        placeholder="Expected output"
-                                        rows="3"
-                                      />
-                                    </div>
-                                  </div>
+                            <div className="example-section">
+                              <p>Example</p>
+                              <div className="form-row">
+                                <div className="form-group">
+                                  <p>Input</p>
+                                  <textarea
+                                    value={problem.examples?.[0]?.input || ""}
+                                    onChange={(e) =>
+                                      handleExampleChange(
+                                        pIndex,
+                                        "input",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Example input"
+                                    rows="3"
+                                  />
                                 </div>
-                              ))}
+                                <div className="form-group">
+                                  <p>Output</p>
+                                  <textarea
+                                    value={problem.examples?.[0]?.output || ""}
+                                    onChange={(e) =>
+                                      handleExampleChange(
+                                        pIndex,
+                                        "output",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Example output"
+                                    rows="3"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="starter-code-section">
+                              <p>Starter Code</p>
+                              <div className="code-tabs">
+                                <div className="code-tab">
+                                  <p>Python</p>
+                                  <textarea
+                                    value={problem.starterCode?.python || ""}
+                                    onChange={(e) =>
+                                      handleStarterCodeChange(
+                                        pIndex,
+                                        "python",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Python starter code"
+                                    rows="6"
+                                    className="code-textarea"
+                                  />
+                                </div>
+                                <div className="code-tab">
+                                  <p>Java</p>
+                                  <textarea
+                                    value={problem.starterCode?.java || ""}
+                                    onChange={(e) =>
+                                      handleStarterCodeChange(
+                                        pIndex,
+                                        "java",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Java starter code"
+                                    rows="6"
+                                    className="code-textarea"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="test-cases-section">
+                              <p>Test Cases</p>
+                              <div className="test-cases-list">
+                                {problem.testCases?.map((testCase, tcIndex) => (
+                                  <div
+                                    key={testCase.testCaseId}
+                                    className="test-case-edit-item"
+                                  >
+                                    <div className="test-case-header">
+                                      <span className="test-case-number">
+                                        Test Case {tcIndex + 1}
+                                      </span>
+                                      <span className="test-case-hidden">
+                                        Hidden
+                                      </span>
+                                    </div>
+                                    <div className="form-row">
+                                      <div className="form-group">
+                                        <p>Input</p>
+                                        <textarea
+                                          value={testCase.input || ""}
+                                          onChange={(e) =>
+                                            handleTestCaseChange(
+                                              pIndex,
+                                              tcIndex,
+                                              "input",
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder="Test case input"
+                                          rows="3"
+                                        />
+                                      </div>
+                                      <div className="form-group">
+                                        <p>Expected Output</p>
+                                        <textarea
+                                          value={testCase.expectedOutput || ""}
+                                          onChange={(e) =>
+                                            handleTestCaseChange(
+                                              pIndex,
+                                              tcIndex,
+                                              "expectedOutput",
+                                              e.target.value
+                                            )
+                                          }
+                                          placeholder="Expected output"
+                                          rows="3"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="event-summary">
                   <h4>Event Summary</h4>
                   <div className="summary-grid">
                     <div className="summary-item">
                       <span className="summary-label">Type:</span>
-                      <span className="summary-value">{editingEvent.eventType?.toUpperCase()}</span>
+                      <span className="summary-value">
+                        {editingEvent.eventType?.toUpperCase()}
+                      </span>
                     </div>
                     <div className="summary-item">
-                      <span className="summary-label">Allowed Departments:</span>
-                      <span className="summary-value">{editFormData.allowedDepartments || editingEvent.allowedDepartments || 'Any department'}</span>
+                      <span className="summary-label">
+                        Allowed Departments:
+                      </span>
+                      <span className="summary-value">
+                        {editFormData.allowedDepartments ||
+                          editingEvent.allowedDepartments ||
+                          "Any department"}
+                      </span>
                     </div>
                     <div className="summary-item">
                       <span className="summary-label">Questions/Problems:</span>
                       <span className="summary-value">
-                        {editingEvent.eventType === 'quiz' 
-                          ? editingEvent.numberOfQuestions 
+                        {editingEvent.eventType === "quiz"
+                          ? editingEvent.numberOfQuestions
                           : editingEvent.numberOfPrograms}
                       </span>
                     </div>
                     <div className="summary-item">
-                      <span className="summary-label">Points per Question:</span>
+                      <span className="summary-label">
+                        Points per Question:
+                      </span>
                       <span className="summary-value">
-                        {editingEvent.eventType === 'quiz' 
-                          ? editingEvent.pointsPerQuestion 
+                        {editingEvent.eventType === "quiz"
+                          ? editingEvent.pointsPerQuestion
                           : editingEvent.pointsPerProgram}
                       </span>
                     </div>
                     <div className="summary-item">
                       <span className="summary-label">Total Score:</span>
                       <span className="summary-value">
-                        {editingEvent.eventType === 'quiz' 
-                          ? editingEvent.totalScore 
-                          : editingEvent.numberOfPrograms * editingEvent.pointsPerProgram}
+                        {editingEvent.eventType === "quiz"
+                          ? editingEvent.totalScore
+                          : editingEvent.numberOfPrograms *
+                            editingEvent.pointsPerProgram}
                       </span>
                     </div>
                   </div>
@@ -1043,17 +1455,25 @@ function ManageContest() {
               </div>
 
               <div className="modal-actions">
-                <button className="btn-secondary" onClick={cancelStartEvent} disabled={startEventLoading}>
+                <button
+                  className="btn-secondary"
+                  onClick={cancelStartEvent}
+                  disabled={startEventLoading}
+                >
                   Cancel
                 </button>
-                <button className="btn-success" onClick={confirmStartEvent} disabled={startEventLoading}>
+                <button
+                  className="btn-success"
+                  onClick={confirmStartEvent}
+                  disabled={startEventLoading}
+                >
                   {startEventLoading ? (
                     <>
                       <div className="spinner"></div>
                       Starting Event...
                     </>
                   ) : (
-                    'Start Event'
+                    "Start Event"
                   )}
                 </button>
               </div>

@@ -4,7 +4,7 @@
   padding: 2rem;
   background-color: #f8f9fa;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin-left: 280px;
 }
 
@@ -277,7 +277,7 @@
 }
 
 .contest-id-text {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.85rem;
   color: #4a5568;
   font-weight: 500;
@@ -712,7 +712,7 @@
 .example-input pre,
 .example-output pre {
   margin: 0;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.85rem;
   color: #2d3748;
   white-space: pre-wrap;
@@ -756,7 +756,7 @@
   padding: 1rem;
   background: #2d3748;
   color: #e2e8f0;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.85rem;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -838,7 +838,7 @@
 .test-input pre,
 .test-output pre {
   margin: 0;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.8rem;
   color: #2d3748;
   white-space: pre-wrap;
@@ -1102,7 +1102,7 @@
   padding: 1rem;
   background: #2d3748;
   color: #e2e8f0;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.85rem;
   line-height: 1.4;
   border: none;
@@ -1158,47 +1158,47 @@
     width: 95vw;
     max-height: 95vh;
   }
-  
+
   .detail-grid,
   .summary-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .problem-details {
     grid-template-columns: 1fr;
   }
-  
+
   .example-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .test-case-content {
     grid-template-columns: 1fr;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .option-edit-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .option-edit-item input[type="text"] {
     width: 100%;
   }
-  
+
   .question-edit-item,
   .problem-edit-item {
     padding: 1rem;
   }
-  
+
   .code-tabs {
     gap: 0.5rem;
   }
-  
+
   .code-textarea {
     min-height: 100px;
   }
@@ -1217,30 +1217,30 @@
   .manage-contest-page {
     padding: 1rem;
   }
-  
+
   .controls-section {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .search-bar {
     min-width: unset;
   }
-  
+
   .filter-section {
     justify-content: center;
   }
-  
+
   .cards-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .card-footer {
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-start;
   }
-  
+
   .card-actions {
     flex-direction: column;
   }
@@ -1250,15 +1250,15 @@
   .page-header h1 {
     font-size: 2rem;
   }
-  
+
   .filter-buttons {
     flex-wrap: wrap;
   }
-  
+
   .section {
     padding: 1rem;
   }
-  
+
   .contest-card {
     padding: 1rem;
   }
@@ -1295,4 +1295,76 @@
 .btn-success:disabled {
   background: #38a169;
   color: white;
+}
+
+/* In ManageContest.css */
+
+/* Modal Tabs */
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #666;
+  border-bottom: 2px solid transparent;
+}
+.tab-button.active {
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+  font-weight: 600;
+}
+
+/* Leaderboard Table */
+.leaderboard-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+.leaderboard-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+.leaderboard-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* For the new Participants button */
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* For the clickable sort buttons in the table header */
+.sort-button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  font-weight: bold;
+}
+.sort-button:hover {
+  color: #0056b3;
 }

@@ -121,7 +121,6 @@ async function handleQuizCreation(req, res, data) {
   }
 }
 
-
 // Function for creating coding contests
 
 // 1) Gets necessary informations from the route '/api/admin/create-contest'.
@@ -323,9 +322,51 @@ async function handleCodingContestCreation(req, res, data) {
   }
 }
 
+async function fetchResultsForEvent(eventId) {
+  // Step 1: Get all the results for the event, same as before
+  const resultsQuery = db
+    .collection("eventResults")
+    .where("eventId", "==", eventId)
+    .orderBy("points", "desc");
 
+  const resultsSnapshot = await resultsQuery.get();
+
+  if (resultsSnapshot.empty) {
+    return []; // Return empty if no one has participated yet
+  }
+
+  // Step 2: Create an array of promises to look up each user
+  const userPromises = resultsSnapshot.docs.map((doc) => {
+    const resultData = doc.data();
+    // For each result, create a promise to get the corresponding user document
+    return db.collection("users").doc(resultData.userId).get();
+  });
+
+  // Step 3: Execute all user lookups in parallel
+  const userSnapshots = await Promise.all(userPromises);
+
+  // Step 4: Combine the result data with the user data
+  const combinedResults = resultsSnapshot.docs.map((doc, index) => {
+    const resultData = doc.data();
+    const userData = userSnapshots[index].data();
+
+    return {
+      resultId: doc.id,
+      userId: resultData.userId,
+      points: resultData.points,
+      submittedAt: resultData.submittedAt.toDate(),
+      // Add user details here!
+      userName: userData?.userName || "Unknown User",
+      userDepartment: userData?.department || "N/A",
+      userEmail: userData?.email || "N/A",
+    };
+  });
+
+  return combinedResults;
+}
 
 module.exports = {
   handleQuizCreation,
   handleCodingContestCreation,
+  fetchResultsForEvent,
 };
