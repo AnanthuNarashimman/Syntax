@@ -124,7 +124,7 @@ async function submitEvent(eventId, userId, points) {
             .where('eventId', '==', eventId)
             .get();
 
-        if(eventSnapshot.empty) {
+        if (eventSnapshot.empty) {
             throw new Error("Event not started");
         }
 
@@ -143,18 +143,36 @@ async function submitEvent(eventId, userId, points) {
             "submittedAt": admin.firestore.FieldValue.serverTimestamp()
         }
 
+        // try {
+
+        //     const userDocRef = db.collection("users").doc(userId);
+        //     const userSnapshot = await userDocRef.get();
+
+        //     if (userSnapshot.exists) {
+        //         await userDocRef.update({ 
+        //             Submissions: admin.firestore.FieldValue.arrayUnion(eventId),
+        //             contestsParticipated: admin.firestore.FieldValue.increment(1)
+        //         });
+        //     }
+
+        //     console.log("Updated Successfully");
+        // } catch (e) {
+        //     console.log(e);
+        // }
+
+
         const resultRef = await db.collection('eventResults').add(resultData);
-        
+
         // Update attempt with result reference
         await attemptDoc.ref.update({
             result_ref: resultRef.id
         });
-        
+
         return {
             "success": true
         }
 
-    } catch(err) {
+    } catch (err) {
         console.log("Error submitting event:", err);
         return {
             "success": false,

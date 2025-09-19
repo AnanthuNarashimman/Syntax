@@ -29,6 +29,7 @@
   box-shadow: 0 20px 40px rgba(255, 138, 101, 0.3);
   position: relative;
   overflow: hidden;
+  margin-top: 15px;
 }
 
 .welcomeCard::before {
@@ -56,10 +57,7 @@
 }
 
 .highlight {
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: white;
 }
 
 .welcomeSubtitle {
@@ -573,7 +571,3 @@
     align-items: flex-start;
   }
 }
-
-/* Sidebar styles removed - StudentHome now uses full width layout */
-
-/* Responsive styles for sidebar removed */

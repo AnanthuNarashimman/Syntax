@@ -1,5 +1,5 @@
 const validationService = require('../services/validationService');
-const { db } = require('../config/firebase');
+const { db, admin } = require('../config/firebase');
 
 const validateQuiz = async (req, res) => {
     try {
@@ -19,6 +19,46 @@ const validateQuiz = async (req, res) => {
         console.log('Quiz validation result:', result.QuizResult);
 
         const totalPoints = result.pointsPerQuestion * result.correctAnswerCount;
+
+        try {
+
+            const userDocRef = db.collection("users").doc(userId);
+            const userSnapshot = await userDocRef.get();
+
+            if (userSnapshot.exists) {
+                await userDocRef.update({
+                    totalScores: admin.firestore.FieldValue.increment(totalPoints),
+                    contestsParticipated: admin.firestore.FieldValue.increment(1)
+                });
+            }
+
+            console.log("Updated Successfully");
+        } catch (e) {
+            console.log(e);
+        }
+
+
+        try {
+            const userSubmissionSnapShot = await db.collection("userSubmissions").where("userId", "==", userId).get(); 
+
+            if (userSubmissionSnapShot.empty) {
+                const newDocRef = await db.collection('userSubmissions').add({
+                    "userId": userId,
+                    "totalScore": totalPoints,
+                    "submissions": [quizId],
+                    "submissionCount": 1
+                });
+            } else {
+                const submissionRef = userSubmissionSnapShot.docs[0].ref;
+                await submissionRef.update({
+                    submissions: admin.firestore.FieldValue.arrayUnion(quizId), 
+                    totalScore: admin.firestore.FieldValue.increment(totalPoints),
+                    submissionCount: admin.firestore.FieldValue.increment(1)
+                });
+            }
+        } catch (e) {
+            console.log(e);
+        }
 
         const submissionResult = await validationService.submitEvent(quizId, userId, totalPoints);
 

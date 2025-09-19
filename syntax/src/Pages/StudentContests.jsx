@@ -223,15 +223,6 @@ const StudentContests = () => {
                   <p>Active Contests</p>
                 </div>
               </div>
-              <div className={styles.statCard}>
-                <div className={styles.statIcon}>
-                  <Users size={24} />
-                </div>
-                <div className={styles.statInfo}>
-                  <h3>1.2k</h3>
-                  <p>Participants</p>
-                </div>
-              </div>
             </div>
           </div>
           <div className={styles.headerIllustration}>
