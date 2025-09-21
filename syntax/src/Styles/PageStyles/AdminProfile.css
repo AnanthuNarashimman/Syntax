@@ -8,6 +8,7 @@
 
 .profileHeader {
   margin-bottom: 32px;
+  margin-top: 2%;
 }
 
 .profileHeader h1 {
@@ -291,6 +292,13 @@
   margin-top: 0;
   position: static;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.profileImage {
+  position: absolute;
+  bottom: 13%;
+  right: 2%;
+  width: 25%;
 }
 
 /* Responsive Design */

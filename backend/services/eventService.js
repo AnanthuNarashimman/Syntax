@@ -359,6 +359,8 @@ async function fetchResultsForEvent(eventId) {
       userName: userData?.userName || "Unknown User",
       userDepartment: userData?.department || "N/A",
       userEmail: userData?.email || "N/A",
+      userYear: userData?.year || "N/A",
+      userSection: userData?.section || "N/A",
     };
   });
 

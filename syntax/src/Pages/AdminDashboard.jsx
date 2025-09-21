@@ -16,6 +16,8 @@ import AdminNavbar from '../Components/AdminNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useContestContext } from '../contexts/ContestContext';
 
+import Admin_Home from '../assets/Images/Admin_home.png';
+
 function AdminDashboard() {
   // Use ContestContext
   const { getStats, getRecentContests, loading, adminName, adminNameLoading, fetchEvents } = useContestContext();
@@ -89,8 +91,7 @@ function AdminDashboard() {
       <div className="AdminDashboardMainContent column-dashboard">
         <header className="dashboard-header">
           <div className="header-content">
-            <h1>Welcome back, {adminNameLoading ? '...' : adminName}!</h1>
-            <p>Manage your coding contests and monitor participant activity</p>
+            {/* Content moved to hero section */}
           </div>
           <div className="header-actions">
             <button className="btn-primary" onClick={() => navigate('/create-contest')}>
@@ -99,6 +100,17 @@ function AdminDashboard() {
             </button>
           </div>
         </header>
+
+        {/* Hero Section */}
+        <div className="admin-hero-section">
+          <div className="admin-hero-content">
+            <h1>Welcome back, {adminNameLoading ? '...' : adminName}!</h1>
+            <p>Empower your students. Create engaging quizzes and exciting contests to foster their growth and success.</p>
+          </div>
+          <div className="admin-hero-image">
+            <img src={Admin_Home} alt="" />
+          </div>
+        </div>
 
         {/* Stats Grid */}
         <div className="AdminDashboardStatsGrid">
@@ -128,8 +140,8 @@ function AdminDashboard() {
             {recentContests.length > 0 ? (
               <div className="AdminDashboardContestList">
                 {recentContests.map((contest, index) => (
-                  <>
-                    <div key={index} className="AdminDashboardContestItem">
+                  <div key={index} className="AdminDashboardContestCard">
+                    <div className="AdminDashboardContestCardContent">
                       <div className="AdminDashboardContestInfo">
                         <h4>{contest.name}</h4>
                         <p>{contest.participants} participants</p>
@@ -139,8 +151,7 @@ function AdminDashboard() {
                         <p className="AdminDashboardContestTime">{contest.time}</p>
                       </div>
                     </div>
-                    {index !== recentContests.length - 1 && <hr className="contest-divider" />}
-                  </>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -171,38 +182,6 @@ function AdminDashboard() {
                 <Settings size={32} />
                 <span>Manage Events</span>
               </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Chart Placeholder */}
-        <div className="AdminDashboardCard AdminDashboardFullWidth">
-          <div className="AdminDashboardCardHeader">
-            <h2>Participation Overview</h2>
-            <select className="time-selector">
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>Last 3 months</option>
-            </select>
-          </div>
-          <div className="AdminDashboardChartPlaceholder">
-            <div className="AdminDashboardChartBars">
-              <div className="AdminDashboardBar" style={{ height: '60%' }}></div>
-              <div className="AdminDashboardBar" style={{ height: '80%' }}></div>
-              <div className="AdminDashboardBar" style={{ height: '45%' }}></div>
-              <div className="AdminDashboardBar" style={{ height: '90%' }}></div>
-              <div className="AdminDashboardBar" style={{ height: '70%' }}></div>
-              <div className="AdminDashboardBar" style={{ height: '85%' }}></div>
-              <div className="AdminDashboardBar" style={{ height: '65%' }}></div>
-            </div>
-            <div className="AdminDashboardChartLabels">
-              <span>Mon</span>
-              <span>Tue</span>
-              <span>Wed</span>
-              <span>Thu</span>
-              <span>Fri</span>
-              <span>Sat</span>
-              <span>Sun</span>
             </div>
           </div>
         </div>

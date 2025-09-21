@@ -17,7 +17,6 @@ import {
   Mail,
   Calendar,
   MapPin,
-  Award,
   Trophy,
   Target,
   TrendingUp,
@@ -32,6 +31,7 @@ import styles from "../Styles/PageStyles/StudentUser.module.css";
 import StudentNavbar from "../Components/StudentNavbar";
 import Loader from "../Components/Loader";
 import { useAlert } from "../contexts/AlertContext";
+import { useContestContext } from "../contexts/ContestContext";
 import SkillEditModal from "../Components/SkillEditModal";
 import SettingsModal from "../Components/SettingsModal";
 
@@ -40,7 +40,109 @@ const getInitial = (name) =>
 
 const StudentUser = () => {
   const { showError } = useAlert();
+  const { 
+    studentSubmissions, 
+    submissionsLoading, 
+    submissionsError, 
+    fetchStudentSubmissions 
+  } = useContestContext();
+
+  const [performanceData, setPerformanceData] = useState([]);
+  const [performanceLoading, setPerformanceLoading] = useState(true);
+  const [contestsYAxisDomain, setContestsYAxisDomain] = useState([0, 10]);
+  const [scoresYAxisDomain, setScoresYAxisDomain] = useState([0, 100]);
+
+  useEffect(() => {
+    fetchStudentSubmissions();
+  }, []);
+
+  // Helper function to calculate proper Y-axis intervals
+  const calculateYAxisDomain = (maxValue, minInterval = 5) => {
+    if (maxValue === 0) return [0, minInterval];
+    
+    // Calculate a nice interval
+    const rawInterval = maxValue / 5; // Aim for about 5 intervals
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawInterval)));
+    const normalizedInterval = rawInterval / magnitude;
+    
+    let niceInterval;
+    if (normalizedInterval <= 1) niceInterval = 1;
+    else if (normalizedInterval <= 2) niceInterval = 2;
+    else if (normalizedInterval <= 5) niceInterval = 5;
+    else niceInterval = 10;
+    
+    const interval = niceInterval * magnitude;
+    const max = Math.ceil(maxValue / interval) * interval;
+    
+    return [0, Math.max(max, minInterval)];
+  };
+
+  // Fetch performance data
+  useEffect(() => {
+    const fetchPerformanceData = async () => {
+      try {
+        const response = await fetch('/api/student/profile/progress', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Performance data received:', data);
+          
+          // Transform the data for the chart
+          const chartData = data.Result.map(item => ({
+            date: item.month,
+            contests: item.contestsParticipated,
+            totalScore: item.totalScore
+          }));
+          
+          // Calculate separate Y-axis domains for each metric
+          const maxContests = Math.max(...chartData.map(item => item.contests));
+          const maxScore = Math.max(...chartData.map(item => item.totalScore));
+          
+          setContestsYAxisDomain(calculateYAxisDomain(maxContests, 5));
+          setScoresYAxisDomain(calculateYAxisDomain(maxScore, 50));
+          
+          setPerformanceData(chartData);
+        } else {
+          console.error('Failed to fetch performance data');
+          // Use fallback data for current year months if API fails
+          setPerformanceData(generateEmptyYearData());
+        }
+      } catch (error) {
+        console.error('Error fetching performance data:', error);
+        setPerformanceData(generateEmptyYearData());
+      } finally {
+        setPerformanceLoading(false);
+      }
+    };
+
+    fetchPerformanceData();
+  }, []);
+
+  // Helper function to generate empty data for all 12 months
+  const generateEmptyYearData = () => {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return monthNames.map(month => ({
+      date: month,
+      contests: 0,
+      totalScore: 0
+    }));
+  };
+
+  // Debug logging
+  useEffect(() => {
+    console.log('StudentUser - Submissions state:', {
+      submissionsLoading,
+      submissionsError,
+      studentSubmissions
+    });
+  }, [submissionsLoading, submissionsError, studentSubmissions]);
+  
   const [loading, setLoading] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [studentData, setStudentData] = useState({
     userName: "User",
     email: "",
@@ -54,75 +156,6 @@ const StudentUser = () => {
     joinDate: "",
     lastActive: "Recently",
   });
-
-  // Sample data for charts and components
-  const performanceData = [
-    { date: "Jan 15", practice: 25, contests: 15, avgScore: 78 },
-    { date: "Jan 20", practice: 35, contests: 22, avgScore: 82 },
-    { date: "Jan 25", practice: 28, contests: 18, avgScore: 75 },
-    { date: "Feb 01", practice: 42, contests: 28, avgScore: 85 },
-    { date: "Feb 05", practice: 38, contests: 25, avgScore: 88 },
-    { date: "Feb 10", practice: 45, contests: 32, avgScore: 90 },
-    { date: "Feb 15", practice: 52, contests: 38, avgScore: 92 },
-  ];
-
-  // const skillsData = [
-  //   { skill: "Arrays", level: 85 },
-  //   { skill: "Trees", level: 72 },
-  //   { skill: "Graphs", level: 68 },
-  //   { skill: "Dynamic Programming", level: 45 },
-  //   { skill: "Algorithms", level: 78 },
-  // ];
-
-  const recentActivity = [
-    {
-      type: "contest",
-      title: "Weekly Coding Challenge",
-      score: 95,
-      date: "2 days ago",
-    },
-    {
-      type: "practice",
-      title: "Array Problems Set",
-      score: 88,
-      date: "3 days ago",
-    },
-    {
-      type: "quiz",
-      title: "Data Structures Quiz",
-      score: 92,
-      date: "5 days ago",
-    },
-    {
-      type: "contest",
-      title: "Monthly Contest",
-      score: 76,
-      date: "1 week ago",
-    },
-  ];
-
-  const achievements = [
-    {
-      icon: "🏆",
-      title: "Top 10 Performer",
-      description: "Ranked in top 10 this month",
-    },
-    {
-      icon: "🎯",
-      title: "Problem Solver",
-      description: "Solved 100+ problems",
-    },
-    {
-      icon: "⚡",
-      title: "Speed Demon",
-      description: "Fastest submission in contest",
-    },
-    {
-      icon: "🔥",
-      title: "Streak Master",
-      description: "30-day practice streak",
-    },
-  ];
 
   const [languages, setLanguages] = useState([]);
   const [skillsData, setSkillsData] = useState([]);
@@ -145,16 +178,69 @@ const StudentUser = () => {
         setStudentData(data.profile);
         setLanguages(data.profile.languages || []);
         setSkillsData(data.profile.skills || []);
+        setProfileLoaded(true);
       } catch (error) {
         console.error(error);
         showError("Failed to load student profile");
+        setProfileLoaded(true);
       } finally {
-        setLoading(false);
+        // Don't set loading to false here - wait for submissions data too
       }
     };
 
     fetchStudentProfile();
   }, [showError]);
+
+  // Update studentData when submissions data is loaded
+  useEffect(() => {
+    if (!submissionsLoading && !submissionsError && studentSubmissions) {
+      console.log('Updating student data with submissions:', studentSubmissions);
+      setStudentData(prevData => ({
+        ...prevData,
+        contestsParticipated: studentSubmissions.contestsParticipated || 0,
+        totalScore: studentSubmissions.totalPoints || 0
+      }));
+    }
+  }, [submissionsLoading, studentSubmissions, submissionsError]);
+
+  // Fallback: manually fetch submissions if context data is not available after profile loads
+  useEffect(() => {
+    if (profileLoaded && submissionsLoading) {
+      const fetchSubmissionsDirectly = async () => {
+        try {
+          console.log('Fetching submissions directly as fallback...');
+          const response = await fetch('/api/student/profile/submissions', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Direct submissions fetch result:', data);
+            setStudentData(prevData => ({
+              ...prevData,
+              contestsParticipated: data.Count || 0,
+              totalScore: data.Points || 0
+            }));
+          }
+        } catch (error) {
+          console.error('Error fetching submissions directly:', error);
+        }
+      };
+
+      // Wait a bit for context to load, then fetch directly if needed
+      const timer = setTimeout(fetchSubmissionsDirectly, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [profileLoaded, submissionsLoading]);
+
+  // Set loading to false when profile is loaded (don't wait for submissions)
+  useEffect(() => {
+    if (profileLoaded && !performanceLoading) {
+      setLoading(false);
+    }
+  }, [profileLoaded, performanceLoading]);
 
   const handleSaveSkills = async ({ languages, skills }) => {
     try {
@@ -178,7 +264,8 @@ const StudentUser = () => {
     }
   };
 
-  if (loading) {
+  // Show loading only if profile hasn't loaded yet
+  if (!profileLoaded) {
     return (
       <div className={styles.studentProfile}>
         <StudentNavbar />
@@ -310,7 +397,7 @@ const StudentUser = () => {
           {/* Header Section */}
           <div className={styles.profileHeader}>
             <div className={styles.headerContent}>
-              <h1 className={styles.pageTitle}>Student Profile</h1>
+              <h1 className={styles.pageTitle}>Dashboard</h1>
               <p className={styles.pageSubtitle}>
                 Track your progress and achievements in coding competitions
               </p>
@@ -324,7 +411,7 @@ const StudentUser = () => {
                   <h3 className={styles.statNumber}>
                     {studentData.contestsParticipated}
                   </h3>
-                  <p className={styles.statLabel}>Contests</p>
+                  <p className={styles.statLabel}>Contests Participated</p>
                 </div>
               </div>
               <div className={styles.statCard}>
@@ -335,143 +422,161 @@ const StudentUser = () => {
                   <h3 className={styles.statNumber}>
                     {studentData.totalScore}
                   </h3>
-                  <p className={styles.statLabel}>Total Score</p>
+                  <p className={styles.statLabel}>Total Points Earned</p>
                 </div>
               </div>
               <div className={styles.statCard}>
                 <div className={styles.statIcon}>
-                  <TrendingUp size={24} />
+                  <Star size={24} />
                 </div>
                 <div className={styles.statInfo}>
-                  <h3 className={styles.statNumber}>89%</h3>
-                  <p className={styles.statLabel}>Success Rate</p>
+                  <h3 className={styles.statNumber}>
+                    {performanceData.filter(month => month.contests > 0).length}
+                  </h3>
+                  <p className={styles.statLabel}>Active Months</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Performance Chart */}
+          {/* Performance Charts */}
           <div className={styles.chartSection}>
+            {/* Contests Participated Chart */}
             <div className={styles.chartCard}>
               <div className={styles.chartHeader}>
-                <h2 className={styles.chartTitle}>Performance Analytics</h2>
+                <h2 className={styles.chartTitle}>
+                  Monthly Contest Participation ({new Date().getFullYear()})
+                </h2>
                 <div className={styles.chartLegend}>
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColor}
                       style={{ backgroundColor: "#8b5cf6" }}
                     ></div>
-                    <span>Practice Sessions</span>
+                    <span>Contests Participated</span>
                   </div>
-                  <div className={styles.legendItem}>
-                    <div
-                      className={styles.legendColor}
-                      style={{ backgroundColor: "#7c3aed" }}
-                    ></div>
-                    <span>Contest Participation</span>
+                </div>
+              </div>
+              <div className={styles.chartContent}>
+                {performanceLoading ? (
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '250px',
+                    fontSize: '14px',
+                    color: '#718096'
+                  }}>
+                    Loading contest participation data...
                   </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#718096" 
+                        fontSize={12}
+                        tick={{ fontSize: 11 }}
+                        interval={0}
+                      />
+                      <YAxis 
+                        stroke="#718096" 
+                        fontSize={12}
+                        domain={contestsYAxisDomain}
+                        tick={{ fontSize: 11 }}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "12px",
+                          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(value) => [value, 'Contests Participated']}
+                        labelFormatter={(label) => `Month: ${label}`}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="contests"
+                        stroke="#8b5cf6"
+                        fill="#8b5cf6"
+                        fillOpacity={0.7}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Total Score Chart */}
+            <div className={styles.chartCard}>
+              <div className={styles.chartHeader}>
+                <h2 className={styles.chartTitle}>
+                  Score Performance Trends ({new Date().getFullYear()})
+                </h2>
+                <div className={styles.chartLegend}>
                   <div className={styles.legendItem}>
                     <div
                       className={styles.legendColor}
                       style={{ backgroundColor: "#4299e1" }}
                     ></div>
-                    <span>Average Score</span>
+                    <span>Total Score</span>
                   </div>
                 </div>
               </div>
               <div className={styles.chartContent}>
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={performanceData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="date" stroke="#718096" fontSize={12} />
-                    <YAxis stroke="#718096" fontSize={12} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="practice"
-                      stackId="1"
-                      stroke="#8b5cf6"
-                      fill="#8b5cf6"
-                      fillOpacity={0.7}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="contests"
-                      stackId="2"
-                      stroke="#7c3aed"
-                      fill="#7c3aed"
-                      fillOpacity={0.7}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="avgScore"
-                      stroke="#4299e1"
-                      strokeWidth={3}
-                      dot={{ fill: "#4299e1", strokeWidth: 2, r: 5 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity & Achievements */}
-          <div className={styles.contentGrid}>
-            <div className={styles.activityCard}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Recent Activity</h2>
-                <Activity size={20} />
-              </div>
-              <div className={styles.activityList}>
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className={styles.activityItem}>
-                    <div className={styles.activityIcon}>
-                      {activity.type === "contest" && <Trophy size={16} />}
-                      {activity.type === "practice" && <Code size={16} />}
-                      {activity.type === "quiz" && <BookOpen size={16} />}
-                    </div>
-                    <div className={styles.activityContent}>
-                      <h4 className={styles.activityTitle}>{activity.title}</h4>
-                      <p className={styles.activityDate}>{activity.date}</p>
-                    </div>
-                    <div className={styles.activityScore}>
-                      <span className={styles.scoreValue}>
-                        {activity.score}%
-                      </span>
-                    </div>
+                {performanceLoading ? (
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '250px',
+                    fontSize: '14px',
+                    color: '#718096'
+                  }}>
+                    Loading score performance data...
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.achievementsCard}>
-              <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Achievements</h2>
-                <Award size={20} />
-              </div>
-              <div className={styles.achievementsList}>
-                {achievements.map((achievement, index) => (
-                  <div key={index} className={styles.achievementItem}>
-                    <div className={styles.achievementIcon}>
-                      {achievement.icon}
-                    </div>
-                    <div className={styles.achievementContent}>
-                      <h4 className={styles.achievementTitle}>
-                        {achievement.title}
-                      </h4>
-                      <p className={styles.achievementDescription}>
-                        {achievement.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                ) : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#718096" 
+                        fontSize={12}
+                        tick={{ fontSize: 11 }}
+                        interval={0}
+                      />
+                      <YAxis 
+                        stroke="#718096" 
+                        fontSize={12}
+                        domain={scoresYAxisDomain}
+                        tick={{ fontSize: 11 }}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "12px",
+                          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(value) => [value, 'Total Score']}
+                        labelFormatter={(label) => `Month: ${label}`}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="totalScore"
+                        stroke="#4299e1"
+                        strokeWidth={3}
+                        dot={{ fill: "#4299e1", strokeWidth: 2, r: 5 }}
+                        activeDot={{ r: 6, stroke: "#4299e1", strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
           </div>
@@ -480,22 +585,28 @@ const StudentUser = () => {
           <div className={styles.progressSection}>
             <div className={styles.progressCard}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Monthly Progress</h2>
+                <h2 className={styles.cardTitle}>Year Overview</h2>
                 <TrendingUp size={20} />
               </div>
               <div className={styles.progressContent}>
                 <div className={styles.progressStats}>
                   <div className={styles.progressStat}>
-                    <span className={styles.statLabel}>Problems Solved</span>
-                    <span className={styles.statValue}>156</span>
+                    <span className={styles.statLabel}>Total Contests</span>
+                    <span className={styles.statValue}>
+                      {performanceData.reduce((sum, month) => sum + month.contests, 0)}
+                    </span>
                   </div>
                   <div className={styles.progressStat}>
-                    <span className={styles.statLabel}>Contest Rank</span>
-                    <span className={styles.statValue}>#24</span>
+                    <span className={styles.statLabel}>Total Points</span>
+                    <span className={styles.statValue}>
+                      {performanceData.reduce((sum, month) => sum + month.totalScore, 0)}
+                    </span>
                   </div>
                   <div className={styles.progressStat}>
-                    <span className={styles.statLabel}>Success Rate</span>
-                    <span className={styles.statValue}>89%</span>
+                    <span className={styles.statLabel}>Active Months</span>
+                    <span className={styles.statValue}>
+                      {performanceData.filter(month => month.contests > 0).length}
+                    </span>
                   </div>
                 </div>
                 <div className={styles.progressVisualization}>
@@ -517,7 +628,7 @@ const StudentUser = () => {
                         stroke="#ff8a65"
                         strokeWidth="10"
                         strokeDasharray="283"
-                        strokeDashoffset="70"
+                        strokeDashoffset={283 - (283 * (performanceData.filter(month => month.contests > 0).length / 12))}
                         transform="rotate(-90 60 60)"
                         className={styles.progressCircle}
                       />
@@ -529,16 +640,16 @@ const StudentUser = () => {
                         fontWeight="600"
                         fill="#2d3748"
                       >
-                        75%
+                        {Math.round((performanceData.filter(month => month.contests > 0).length / 12) * 100)}%
                       </text>
                     </svg>
                   </div>
                   <div className={styles.progressLabels}>
                     <span className={styles.progressLabel}>
-                      Overall Progress
+                      Activity Progress
                     </span>
                     <span className={styles.progressDescription}>
-                      Keep up the great work!
+                      {performanceData.filter(month => month.contests > 0).length} out of 12 months active
                     </span>
                   </div>
                 </div>

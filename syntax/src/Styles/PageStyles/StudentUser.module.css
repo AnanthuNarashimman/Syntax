@@ -340,6 +340,21 @@
   min-height: 48px;
 }
 
+.statNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.2;
+}
+
 .statInfo h3 {
   font-size: 1.5rem;
   font-weight: 700;
@@ -712,5 +727,190 @@
 
   .statInfo h3 {
     font-size: 1.25rem;
+  }
+}
+
+/* Full Width Section Styles */
+.fullWidthSection {
+  margin-top: 2rem;
+}
+
+.fullWidthCard {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.activityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.activityItem:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.activityIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.activityContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.activitySubtitle {
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
+}
+
+.activityDate {
+  font-size: 0.85rem;
+  color: #718096;
+  margin: 0;
+  font-weight: 500;
+}
+
+.activityMetrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.scoreContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.scoreValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4299e1;
+  line-height: 1;
+}
+
+.scoreLabel {
+  font-size: 0.75rem;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.contestCount {
+  font-size: 0.85rem;
+  color: #805ad5;
+  font-weight: 600;
+  background: #e9d8fd;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.noActivityMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #718096;
+  grid-column: 1 / -1;
+}
+
+.noActivityIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: #edf2f7;
+  border-radius: 50%;
+  color: #a0aec0;
+  margin-bottom: 1rem;
+}
+
+.noActivityText h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin: 0 0 0.5rem 0;
+}
+
+.noActivityText p {
+  font-size: 1rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive Design for Activity Grid */
+@media (max-width: 768px) {
+  .activityGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .activityItem {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+  
+  .activityContent {
+    text-align: center;
+  }
+  
+  .activityMetrics {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .scoreContainer {
+    align-items: center;
   }
 }

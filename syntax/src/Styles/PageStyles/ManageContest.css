@@ -245,6 +245,48 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   color: #718096;
+  transition: all 0.3s ease;
+}
+
+.participants.active {
+  color: #38a169;
+  font-weight: 600;
+}
+
+.participants.active .icon {
+  color: #38a169;
+}
+
+.participants.active .participant-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2f855a;
+}
+
+.participants.ended {
+  color: #a0aec0;
+  opacity: 0.7;
+}
+
+.participants.ended .icon {
+  color: #a0aec0;
+}
+
+.participants.ended .participant-count {
+  color: #718096;
+}
+
+.participants.queue .participant-count {
+  font-weight: 500;
+}
+
+.participant-count {
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.participant-label {
+  font-size: 0.85rem;
 }
 
 .participants .icon,
@@ -377,6 +419,23 @@
 .btn-success:hover {
   background: #2f855a;
   border-color: #2f855a;
+}
+
+.btn-info {
+  padding: 8px 16px;
+  border: 2px solid #adadad;
+  background: #ADB5BD;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-info:hover {
+  background: #6C7B95;
+  border-color: #6C7B95;
 }
 
 /* Modal Styles */

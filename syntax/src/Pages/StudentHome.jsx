@@ -20,11 +20,19 @@ const StudentHome = () => {
     getRecentStudentContests,
     formatStudentDate,
     getStudentContestStatus,
-    fetchStudentContests
+    fetchStudentContests,
+    studentSubmissions,
+    submissionsLoading,
+    submissionsError,
+    fetchStudentSubmissions
   } = useContestContext();
 
   const [contestCode, setContestCode] = useState('');
   const [loading, setLoading] = useState(true);
+  const [submissionStats, setSubmissionStats] = useState({
+    contestsParticipated: 0,
+    totalScore: 0
+  });
   const [studentData, setStudentData] = useState({
     userName: 'User',
     department: '',
@@ -103,8 +111,50 @@ const StudentHome = () => {
   }, [showError]);
 
   useEffect(() => {
-    fetchStudentContests()
-  }, [])
+    fetchStudentContests();
+    fetchStudentSubmissions();
+  }, []);
+
+  // Update submission stats when context data loads
+  useEffect(() => {
+    if (!submissionsLoading && !submissionsError && studentSubmissions) {
+      console.log('StudentHome - Updating submission stats:', studentSubmissions);
+      setSubmissionStats({
+        contestsParticipated: studentSubmissions.contestsParticipated || 0,
+        totalScore: studentSubmissions.totalPoints || 0
+      });
+    }
+  }, [submissionsLoading, studentSubmissions, submissionsError]);
+
+  // Fallback: fetch submissions directly if context data is not available
+  useEffect(() => {
+    if (!loading && submissionsLoading) {
+      const fetchSubmissionsDirectly = async () => {
+        try {
+          console.log('StudentHome - Fetching submissions directly...');
+          const response = await fetch('/api/student/profile/submissions', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('StudentHome - Direct submissions result:', data);
+            setSubmissionStats({
+              contestsParticipated: data.Count || 0,
+              totalScore: data.Points || 0
+            });
+          }
+        } catch (error) {
+          console.error('StudentHome - Error fetching submissions:', error);
+        }
+      };
+
+      const timer = setTimeout(fetchSubmissionsDirectly, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, submissionsLoading]);
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {
@@ -155,8 +205,8 @@ const StudentHome = () => {
                     <Trophy size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>24</h3>
-                    <p className={styles.statLabel}>Contests Won</p>
+                    <h3 className={styles.statNumber}>{submissionStats.contestsParticipated}</h3>
+                    <p className={styles.statLabel}>Events Participated</p>
                   </div>
                 </div>
                 
@@ -165,18 +215,8 @@ const StudentHome = () => {
                     <Target size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>156</h3>
-                    <p className={styles.statLabel}>Problems Solved</p>
-                  </div>
-                </div>
-                
-                <div className={styles.statCard}>
-                  <div className={styles.statIcon}>
-                    <TrendingUp size={24} />
-                  </div>
-                  <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>89%</h3>
-                    <p className={styles.statLabel}>Success Rate</p>
+                    <h3 className={styles.statNumber}>{submissionStats.totalScore}</h3>
+                    <p className={styles.statLabel}>Total Points</p>
                   </div>
                 </div>
                 
@@ -200,11 +240,13 @@ const StudentHome = () => {
                   <div className={styles.progressBadge}>Gold Tier</div>
                 </div>
                 <div className={styles.progressBar}>
-                  <div className={styles.progressFill} style={{width: '66%'}}></div>
+                  <div className={styles.progressFill} style={{
+                    width: `${Math.min((submissionStats.totalScore / 300) * 100, 100)}%`
+                  }}></div>
                 </div>
                 <div className={styles.progressStats}>
-                  <span>200 / 300 points</span>
-                  <span>100 points to next level</span>
+                  <span>{submissionStats.totalScore} / 300 points</span>
+                  <span>{Math.max(300 - submissionStats.totalScore, 0)} points to next level</span>
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState } from 'react';
 import AdminNavbar from '../Components/AdminNavbar';
-import { BookOpen, X } from 'lucide-react';
+import { BookOpen, X, ExternalLink, FileText, Tag, Users } from 'lucide-react';
 import '../Styles/PageStyles/Articles.css'; // Import the new CSS file
 import { marked } from 'marked';
 
@@ -55,60 +55,93 @@ function Articles() {
       <div className="Article_MainContent">
         <header className="Article_DashboardHeader">
           <div className="Article_HeaderContent">
-            <h1>Articles</h1>
-            <p>Browse uploaded and linked articles</p>
+            <div className="Article_HeaderIcon">
+              <BookOpen size={32} />
+            </div>
+            <div className="Article_HeaderText">
+              <h1>Articles & Resources</h1>
+              <p>Explore our curated collection of programming articles and learning resources</p>
+            </div>
           </div>
         </header>
         <div className="Article_ContentGrid">
-          <div className="Article_Card Article_FullWidth">
-            <div className="Article_CardHeader">
-              <h2>All Articles</h2>
+          {loading ? (
+            <div className="Article_LoadingContainer">
+              <div className="Article_LoadingSpinner"></div>
+              <p className="Article_LoadingText">Loading articles...</p>
             </div>
-            <div className="Article_List">
-              {loading ? (
-                <p className="Article_LoadingText">Loading articles...</p>
-              ) : error ? (
-                <p className="Article_ErrorText">{error}</p>
-              ) : articles.length === 0 ? (
-                <p className="Article_LoadingText">No articles found.</p>
-              ) : (
-                articles.map((article, idx) => (
-                  <Fragment key={article.id || idx}>
-                    <div className="Article_Card_Row">
-                      <div className="Article_Info">
-                        <h4>{article.title}</h4>
-                        <p>{article.description}</p>
-                        <p><strong>Topics:</strong> {article.topicsCovered}</p>
-                        <p><strong>Allowed Departments:</strong> {article.allowedDepartments}</p>
-                      </div>
-                      <div className="Article_Actions">
+          ) : error ? (
+            <div className="Article_ErrorContainer">
+              <p className="Article_ErrorText">{error}</p>
+            </div>
+          ) : articles.length === 0 ? (
+            <div className="Article_EmptyContainer">
+              <BookOpen size={48} />
+              <p className="Article_EmptyText">No articles found.</p>
+              <p className="Article_EmptySubtext">Check back later for new content!</p>
+            </div>
+          ) : (
+            <div className="Article_CardsGrid">
+              {articles.map((article, idx) => (
+                <div key={article.id || idx} className="Article_Card Article_IndividualCard">
+                  <div className="Article_CardContent">
+                    <div className="Article_CardHeader">
+                      <h3 className="Article_CardTitle">{article.title}</h3>
+                      <div className="Article_CardType">
                         {article.articleLink ? (
-                          <a 
-                            href={article.articleLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="Article_BtnSecondary"
-                          >
-                            View Article
-                          </a>
-                        ) : article.articleContent ? (
-                          <button 
-                            className="Article_BtnSecondary" 
-                            onClick={() => openModal(article.title, article.articleContent)}
-                          >
-                            View
-                          </button>
+                          <ExternalLink size={16} />
                         ) : (
-                          <span className="Article_NoContentText">No content</span>
+                          <FileText size={16} />
                         )}
                       </div>
                     </div>
-                    {idx < articles.length - 1 && <hr className="Article_Divider" />}
-                  </Fragment>
-                ))
-              )}
+                    
+                    <p className="Article_CardDescription">{article.description}</p>
+                    
+                    <div className="Article_CardMeta">
+                      <div className="Article_MetaItem">
+                        <Tag size={14} />
+                        <span className="Article_MetaLabel">Topics:</span>
+                        <span className="Article_MetaValue">{article.topicsCovered}</span>
+                      </div>
+                      <div className="Article_MetaItem">
+                        <Users size={14} />
+                        <span className="Article_MetaLabel">Departments:</span>
+                        <span className="Article_MetaValue">{article.allowedDepartments}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="Article_CardFooter">
+                    {article.articleLink ? (
+                      <a 
+                        href={article.articleLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="Article_BtnPrimary"
+                      >
+                        <ExternalLink size={16} />
+                        View Article
+                      </a>
+                    ) : article.articleContent ? (
+                      <button 
+                        className="Article_BtnPrimary" 
+                        onClick={() => openModal(article.title, article.articleContent)}
+                      >
+                        <FileText size={16} />
+                        Read Article
+                      </button>
+                    ) : (
+                      <span className="Article_NoContent">
+                        <FileText size={16} />
+                        No content available
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
       

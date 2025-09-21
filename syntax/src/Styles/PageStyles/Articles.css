@@ -16,6 +16,28 @@
   .Article_DashboardHeader {
     margin-bottom: 2rem;
   }
+
+  .Article_HeaderContent {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .Article_HeaderIcon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+  }
+
+  .Article_HeaderText {
+    flex: 1;
+  }
   
   .Article_HeaderContent h1 {
     font-size: 2.5rem;
@@ -33,6 +55,206 @@
   .Article_ContentGrid {
     display: grid;
     gap: 2rem;
+  }
+
+  /* New Card Grid Layout */
+  .Article_CardsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .Article_IndividualCard {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .Article_IndividualCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.04);
+    border-color: rgba(255, 138, 101, 0.2);
+  }
+
+  .Article_CardContent {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .Article_CardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+  }
+
+  .Article_CardTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .Article_CardType {
+    width: 32px;
+    height: 32px;
+    background: #f7fafc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff8a65;
+    flex-shrink: 0;
+  }
+
+  .Article_CardDescription {
+    color: #4a5568;
+    line-height: 1.6;
+    margin: 0 0 1.5rem 0;
+    flex: 1;
+  }
+
+  .Article_CardMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .Article_MetaItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .Article_MetaItem svg {
+    color: #ff8a65;
+    flex-shrink: 0;
+  }
+
+  .Article_MetaLabel {
+    font-weight: 500;
+    color: #2d3748;
+    min-width: 80px;
+  }
+
+  .Article_MetaValue {
+    color: #4a5568;
+    flex: 1;
+  }
+
+  .Article_CardFooter {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    border-top: 1px solid #f7fafc;
+    margin-top: auto;
+  }
+
+  .Article_BtnPrimary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    margin-top: 1rem;
+  }
+
+  .Article_BtnPrimary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 138, 101, 0.4);
+  }
+
+  .Article_BtnPrimary:active {
+    transform: translateY(0);
+  }
+
+  .Article_NoContent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: #f7fafc;
+    color: #a0aec0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-style: italic;
+    margin-top: 1rem;
+  }
+
+  /* Loading States */
+  .Article_LoadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+  }
+
+  .Article_LoadingSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #ff8a65;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .Article_ErrorContainer {
+    display: flex;
+    justify-content: center;
+    padding: 4rem 2rem;
+  }
+
+  .Article_EmptyContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+    color: #718096;
+  }
+
+  .Article_EmptyText {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #4a5568;
+    margin: 0;
+  }
+
+  .Article_EmptySubtext {
+    color: #718096;
+    margin: 0;
   }
   
   .Article_Card {
@@ -284,9 +506,27 @@
     .Article_MainContent {
       padding: 1rem;
     }
+
+    .Article_HeaderContent {
+      gap: 0.75rem;
+    }
+
+    .Article_HeaderIcon {
+      width: 50px;
+      height: 50px;
+    }
     
     .Article_HeaderContent h1 {
       font-size: 2rem;
+    }
+
+    .Article_CardsGrid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .Article_IndividualCard:hover {
+      transform: none;
     }
     
     .Article_Card_Row {
@@ -318,12 +558,39 @@
   }
   
   @media (max-width: 480px) {
+    .Article_HeaderContent {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+    }
+
     .Article_HeaderContent h1 {
       font-size: 1.75rem;
     }
     
     .Article_HeaderContent p {
       font-size: 1rem;
+    }
+
+    .Article_CardsGrid {
+      grid-template-columns: 1fr;
+    }
+
+    .Article_CardContent {
+      padding: 1.25rem;
+    }
+
+    .Article_CardFooter {
+      padding: 0 1.25rem 1.25rem 1.25rem;
+    }
+
+    .Article_CardTitle {
+      font-size: 1.125rem;
+    }
+
+    .Article_MetaItem {
+      font-size: 0.8rem;
     }
     
     .Article_CardHeader {
@@ -378,9 +645,9 @@
   }
   
   /* Focus states for accessibility */
-  .Article_BtnSecondary:focus,
+  .Article_BtnPrimary:focus,
   .Article_ModalCloseBtn:focus {
-    outline: 2px solid #667eea;
+    outline: 2px solid #ff8a65;
     outline-offset: 2px;
   }
   

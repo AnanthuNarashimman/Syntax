@@ -160,7 +160,7 @@ function AdminLogPage() {
                     </div>
 
                     <div className="form-group">
-                        <label className={`passwordLabel${formData.password ? " active" : ""}`}>{loginData.passwordLabel}</label>
+                        <label className={`passwordLabel${formData.password ? " active" : ""}`}>Password</label>
                         <input
                             type="password"
                             name="password"

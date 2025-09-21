@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminNavbar from '../Components/AdminNavbar';
 import { Button } from '../Components/Button';
 import { useNavigate } from 'react-router-dom';
+import Profile_Icon from '../assets/Images/Admin_Profile.svg';
 
 
 function AdminProfile() {
@@ -381,6 +382,9 @@ function AdminProfile() {
                     </div>
                 </div>
             </div>
+
+
+            <img src={Profile_Icon} className='profileImage' alt="" />
         </>
     );
 }

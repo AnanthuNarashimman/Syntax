@@ -168,8 +168,53 @@ const fetchAdminEvents = async (req, res) => {
       });
     });
 
+    // Get participant counts for all events
+    const eventIds = events.map(event => event.id);
+    const participantCountPromises = eventIds.map(async (eventId) => {
+      try {
+        const eventAttemptsSnapshot = await db
+          .collection("eventAttempts")
+          .where("eventId", "==", eventId)
+          .get();
+        
+        // Count unique participants (by userId)
+        const uniqueParticipants = new Set();
+        eventAttemptsSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.userId) {
+            uniqueParticipants.add(data.userId);
+          }
+        });
+        
+        return {
+          eventId,
+          participantCount: uniqueParticipants.size
+        };
+      } catch (error) {
+        console.error(`Error fetching participants for event ${eventId}:`, error);
+        return {
+          eventId,
+          participantCount: 0
+        };
+      }
+    });
+
+    const participantCounts = await Promise.all(participantCountPromises);
+    
+    // Create a map for quick lookup
+    const participantCountMap = {};
+    participantCounts.forEach(({ eventId, participantCount }) => {
+      participantCountMap[eventId] = participantCount;
+    });
+
+    // Add participant counts to events
+    const eventsWithParticipants = events.map(event => ({
+      ...event,
+      participants: participantCountMap[event.id] || 0
+    }));
+
     // Sort events by createdAt in descending order (newest first)
-    events.sort((a, b) => {
+    eventsWithParticipants.sort((a, b) => {
       const aTime =
         a.createdAt?.toDate?.() ||
         new Date(a.createdAt?._seconds * 1000) ||
@@ -183,7 +228,7 @@ const fetchAdminEvents = async (req, res) => {
 
     res.status(200).json({
       message: "Events retrieved successfully!",
-      events,
+      events: eventsWithParticipants,
     });
   } catch (error) {
     console.error("Error fetching events:", error);

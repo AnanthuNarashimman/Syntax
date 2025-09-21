@@ -28,6 +28,14 @@ export const ContestProvider = ({ children }) => {
   const [isStudentAuthenticated, setIsStudentAuthenticated] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
+  // Student submissions state
+  const [studentSubmissions, setStudentSubmissions] = useState({
+    totalPoints: 0,
+    contestsParticipated: 0
+  });
+  const [submissionsLoading, setSubmissionsLoading] = useState(true);
+  const [submissionsError, setSubmissionsError] = useState(null);
+
   // Fetch current admin's name
   useEffect(() => {
     const fetchAdminName = async () => {
@@ -185,6 +193,48 @@ export const ContestProvider = ({ children }) => {
       setStudentArticles([]);
     } finally {
       setStudentArticlesLoading(false);
+    }
+  };
+
+  // Fetch student submissions data
+  const fetchStudentSubmissions = async (retryCount = 0) => {
+    try {
+      setSubmissionsLoading(true);
+      setSubmissionsError(null);
+
+      const response = await fetch('/api/student/profile/submissions', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.status === 403 && retryCount < 2) {
+        console.log('Student submissions fetch: Authentication failed, retrying...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchStudentSubmissions(retryCount + 1);
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch submissions: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setStudentSubmissions({
+        totalPoints: data.Points || 0,
+        contestsParticipated: data.Count || 0
+      });
+    } catch (error) {
+      console.error('Error fetching student submissions:', error);
+      setSubmissionsError(error.message);
+      setStudentSubmissions({
+        totalPoints: 0,
+        contestsParticipated: 0
+      });
+    } finally {
+      setSubmissionsLoading(false);
     }
   };
 
@@ -396,10 +446,12 @@ export const ContestProvider = ({ children }) => {
         // If authenticated, fetch data
         fetchStudentContests();
         fetchStudentArticles();
+        fetchStudentSubmissions();
       } else {
         // If not authenticated, try fetching anyway (will handle 403 with retry)
         fetchStudentContests();
         fetchStudentArticles();
+        fetchStudentSubmissions();
       }
     };
 
@@ -436,7 +488,13 @@ export const ContestProvider = ({ children }) => {
     getStudentContestStatus,
     isStudentAuthenticated,
     authCheckComplete,
-    checkStudentAuth
+    checkStudentAuth,
+
+    // Student submissions data
+    studentSubmissions,
+    submissionsLoading,
+    submissionsError,
+    fetchStudentSubmissions
   };
 
   return (

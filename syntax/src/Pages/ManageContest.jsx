@@ -15,6 +15,7 @@ import {
   Trophy,
   BookOpen,
   Brain,
+  Download,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import AdminNavbar from "../Components/AdminNavbar";
@@ -23,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { useContestContext } from "../contexts/ContestContext";
 import { useAlert } from "../contexts/AlertContext";
 import { useMemo } from "react";
+import * as XLSX from "xlsx";
 
 function ManageContest() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,6 +96,11 @@ function ManageContest() {
 
   // Get categorized events from context
   const categorizedEvents = getCategorizedEvents();
+  
+  // Debug: Log the first event to see its structure
+  if (categorizedEvents.all.length > 0) {
+    console.log("First event data:", categorizedEvents.all[0]);
+  }
 
   const filteredEvents = categorizedEvents.all.filter((event) => {
     const matchesSearch = event.title
@@ -425,6 +432,57 @@ function ManageContest() {
     }
   };
 
+  const exportToExcel = () => {
+    try {
+      if (!sortedLeaderboardData || sortedLeaderboardData.length === 0) {
+        showError("No participant data to export");
+        return;
+      }
+
+      // Prepare data for Excel export
+      const excelData = sortedLeaderboardData.map((user, index) => ({
+        Rank: index + 1,
+        Name: user.userName,
+        Department: user.userDepartment,
+        Year: user.userYear,
+        Section: user.userSection,
+        Score: user.points,
+        "Submitted At": new Date(user.submittedAt).toLocaleString(),
+      }));
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+      // Auto-size columns
+      const colWidths = [
+        { wch: 6 },  // Rank
+        { wch: 20 }, // Name
+        { wch: 15 }, // Department
+        { wch: 8 },  // Year
+        { wch: 10 }, // Section
+        { wch: 10 }, // Score
+        { wch: 20 }, // Submitted At
+      ];
+      worksheet['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Participants");
+
+      // Generate filename with contest name
+      const contestName = selectedEvent?.eventTitle || "Contest";
+      const safeContestName = contestName.replace(/[^a-zA-Z0-9]/g, "_");
+      const filename = `${safeContestName}_Participants.xlsx`;
+
+      // Save file
+      XLSX.writeFile(workbook, filename);
+      showSuccess(`Excel file "${filename}" downloaded successfully!`);
+    } catch (err) {
+      console.error("Error exporting to Excel:", err);
+      showError("Failed to export data to Excel");
+    }
+  };
+
   return (
     <>
       <AdminNavbar />
@@ -534,9 +592,14 @@ function ManageContest() {
                           <p className="card-description">{item.description}</p>
 
                           <div className="card-footer">
-                            <div className="participants">
+                            <div className={`participants ${item.status === "ongoing" ? "active" : item.status === "ended" ? "ended" : "queue"}`}>
                               <Users className="icon" />
-                              <span>{item.participants} participants</span>
+                              <span className="participant-count">
+                                {item.participants || 0}
+                              </span>
+                              <span className="participant-label">
+                                {(item.participants || 0) === 1 ? "participant" : "participants"}
+                              </span>
                             </div>
                             <div className="time-info">
                               <Clock className="icon" />
@@ -585,7 +648,7 @@ function ManageContest() {
                             {(item.status === "ongoing" ||
                               item.status === "ended") && (
                               <button
-                                className="btn-secondary"
+                                className="btn-info"
                                 onClick={() =>
                                   handleViewParticipants(item.id, item.title)
                                 }
@@ -653,7 +716,7 @@ function ManageContest() {
                       <thead>
                         <tr>
                           {/* Clickable Table Headers for Sorting */}
-                          <th>Rank</th>
+                          <th>S/N</th>
                           <th>
                             <button
                               onClick={() => requestSort("userName")}
@@ -674,6 +737,32 @@ function ManageContest() {
                             >
                               Department{" "}
                               {sortConfig.key === "userDepartment"
+                                ? sortConfig.direction === "ascending"
+                                  ? "▲"
+                                  : "▼"
+                                : ""}
+                            </button>
+                          </th>
+                          <th>
+                            <button
+                              onClick={() => requestSort("userYear")}
+                              className="sort-button"
+                            >
+                              Year{" "}
+                              {sortConfig.key === "userYear"
+                                ? sortConfig.direction === "ascending"
+                                  ? "▲"
+                                  : "▼"
+                                : ""}
+                            </button>
+                          </th>
+                          <th>
+                            <button
+                              onClick={() => requestSort("userSection")}
+                              className="sort-button"
+                            >
+                              Section{" "}
+                              {sortConfig.key === "userSection"
                                 ? sortConfig.direction === "ascending"
                                   ? "▲"
                                   : "▼"
@@ -714,6 +803,8 @@ function ManageContest() {
                             <td>{index + 1}</td>
                             <td>{user.userName}</td>
                             <td>{user.userDepartment}</td>
+                            <td>{user.userYear}</td>
+                            <td>{user.userSection}</td>
                             <td>{user.points}</td>
                             <td>
                               {new Date(user.submittedAt).toLocaleString()}
@@ -733,6 +824,16 @@ function ManageContest() {
               </div>
 
               <div className="modal-actions">
+                {sortedLeaderboardData.length > 0 && (
+                  <button
+                    className="btn-primary"
+                    onClick={exportToExcel}
+                    style={{ marginRight: "10px" }}
+                  >
+                    <Download className="icon" />
+                    Export to Excel
+                  </button>
+                )}
                 <button
                   className="btn-secondary"
                   onClick={closeLeaderboardModal}
