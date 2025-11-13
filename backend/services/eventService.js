@@ -162,22 +162,31 @@ async function handleCodingContestCreation(req, res, data) {
     for (let i = 1; i <= numberOfQuestions; i++) {
       const questionData = questions[i];
 
+      // Support both old format (example/testCases) and new format (visibleTestCases/hiddenTestCases)
+      const visibleTestCases = questionData.visibleTestCases || (questionData.example ? [questionData.example] : []);
+      const hiddenTestCases = questionData.hiddenTestCases || questionData.testCases || [];
+
       if (
         !questionData ||
         !questionData.problem ||
-        !questionData.example ||
-        !Array.isArray(questionData.testCases) ||
-        questionData.testCases.length === 0
+        !Array.isArray(visibleTestCases) ||
+        visibleTestCases.length === 0 ||
+        !Array.isArray(hiddenTestCases) ||
+        hiddenTestCases.length === 0
       ) {
         return res.status(400).json({
-          message: `Problem ${i} is incomplete. Missing problem statement, example, or test cases.`,
+          message: `Problem ${i} is incomplete. Missing problem statement, visible test cases, or hidden test cases.`,
         });
       }
 
-      if (!questionData.example.input || !questionData.example.output) {
-        return res.status(400).json({
-          message: `Problem ${i} example is incomplete (missing input or output).`,
-        });
+      // Validate visible test cases
+      for (let j = 0; j < visibleTestCases.length; j++) {
+        const vtc = visibleTestCases[j];
+        if (!vtc.input || !vtc.output) {
+          return res.status(400).json({
+            message: `Problem ${i}, Visible Test Case ${j + 1} is incomplete (missing input or output).`,
+          });
+        }
       }
 
       // Validate input/output formats
@@ -202,11 +211,12 @@ async function handleCodingContestCreation(req, res, data) {
         });
       }
 
-      for (let j = 0; j < questionData.testCases.length; j++) {
-        const tc = questionData.testCases[j];
-        if (!tc.input || !tc.output) {
+      // Validate hidden test cases
+      for (let j = 0; j < hiddenTestCases.length; j++) {
+        const htc = hiddenTestCases[j];
+        if (!htc.input || !htc.output) {
           return res.status(400).json({
-            message: `Problem ${i}, Test Case ${
+            message: `Problem ${i}, Hidden Test Case ${
               j + 1
             } is incomplete (missing input or output).`,
           });
@@ -243,18 +253,16 @@ async function handleCodingContestCreation(req, res, data) {
           cpp: "",
         },
 
-        examples: [
-          {
-            input: questionData.example.input,
-            output: questionData.example.output,
-            explanation: "",
-          },
-        ],
+        examples: visibleTestCases.map((vtc, idx) => ({
+          input: vtc.input,
+          output: vtc.output,
+          explanation: "",
+        })),
 
-        testCases: questionData.testCases.map((tc, idx) => ({
+        testCases: hiddenTestCases.map((htc, idx) => ({
           testCaseId: `tc_${i}_${idx}`,
-          input: tc.input,
-          expectedOutput: tc.output,
+          input: htc.input,
+          expectedOutput: htc.output,
           isHidden: true,
           description: `Test Case ${idx + 1} for Problem ${String.fromCharCode(
             64 + i

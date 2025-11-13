@@ -26,7 +26,12 @@ const adminLogin = async (req, res) => {
 
 const studentLogin = async (req, res) => {
   const { email, password } = req.body;
+  console.log("Student login attempt for:", email);
+
   try {
+    const loginResult = await authService.loginStudentUser(email, password);
+    console.log("Login result received:", { ...loginResult, token: loginResult.token ? "***" : "MISSING" });
+
     const {
       id,
       email: userEmail,
@@ -38,7 +43,7 @@ const studentLogin = async (req, res) => {
       semester,
       batch,
       token,
-    } = await authService.loginStudentUser(email, password);
+    } = loginResult;
 
     res.cookie("auth_token", token, {
       httpOnly: true,
