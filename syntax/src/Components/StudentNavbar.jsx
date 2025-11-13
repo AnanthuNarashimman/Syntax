@@ -50,7 +50,7 @@ const StudentNavbar = () => {
           <NavLink to="/student-practice" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Practice</NavLink>
           <NavLink to="/student-contests" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Contests</NavLink>
           <NavLink to="/student-leader" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Leaderboard</NavLink>
-          <span className={styles['nav-link']}>Codeground</span>
+          <NavLink to="/student-codeground" className={({ isActive }) => `${styles['nav-link']} ${isActive ? styles['active'] : ''}`}>Codeground</NavLink>
         </div>
 
         {/* Right side items */}
@@ -86,7 +86,7 @@ const StudentNavbar = () => {
           <NavLink to="/student-practice" className={styles['mobile-nav-link']}>Practice</NavLink>
           <NavLink to="/student-contests" className={styles['mobile-nav-link']}>Contests</NavLink>
           <NavLink to="/student-leader" className={styles['mobile-nav-link']}>Leaderboard</NavLink>
-          <span className={styles['mobile-nav-link']}>Codeground</span>
+          <NavLink to="/student-codeground" className={styles['mobile-nav-link']}>Codeground</NavLink>
         </div>
       )}
     </nav>

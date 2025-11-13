@@ -16,7 +16,6 @@ async function handleQuizCreation(req, res, data) {
       contestDescription,
       duration,
       numberOfQuestions,
-      pointsPerProgram,
       questions,
       contestType,
       contestMode,
@@ -64,7 +63,6 @@ async function handleQuizCreation(req, res, data) {
       contestType,
       contestMode,
       numberOfQuestions,
-      pointsPerProgram,
     });
 
     const eventData = {
@@ -72,8 +70,8 @@ async function handleQuizCreation(req, res, data) {
       eventDescription: contestDescription,
       durationMinutes: parseInt(duration),
       numberOfQuestions: numberOfQuestions,
-      pointsPerQuestion: parseInt(pointsPerProgram),
-      totalScore: numberOfQuestions * parseInt(pointsPerProgram),
+      pointsPerQuestion: 10,
+      totalScore: numberOfQuestions * 10,
       questions: questions.map((q, index) => ({
         questionId: `q_${contestTitle.replace(/\s/g, "_").toLowerCase()}_${
           index + 1
@@ -139,9 +137,8 @@ async function handleCodingContestCreation(req, res, data) {
       contestDescription,
       duration,
       numberOfQuestions,
-      pointsPerProgram,
       questions,
-      selectedLanguage,
+      selectedLanguages,
       contestType,
       contestMode,
       topicsCovered,
@@ -215,7 +212,7 @@ async function handleCodingContestCreation(req, res, data) {
 
       const problemObject = {
         contestProblemCode: String.fromCharCode(64 + i), // A, B, C, ...
-        points: parseInt(pointsPerProgram),
+        points: 100,
         questionId: `cp_${contestTitle
           .replace(/\s/g, "_")
           .toLowerCase()}_${i}_${Date.now()}`,
@@ -227,8 +224,7 @@ async function handleCodingContestCreation(req, res, data) {
         difficulty: "Undefined",
         topicsCovered: topicsCovered,
         estimatedTimeMinutes: 20,
-        languagesSupported:
-          selectedLanguage === "both" ? ["python", "java"] : [selectedLanguage],
+        languagesSupported: selectedLanguages,
 
         problemDetails: {
           inputFormat: questionData.problemDetails.inputFormat,
@@ -236,12 +232,7 @@ async function handleCodingContestCreation(req, res, data) {
           constraints: [],
           hint: "",
         },
-        starterCode: {
-          python: questionData.starterCode.python,
-          java: questionData.starterCode.java,
-          javascript: "",
-          cpp: "",
-        },
+        starterCode: questionData.starterCode || {},
 
         examples: [
           {
@@ -268,10 +259,8 @@ async function handleCodingContestCreation(req, res, data) {
       console.log(`Problem ${i} created:`, {
         inputFormat: problemObject.problemDetails.inputFormat,
         outputFormat: problemObject.problemDetails.outputFormat,
-        pythonStarterCode:
-          problemObject.starterCode.python.substring(0, 50) + "...",
-        javaStarterCode:
-          problemObject.starterCode.java.substring(0, 50) + "...",
+        languagesSupported: problemObject.languagesSupported,
+        starterCodeLanguages: Object.keys(problemObject.starterCode),
       });
 
       problems.push(problemObject);
@@ -282,7 +271,7 @@ async function handleCodingContestCreation(req, res, data) {
       eventDescription: contestDescription,
       durationMinutes: parseInt(duration),
       numberOfPrograms: numberOfQuestions,
-      pointsPerProgram: parseInt(pointsPerProgram),
+      pointsPerProgram: 100,
       problems: problems,
 
       // Meta data for the event

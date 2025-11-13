@@ -22,13 +22,16 @@ import { useAlert } from '../contexts/AlertContext';
 function CreateContestQuestions() {
   const [step, setStep] = useState(1);
   const [numberOfQuestions, setNumberOfQuestions] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('');
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [showCustomSelection, setShowCustomSelection] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(1);
   const [questions, setQuestions] = useState({});
   const [activeTab, setActiveTabState] = useState('create');
   const navigate = useNavigate();
   const { addNewEvent } = useContestContext();
   const { showError, showSuccess } = useAlert();
+
+  const availableLanguages = ['python', 'c', 'java', 'javascript', 'cpp'];
 
   const sidebarItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -54,15 +57,50 @@ function CreateContestQuestions() {
     }
   };
 
+  const handleLanguageToggle = (language) => {
+    setSelectedLanguages(prev => {
+      if (prev.includes(language)) {
+        return prev.filter(lang => lang !== language);
+      } else {
+        return [...prev, language];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedLanguages.length === availableLanguages.length) {
+      setSelectedLanguages([]);
+    } else {
+      setSelectedLanguages([...availableLanguages]);
+    }
+  };
+
+  const getDefaultStarterCode = () => {
+    return {
+      python: 'print("hello world")',
+      c: '#include <stdio.h>\n\nint main() {\n    printf("hello world\\n");\n    return 0;\n}',
+      java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello world");\n    }\n}',
+      javascript: 'console.log("hello world");',
+      cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "hello world" << endl;\n    return 0;\n}'
+    };
+  };
+
   const handleConfigSubmit = () => {
-    if (!numberOfQuestions || !selectedLanguage) {
-      showError('Please select both number of questions and language');
+    if (!numberOfQuestions || selectedLanguages.length === 0) {
+      showError('Please select number of questions and at least one language');
       return;
     }
     
     // Initialize questions object
     const initialQuestions = {};
+    const defaultStarterCode = getDefaultStarterCode();
+    
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
+      const starterCodeForQuestion = {};
+      selectedLanguages.forEach(lang => {
+        starterCodeForQuestion[lang] = defaultStarterCode[lang];
+      });
+      
       initialQuestions[i] = {
         problem: '',
         testCases: [{ input: '', output: '' }],
@@ -71,10 +109,7 @@ function CreateContestQuestions() {
           inputFormat: '',
           outputFormat: ''
         },
-        starterCode: {
-          python: 'print("hello world")',
-          java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello world");\n    }\n}'
-        }
+        starterCode: starterCodeForQuestion
       };
     }
     setQuestions(initialQuestions);
@@ -182,15 +217,13 @@ function CreateContestQuestions() {
       return;
     }
     
-    // Validate starter code
-    if (!questions[currentQuestion].starterCode?.python?.trim()) {
-      showError('Please enter Python starter code');
-      return;
-    }
-    
-    if (!questions[currentQuestion].starterCode?.java?.trim()) {
-      showError('Please enter Java starter code');
-      return;
+    // Validate starter code for all selected languages
+    for (const lang of selectedLanguages) {
+      if (!questions[currentQuestion].starterCode?.[lang]?.trim()) {
+        const langName = lang === 'cpp' ? 'C++' : lang.charAt(0).toUpperCase() + lang.slice(1);
+        showError(`Please enter ${langName} starter code`);
+        return;
+      }
     }
     
     if (currentQuestion < parseInt(numberOfQuestions)) {
@@ -223,13 +256,13 @@ function CreateContestQuestions() {
             showError(`Please complete output format for question ${i}`);
             return;
         }
-        if (!questions[i].starterCode?.python?.trim()) {
-            showError(`Please complete Python starter code for question ${i}`);
-            return;
-        }
-        if (!questions[i].starterCode?.java?.trim()) {
-            showError(`Please complete Java starter code for question ${i}`);
-            return;
+        // Validate starter code for all selected languages
+        for (const lang of selectedLanguages) {
+            if (!questions[i].starterCode?.[lang]?.trim()) {
+                const langName = lang === 'cpp' ? 'C++' : lang.charAt(0).toUpperCase() + lang.slice(1);
+                showError(`Please complete ${langName} starter code for question ${i}`);
+                return;
+            }
         }
         if (questions[i].testCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
             showError(`Please complete all test cases for question ${i}`);
@@ -267,13 +300,12 @@ function CreateContestQuestions() {
         contestTitle: contestGeneralData.title,
         contestDescription: contestGeneralData.description,
         duration: contestGeneralData.duration,
-        pointsPerProgram: contestGeneralData.pointsPerProgram,
-        contestMode: contestGeneralData.mode, // Fixed: use contestMode instead of mode
-        contestType: contestGeneralData.type, // Fixed: use contestType instead of type
+        contestMode: contestGeneralData.mode,
+        contestType: contestGeneralData.type,
         topicsCovered: contestGeneralData.topicsCovered,
         allowedDepartments: contestGeneralData.allowedDepartments,
         numberOfQuestions: parseInt(numberOfQuestions),
-        selectedLanguage: selectedLanguage,
+        selectedLanguages: selectedLanguages, // Changed from selectedLanguage to selectedLanguages (array)
         questions: questions,
     };
 
@@ -340,41 +372,176 @@ function CreateContestQuestions() {
         </div>
 
         <div className="form-group">
-          <p className="label">Programming Language</p>
-          <div className="language-options">
-            <div 
-              className={`language-card ${selectedLanguage === 'python' ? 'selected' : ''}`}
-              onClick={() => setSelectedLanguage('python')}
+          <p className="label">Programming Languages</p>
+          <p className="sublabel">Select one or more languages for this contest</p>
+          
+          <div className="language-selection-mode">
+            <button 
+              className={`mode-btn ${!showCustomSelection ? 'active' : ''}`}
+              onClick={() => setShowCustomSelection(false)}
             >
-              <div className="language-icon">
-                <Code size={24} />
-              </div>
-              <h3>Python</h3>
-              <p>Python programming language</p>
-            </div>
-            
-            <div 
-              className={`language-card ${selectedLanguage === 'java' ? 'selected' : ''}`}
-              onClick={() => setSelectedLanguage('java')}
+              Quick Select
+            </button>
+            <button 
+              className={`mode-btn ${showCustomSelection ? 'active' : ''}`}
+              onClick={() => setShowCustomSelection(true)}
             >
-              <div className="language-icon">
-                <Code size={24} />
-              </div>
-              <h3>Java</h3>
-              <p>Java programming language</p>
-            </div>
-            
-            <div 
-              className={`language-card ${selectedLanguage === 'both' ? 'selected' : ''}`}
-              onClick={() => setSelectedLanguage('both')}
-            >
-              <div className="language-icon">
-                <Code size={24} />
-              </div>
-              <h3>Both</h3>
-              <p>Python and Java</p>
-            </div>
+              Custom Selection
+            </button>
           </div>
+
+          {!showCustomSelection ? (
+            <div className="language-quick-options">
+              <div 
+                className={`language-quick-card ${selectedLanguages.length === availableLanguages.length ? 'selected' : ''}`}
+                onClick={handleSelectAll}
+              >
+                <div className="language-icon">
+                  <Code size={24} />
+                </div>
+                <h3>All Languages</h3>
+                <p>Python, C, Java, JavaScript, C++</p>
+                <div className="selection-indicator">
+                  {selectedLanguages.length === availableLanguages.length && '✓'}
+                </div>
+              </div>
+
+              <div 
+                className={`language-quick-card ${JSON.stringify(selectedLanguages.sort()) === JSON.stringify(['python', 'java'].sort()) ? 'selected' : ''}`}
+                onClick={() => setSelectedLanguages(['python', 'java'])}
+              >
+                <div className="language-icon">
+                  <Code size={24} />
+                </div>
+                <h3>Python & Java</h3>
+                <p>Most popular combination</p>
+                <div className="selection-indicator">
+                  {JSON.stringify(selectedLanguages.sort()) === JSON.stringify(['python', 'java'].sort()) && '✓'}
+                </div>
+              </div>
+
+              <div 
+                className={`language-quick-card ${JSON.stringify(selectedLanguages.sort()) === JSON.stringify(['c', 'cpp', 'java'].sort()) ? 'selected' : ''}`}
+                onClick={() => setSelectedLanguages(['c', 'cpp', 'java'])}
+              >
+                <div className="language-icon">
+                  <Code size={24} />
+                </div>
+                <h3>C, C++ & Java</h3>
+                <p>Compiled languages</p>
+                <div className="selection-indicator">
+                  {JSON.stringify(selectedLanguages.sort()) === JSON.stringify(['c', 'cpp', 'java'].sort()) && '✓'}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="language-custom-options">
+              <div className="custom-languages-grid">
+                <div 
+                  className={`language-checkbox-card ${selectedLanguages.includes('python') ? 'selected' : ''}`}
+                  onClick={() => handleLanguageToggle('python')}
+                >
+                  <div className="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLanguages.includes('python')}
+                      onChange={() => {}}
+                    />
+                    <span className="checkmark">{selectedLanguages.includes('python') && '✓'}</span>
+                  </div>
+                  <div className="language-info">
+                    <h4>Python</h4>
+                    <p>High-level scripting</p>
+                  </div>
+                </div>
+
+                <div 
+                  className={`language-checkbox-card ${selectedLanguages.includes('c') ? 'selected' : ''}`}
+                  onClick={() => handleLanguageToggle('c')}
+                >
+                  <div className="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLanguages.includes('c')}
+                      onChange={() => {}}
+                    />
+                    <span className="checkmark">{selectedLanguages.includes('c') && '✓'}</span>
+                  </div>
+                  <div className="language-info">
+                    <h4>C</h4>
+                    <p>Procedural programming</p>
+                  </div>
+                </div>
+
+                <div 
+                  className={`language-checkbox-card ${selectedLanguages.includes('java') ? 'selected' : ''}`}
+                  onClick={() => handleLanguageToggle('java')}
+                >
+                  <div className="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLanguages.includes('java')}
+                      onChange={() => {}}
+                    />
+                    <span className="checkmark">{selectedLanguages.includes('java') && '✓'}</span>
+                  </div>
+                  <div className="language-info">
+                    <h4>Java</h4>
+                    <p>Object-oriented</p>
+                  </div>
+                </div>
+
+                <div 
+                  className={`language-checkbox-card ${selectedLanguages.includes('javascript') ? 'selected' : ''}`}
+                  onClick={() => handleLanguageToggle('javascript')}
+                >
+                  <div className="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLanguages.includes('javascript')}
+                      onChange={() => {}}
+                    />
+                    <span className="checkmark">{selectedLanguages.includes('javascript') && '✓'}</span>
+                  </div>
+                  <div className="language-info">
+                    <h4>JavaScript</h4>
+                    <p>Web development</p>
+                  </div>
+                </div>
+
+                <div 
+                  className={`language-checkbox-card ${selectedLanguages.includes('cpp') ? 'selected' : ''}`}
+                  onClick={() => handleLanguageToggle('cpp')}
+                >
+                  <div className="checkbox-wrapper">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLanguages.includes('cpp')}
+                      onChange={() => {}}
+                    />
+                    <span className="checkmark">{selectedLanguages.includes('cpp') && '✓'}</span>
+                  </div>
+                  <div className="language-info">
+                    <h4>C++</h4>
+                    <p>System programming</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="selected-languages-summary">
+                <strong>Selected ({selectedLanguages.length}):</strong> 
+                {selectedLanguages.length > 0 ? (
+                  <span className="languages-list">
+                    {selectedLanguages.map(lang => 
+                      lang === 'cpp' ? 'C++' : lang.charAt(0).toUpperCase() + lang.slice(1)
+                    ).join(', ')}
+                  </span>
+                ) : (
+                  <span className="no-selection">No languages selected</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="form-actions">
@@ -490,24 +657,65 @@ function CreateContestQuestions() {
             Sample Code ("Hello World")
           </h3>
           <div className="starter-code-grid">
-            <div className="form-group">
-              <p className="label">Python</p>
-              <textarea
-                rows="3"
-                placeholder="Python starter code..."
-                value={questions[currentQuestion]?.starterCode?.python || ''}
-                onChange={e => handleStarterCodeChange('python', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <p className="label">Java</p>
-              <textarea
-                rows="5"
-                placeholder="Java starter code..."
-                value={questions[currentQuestion]?.starterCode?.java || ''}
-                onChange={e => handleStarterCodeChange('java', e.target.value)}
-              />
-            </div>
+            {selectedLanguages.includes('python') && (
+              <div className="form-group">
+                <p className="label">Python</p>
+                <textarea
+                  rows="3"
+                  placeholder="Python starter code..."
+                  value={questions[currentQuestion]?.starterCode?.python || ''}
+                  onChange={e => handleStarterCodeChange('python', e.target.value)}
+                />
+              </div>
+            )}
+            
+            {selectedLanguages.includes('c') && (
+              <div className="form-group">
+                <p className="label">C</p>
+                <textarea
+                  rows="6"
+                  placeholder="C starter code..."
+                  value={questions[currentQuestion]?.starterCode?.c || ''}
+                  onChange={e => handleStarterCodeChange('c', e.target.value)}
+                />
+              </div>
+            )}
+            
+            {selectedLanguages.includes('java') && (
+              <div className="form-group">
+                <p className="label">Java</p>
+                <textarea
+                  rows="6"
+                  placeholder="Java starter code..."
+                  value={questions[currentQuestion]?.starterCode?.java || ''}
+                  onChange={e => handleStarterCodeChange('java', e.target.value)}
+                />
+              </div>
+            )}
+            
+            {selectedLanguages.includes('javascript') && (
+              <div className="form-group">
+                <p className="label">JavaScript</p>
+                <textarea
+                  rows="3"
+                  placeholder="JavaScript starter code..."
+                  value={questions[currentQuestion]?.starterCode?.javascript || ''}
+                  onChange={e => handleStarterCodeChange('javascript', e.target.value)}
+                />
+              </div>
+            )}
+            
+            {selectedLanguages.includes('cpp') && (
+              <div className="form-group">
+                <p className="label">C++</p>
+                <textarea
+                  rows="6"
+                  placeholder="C++ starter code..."
+                  value={questions[currentQuestion]?.starterCode?.cpp || ''}
+                  onChange={e => handleStarterCodeChange('cpp', e.target.value)}
+                />
+              </div>
+            )}
           </div>
         </div>
 

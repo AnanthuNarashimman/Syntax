@@ -73,34 +73,9 @@ const StudentContests = () => {
     setSearchErrorMessage('');
   };
 
-
-
-
-
-  // Add mock contest data for cards styled like StudentPractice
-  const mockContestCards = [
-    { id: 1, type: 'Coding Contest', title: 'Algo Sprint', duration: '2 hours', department: 'CSE' },
-    { id: 2, type: 'Quiz', title: 'Logic Quiz', duration: '30 min', department: 'IT' },
-    { id: 3, type: 'Coding Contest', title: 'Bug Hunt', duration: '1 hour', department: 'ECE' },
-    { id: 4, type: 'Quiz', title: 'Math Mania', duration: '45 min', department: 'EEE' },
-    { id: 5, type: 'Coding Contest', title: 'Code Rush', duration: '3 hours', department: 'IT' },
-    { id: 6, type: 'Quiz', title: 'Aptitude Test', duration: '25 min', department: 'CSE' },
-    // New mock data
-    { id: 7, type: 'Coding Contest', title: 'Bitwise Battles', duration: '2 hours', department: 'CSE' },
-    { id: 8, type: 'Quiz', title: 'Logic Gates', duration: '22 min', department: 'ECE' },
-    { id: 9, type: 'Coding Contest', title: 'Code Golf', duration: '1 hour', department: 'EEE' },
-    { id: 10, type: 'Quiz', title: 'Placement Prep', duration: '50 min', department: 'IT' },
-    { id: 11, type: 'Coding Contest', title: 'Graph Masters', duration: '2.5 hours', department: 'CSE' },
-  ];
-
-
   useEffect(() => {
-    if (studentContests.length > 0) {
-      setFilteredContests(studentContests);
-      setContestCount(studentContests.length);
-    } else {
-      setFilteredContests(mockContestCards);
-    }
+    setFilteredContests(studentContests);
+    setContestCount(studentContests.length);
   }, [studentContests]);
 
   useEffect(() => {
@@ -109,23 +84,18 @@ const StudentContests = () => {
 
   // When filter button is clicked, filter the contests
   const handleFilter = () => {
-    const dataToFilter = studentContests.length > 0 ? studentContests : mockContestCards;
-    const filtered = dataToFilter.filter(contest => {
+    const filtered = studentContests.filter(contest => {
       const matchesSearch = contest.eventTitle?.toLowerCase().includes(filterSearch.toLowerCase()) ||
-        contest.title?.toLowerCase().includes(filterSearch.toLowerCase()) ||
-        contest.eventDescription?.toLowerCase().includes(filterSearch.toLowerCase()) ||
-        contest.description?.toLowerCase().includes(filterSearch.toLowerCase());
+        contest.eventDescription?.toLowerCase().includes(filterSearch.toLowerCase());
 
       const matchesLanguage = filterLanguage === 'All Language' ||
         (contest.topicsCovered && contest.topicsCovered.includes(filterLanguage));
 
       const matchesType = filterType === 'All' ||
-        (contest.eventType && contest.eventType === filterType.toLowerCase()) ||
-        (contest.type && contest.type === filterType);
+        (contest.eventType && contest.eventType === filterType.toLowerCase());
 
       const matchesDepartment = filterDepartment === 'All Department' ||
-        (contest.allowedDepartments && contest.allowedDepartments.includes(filterDepartment)) ||
-        (contest.department && contest.department === filterDepartment);
+        (contest.allowedDepartments && contest.allowedDepartments.includes(filterDepartment));
 
       return matchesSearch && matchesLanguage && matchesType && matchesDepartment;
     });
@@ -303,27 +273,31 @@ const StudentContests = () => {
         </div>
 
         {/* Contest Cards Grid */}
+        {contestCardsToShow.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyStateIcon}>
+              <Trophy size={64} />
+            </div>
+            <h2>No Contests Available</h2>
+            <p>There are currently no contests matching your criteria. Check back later or adjust your filters.</p>
+          </div>
+        ) : (
         <div className={styles.contestsGrid}>
           {contestCardsToShow.map(contest => {
             const statusInfo = getStudentContestStatus(contest.status || 'active');
-            const isApiData = contest.eventTitle; // Check if it's API data
 
             return (
               <div key={contest.id} className={styles.contestCard}>
                 <div className={styles.contestCardHeader}>
                   <div className={styles.contestType}>
-                    {(contest.eventType === 'coding contest' || contest.type === 'Coding Contest') ?
-                      <Code size={16} /> : <BookOpen size={16} />}
+                    {contest.eventType === 'contest' ? <Code size={16} /> : <BookOpen size={16} />}
                     <span className={styles.typeLabel}>
-                      {isApiData ?
-                        (contest.eventType === 'quiz' ? 'Quiz' : 'Coding Contest') :
-                        contest.type
-                      }
+                      {contest.eventType === 'quiz' ? 'Quiz' : 'Coding Contest'}
                     </span>
                   </div>
                   <div className={styles.contestBadges}>
                     {/* Event Mode Badge */}
-                    {isApiData && contest.eventMode && (
+                    {contest.eventMode && (
                       <div className={`${styles.modeBadge} ${styles[contest.eventMode]}`}>
                         <span>{contest.eventMode === 'strict' ? 'Strict Mode' : 'Practice Mode'}</span>
                       </div>
@@ -338,26 +312,26 @@ const StudentContests = () => {
 
                 <div className={styles.contestCardBody}>
                   <h3 className={styles.contestTitle}>
-                    {isApiData ? contest.eventTitle : contest.title}
+                    {contest.eventTitle}
                   </h3>
                   <div className={styles.contestDetails}>
                     <div className={styles.detailItem}>
                       <Clock size={16} />
-                      <span>Duration: {isApiData ? `${contest.durationMinutes} min` : contest.duration}</span>
+                      <span>Duration: {contest.durationMinutes} min</span>
                     </div>
                     <div className={styles.detailItem}>
                       <Users size={16} />
-                      <span>Department: {isApiData ? contest.allowedDepartments : contest.department}</span>
+                      <span>Department: {contest.allowedDepartments}</span>
                     </div>
                     {/* Event Type Detail */}
-                    {isApiData && contest.eventType && (
+                    {contest.eventType && (
                       <div className={styles.detailItem}>
                         {contest.eventType === 'quiz' ? <BookOpen size={16} /> : <Code size={16} />}
                         <span>Type: {contest.eventType === 'quiz' ? 'Quiz Competition' : 'Coding Contest'}</span>
                       </div>
                     )}
                     {/* Event Mode Detail */}
-                    {isApiData && contest.eventMode && (
+                    {contest.eventMode && (
                       <div className={styles.detailItem}>
                         <Trophy size={16} />
                         <span>Mode: {contest.eventMode === 'strict' ? 'Strict (Timed)' : 'Practice (Flexible)'}</span>
@@ -374,7 +348,7 @@ const StudentContests = () => {
                       <Target size={16} />
                       <span className={styles.contestId}>ID: {contest.id}</span>
                     </div>
-                    {isApiData && contest.totalScore && (
+                    {contest.totalScore && (
                       <div className={styles.detailItem}>
                         <Trophy size={16} />
                         <span>Points: {contest.totalScore}</span>
@@ -403,6 +377,7 @@ const StudentContests = () => {
             );
           })}
         </div>
+        )}
 
         {/* Pagination Section */}
         {!showAllContests && totalPages > 1 && (

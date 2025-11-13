@@ -8,9 +8,8 @@ const createContest = async (req, res) => {
       contestDescription,
       duration,
       numberOfQuestions,
-      pointsPerProgram,
       questions,
-      selectedLanguage,
+      selectedLanguages,
       contestType,
       contestMode,
       topicsCovered,
@@ -22,7 +21,6 @@ const createContest = async (req, res) => {
       !contestDescription ||
       !duration ||
       !numberOfQuestions ||
-      !pointsPerProgram ||
       !contestType ||
       !contestMode ||
       !topicsCovered ||
@@ -30,14 +28,14 @@ const createContest = async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          "Missing required contest setup fields: title, description, duration, number of questions, points per program, contest type, contest mode, topics covered, or allowed departments.",
+          "Missing required contest setup fields: title, description, duration, number of questions, contest type, contest mode, topics covered, or allowed departments.",
       });
     }
 
-    // For coding contests, selectedLanguage is required
-    if (contestType === "contest" && !selectedLanguage) {
+    // For coding contests, selectedLanguages is required
+    if (contestType === "contest" && (!selectedLanguages || !Array.isArray(selectedLanguages) || selectedLanguages.length === 0)) {
       return res.status(400).json({
-        message: "Selected language is required for coding contests.",
+        message: "At least one programming language must be selected for coding contests.",
       });
     }
 
@@ -56,7 +54,7 @@ const createContest = async (req, res) => {
       topicsCovered,
       allowedDepartments,
       numberOfQuestions: parsedNumberOfQuestions,
-      selectedLanguage,
+      selectedLanguages,
     });
 
     // Handle different contest types
@@ -67,7 +65,6 @@ const createContest = async (req, res) => {
         contestDescription,
         duration,
         numberOfQuestions: parsedNumberOfQuestions,
-        pointsPerProgram,
         questions,
         contestType,
         contestMode,
@@ -81,9 +78,8 @@ const createContest = async (req, res) => {
         contestDescription,
         duration,
         numberOfQuestions: parsedNumberOfQuestions,
-        pointsPerProgram,
         questions,
-        selectedLanguage,
+        selectedLanguages,
         contestType,
         contestMode,
         topicsCovered,

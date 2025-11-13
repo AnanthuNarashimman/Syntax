@@ -26,6 +26,7 @@ import {
   Code,
   Star,
   Activity,
+  Award
 } from "lucide-react";
 import styles from "../Styles/PageStyles/StudentUser.module.css";
 import StudentNavbar from "../Components/StudentNavbar";

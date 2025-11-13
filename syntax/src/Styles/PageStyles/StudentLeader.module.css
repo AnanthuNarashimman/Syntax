@@ -90,18 +90,19 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-  padding: 1rem 1.5rem;
+  background: white;
+  padding: 1.25rem 1.5rem;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
-  min-width: 140px;
+  min-width: 160px;
   transition: all 0.3s ease;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .statCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   border-color: #cbd5e0;
 }
 
@@ -114,10 +115,15 @@
   justify-content: center;
   background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
   color: white;
+  flex-shrink: 0;
 }
 
 .statInfo {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 48px;
 }
 
 .statNumber {
@@ -125,7 +131,7 @@
   font-weight: 700;
   color: #2d3748;
   margin: 0;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .statLabel {
@@ -133,6 +139,7 @@
   color: #718096;
   margin: 0.25rem 0 0 0;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 /* Profile Section */
@@ -157,6 +164,16 @@
   gap: 2rem;
   color: white;
   position: relative;
+  min-height: 120px;
+}
+
+@media (max-width: 768px) {
+  .profileHeader {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+    padding: 1.5rem;
+  }
 }
 
 .profileHeader::before {
@@ -230,6 +247,9 @@
   flex: 1;
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .profileName {
@@ -237,6 +257,7 @@
   font-weight: 700;
   margin: 0 0 1rem 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  line-height: 1.2;
 }
 
 .pointsBadge {
@@ -250,18 +271,30 @@
   font-weight: 600;
   backdrop-filter: blur(10px);
   margin-bottom: 0.75rem;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tierBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 0.4rem 0.8rem;
-  border-radius: 16px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1));
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+
+.tierBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.15));
 }
 
 /* Profile Stats */
@@ -655,7 +688,7 @@
 }
 
 .leaderboardTitle svg {
-  color: #ff8a65;
+  color: white;
 }
 
 .leaderboardFilters {
@@ -868,39 +901,42 @@
   font-weight: 500;
 }
 
-.tierBadge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
+.tableCell .tierBadge {
+  padding: 0.4rem 0.6rem;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
+  min-width: 50px;
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
-.tierBadge::before {
+.tableCell .tierBadge::before {
   content: '';
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s ease;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
 }
 
-.tierBadge:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.tableCell .tierBadge:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.tierBadge:hover::before {
+.tableCell .tierBadge:hover::before {
   left: 100%;
 }
 
