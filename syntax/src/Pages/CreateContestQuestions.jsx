@@ -1,3 +1,4 @@
+// /syntax/src/Pages/CreateContestQuestions.jsx
 import { useState } from "react";
 import { 
   Home, 
@@ -11,7 +12,9 @@ import {
   Save,
   Code,
   FileText,
-  TestTube
+  TestTube,
+  Eye,       // <-- Import Eye icon
+  EyeOff     // <-- Import EyeOff icon
 } from 'lucide-react';
 import '../Styles/PageStyles/CreateContestQuestions.css';
 import AdminNavbar from "../Components/AdminNavbar";
@@ -65,8 +68,10 @@ function CreateContestQuestions() {
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
       initialQuestions[i] = {
         problem: '',
-        testCases: [{ input: '', output: '' }],
-        example: { input: '', output: '' },
+        // --- MODIFIED DATA STRUCTURE ---
+        visibleTestCases: [{ input: '', output: '' }], // Replaced 'example'
+        hiddenTestCases: [{ input: '', output: '' }],  // Replaced 'testCases'
+        // --------------------------------
         problemDetails: {
           inputFormat: '',
           outputFormat: ''
@@ -91,7 +96,6 @@ function CreateContestQuestions() {
     }));
   };
 
-  // New handlers for input/output format and starter code
   const handleProblemDetailsChange = (field, value) => {
     setQuestions(prev => ({
       ...prev,
@@ -118,48 +122,71 @@ function CreateContestQuestions() {
     }));
   };
 
-  const handleTestCaseChange = (index, field, value) => {
+  // --- Handlers for VISIBLE Test Cases ---
+  const handleVisibleTestCaseChange = (index, field, value) => {
     setQuestions(prev => ({
       ...prev,
       [currentQuestion]: {
         ...prev[currentQuestion],
-        testCases: prev[currentQuestion].testCases.map((testCase, i) => 
+        visibleTestCases: prev[currentQuestion].visibleTestCases.map((testCase, i) => 
           i === index ? { ...testCase, [field]: value } : testCase
         )
       }
     }));
   };
 
-  const handleExampleChange = (field, value) => {
+  const addVisibleTestCase = () => {
     setQuestions(prev => ({
       ...prev,
       [currentQuestion]: {
         ...prev[currentQuestion],
-        example: {
-          ...prev[currentQuestion].example,
-          [field]: value
-        }
+        visibleTestCases: [...prev[currentQuestion].visibleTestCases, { input: '', output: '' }]
       }
     }));
   };
 
-  const addTestCase = () => {
-    setQuestions(prev => ({
-      ...prev,
-      [currentQuestion]: {
-        ...prev[currentQuestion],
-        testCases: [...prev[currentQuestion].testCases, { input: '', output: '' }]
-      }
-    }));
-  };
-
-  const removeTestCase = (index) => {
-    if (questions[currentQuestion].testCases.length > 1) {
+  const removeVisibleTestCase = (index) => {
+    if (questions[currentQuestion].visibleTestCases.length > 1) {
       setQuestions(prev => ({
         ...prev,
         [currentQuestion]: {
           ...prev[currentQuestion],
-          testCases: prev[currentQuestion].testCases.filter((_, i) => i !== index)
+          visibleTestCases: prev[currentQuestion].visibleTestCases.filter((_, i) => i !== index)
+        }
+      }));
+    }
+  };
+
+  // --- Handlers for HIDDEN Test Cases ---
+  const handleHiddenTestCaseChange = (index, field, value) => {
+    setQuestions(prev => ({
+      ...prev,
+      [currentQuestion]: {
+        ...prev[currentQuestion],
+        hiddenTestCases: prev[currentQuestion].hiddenTestCases.map((testCase, i) => 
+          i === index ? { ...testCase, [field]: value } : testCase
+        )
+      }
+    }));
+  };
+
+  const addHiddenTestCase = () => {
+    setQuestions(prev => ({
+      ...prev,
+      [currentQuestion]: {
+        ...prev[currentQuestion],
+        hiddenTestCases: [...prev[currentQuestion].hiddenTestCases, { input: '', output: '' }]
+      }
+    }));
+  };
+
+  const removeHiddenTestCase = (index) => {
+    if (questions[currentQuestion].hiddenTestCases.length > 1) {
+      setQuestions(prev => ({
+        ...prev,
+        [currentQuestion]: {
+          ...prev[currentQuestion],
+          hiddenTestCases: prev[currentQuestion].hiddenTestCases.filter((_, i) => i !== index)
         }
       }));
     }
@@ -171,7 +198,6 @@ function CreateContestQuestions() {
       return;
     }
     
-    // Validate input/output formats
     if (!questions[currentQuestion].problemDetails?.inputFormat?.trim()) {
       showError('Please enter the input format');
       return;
@@ -182,7 +208,6 @@ function CreateContestQuestions() {
       return;
     }
     
-    // Validate starter code
     if (!questions[currentQuestion].starterCode?.python?.trim()) {
       showError('Please enter Python starter code');
       return;
@@ -193,6 +218,16 @@ function CreateContestQuestions() {
       return;
     }
     
+    // --- MODIFIED Validation ---
+    if (questions[currentQuestion].visibleTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+        showError('Please complete all visible test cases');
+        return;
+    }
+    if (questions[currentQuestion].hiddenTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+        showError('Please complete all hidden test cases');
+        return;
+    }
+
     if (currentQuestion < parseInt(numberOfQuestions)) {
       setCurrentQuestion(currentQuestion + 1);
     }
@@ -200,19 +235,23 @@ function CreateContestQuestions() {
 
   const handlePrevious = () => {
     if (currentQuestion > 1) {
-      setCurrentQuestion(currentQuestion - 1);
+      setCurrentQuestion(currentQuestion - 1); // Corrected from + 1
     }
   };
 
   const handleSaveContest = async () => {
-    // Validate all questions
+    // --- MODIFIED Full Contest Validation ---
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
         if (!questions[i].problem.trim()) {
-            showError(`Please complete question ${i}`);
+            showError(`Please complete problem statement for question ${i}`);
             return;
         }
-        if (!questions[i].example.input.trim() || !questions[i].example.output.trim()) {
-            showError(`Please complete example for question ${i}`);
+        if (questions[i].visibleTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+            showError(`Please complete all visible test cases for question ${i}`);
+            return;
+        }
+        if (questions[i].hiddenTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+            showError(`Please complete all hidden test cases for question ${i}`);
             return;
         }
         if (!questions[i].problemDetails?.inputFormat?.trim()) {
@@ -231,61 +270,50 @@ function CreateContestQuestions() {
             showError(`Please complete Java starter code for question ${i}`);
             return;
         }
-        if (questions[i].testCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
-            showError(`Please complete all test cases for question ${i}`);
-            return;
-        }
     }
 
-    // Get contest general data from localStorage
     let contestGeneralData = {};
     
     try {
         const stored = localStorage.getItem('contestFormData');
         if (stored) {
             contestGeneralData = JSON.parse(stored);
-            console.log('Found contest data in localStorage:', contestGeneralData);
         } else {
             throw new Error('No contest data found in localStorage');
         }
     } catch (e) {
         showError('Contest general information not found. Please go back and fill in the contest details first.');
-        console.error('Error retrieving contest data:', e);
-        console.log('Available localStorage keys:', Object.keys(localStorage));
         return;
     }
 
-    // Check if we have the required data using the correct field names
     if (!contestGeneralData.title || !contestGeneralData.description) {
         showError('Contest title and description not found. Please go back and fill in the contest details first.');
-        console.error('Missing required contest data. Available data:', contestGeneralData);
         return;
     }
 
-    // Assemble the data to send to the backend using correct field names
     const dataToSend = {
         contestTitle: contestGeneralData.title,
         contestDescription: contestGeneralData.description,
         duration: contestGeneralData.duration,
         pointsPerProgram: contestGeneralData.pointsPerProgram,
-        contestMode: contestGeneralData.mode, // Fixed: use contestMode instead of mode
-        contestType: contestGeneralData.type, // Fixed: use contestType instead of type
+        contestMode: contestGeneralData.mode, 
+        contestType: contestGeneralData.type, 
         topicsCovered: contestGeneralData.topicsCovered,
         allowedDepartments: contestGeneralData.allowedDepartments,
         numberOfQuestions: parseInt(numberOfQuestions),
         selectedLanguage: selectedLanguage,
-        questions: questions,
+        questions: questions, // This now contains the visible/hidden test cases
     };
 
     console.log('Data being sent to API:', dataToSend);
-    console.log('Questions data structure:', questions);
-    console.log('Sample question data:', questions[1]);
 
     try {
-        const response = await fetch('/api/admin/create-contest', {
+        // TODO: Make sure this endpoint matches your backend routes
+        const response = await fetch('/api/admin/create-contest', { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                // TODO: Add Authorization header if needed
             },
             body: JSON.stringify(dataToSend)
         });
@@ -293,27 +321,22 @@ function CreateContestQuestions() {
         if (!response.ok) {
             const errorData = await response.json();
             showError(`Failed to create contest: ${errorData.message || 'Unknown error'}`);
-            console.error('API Error:', errorData);
             return;
         }
 
         const result = await response.json();
         showSuccess('Contest created successfully!');
-        console.log('Contest creation success:', result);
         
-        // Add the new event to the context
         if (result.event) {
             addNewEvent(result.event);
         }
         
-        // Clear localStorage
         localStorage.removeItem('contestFormData');
-        
         navigate('/manage-contest');
 
     } catch (error) {
         console.error('Network or unexpected error:', error);
-        showError('An unexpected error occurred while saving the contest. Please check the console for details.');
+        showError('An unexpected error occurred while saving the contest.');
     }
   };
 
@@ -429,31 +452,55 @@ function CreateContestQuestions() {
           />
         </div>
 
-        <div className="example-section">
-          <h3>
-            <Code size={16} />
-            Example
-          </h3>
-          <div className="example-grid">
-            <div className="form-group">
-              <p className="label">Input</p>
-              <textarea
-                rows="3"
-                placeholder="Example input..."
-                value={questions[currentQuestion]?.example?.input || ''}
-                onChange={(e) => handleExampleChange('input', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <p className="label">Output</p>
-              <textarea
-                rows="3"
-                placeholder="Expected output..."
-                value={questions[currentQuestion]?.example?.output || ''}
-                onChange={(e) => handleExampleChange('output', e.target.value)}
-              />
-            </div>
+        {/* --- MODIFIED JSX for Visible Test Cases --- */}
+        <div className="test-cases-section">
+          <div className="section-header">
+            <h3>
+              <Eye size={16} />
+              Visible Test Cases (Examples)
+            </h3>
+            <button className="add-test-case-btn" onClick={addVisibleTestCase}>
+              <Plus size={16} />
+              Add Visible Test Case
+            </button>
           </div>
+          <p className="section-subtitle">These test cases will be visible to the student as examples.</p>
+          
+          {questions[currentQuestion]?.visibleTestCases?.map((testCase, index) => (
+            <div key={index} className="test-case-card">
+              <div className="test-case-header">
+                <span>Visible Case {index + 1}</span>
+                {questions[currentQuestion].visibleTestCases.length > 1 && (
+                  <button 
+                    className="remove-test-case-btn"
+                    onClick={() => removeVisibleTestCase(index)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="test-case-grid">
+                <div className="form-group">
+                  <p className="label">Input</p>
+                  <textarea
+                    rows="3"
+                    placeholder="Example input..."
+                    value={testCase.input}
+                    onChange={(e) => handleVisibleTestCaseChange(index, 'input', e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <p className="label">Expected Output</p>
+                  <textarea
+                    rows="3"
+                    placeholder="Expected output..."
+                    value={testCase.output}
+                    onChange={(e) => handleVisibleTestCaseChange(index, 'output', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Input/Output Format Section */}
@@ -483,11 +530,12 @@ function CreateContestQuestions() {
             </div>
           </div>
         </div>
+        
         {/* Starter Code Section */}
         <div className="starter-code-section">
           <h3>
             <Code size={16} />
-            Sample Code ("Hello World")
+            Starter Code
           </h3>
           <div className="starter-code-grid">
             <div className="form-group">
@@ -511,26 +559,28 @@ function CreateContestQuestions() {
           </div>
         </div>
 
+        {/* --- MODIFIED JSX for Hidden Test Cases --- */}
         <div className="test-cases-section">
           <div className="section-header">
             <h3>
-              <TestTube size={16} />
-              Test Cases
+              <EyeOff size={16} />
+              Hidden Test Cases
             </h3>
-            <button className="add-test-case-btn" onClick={addTestCase}>
+            <button className="add-test-case-btn" onClick={addHiddenTestCase}>
               <Plus size={16} />
-              Add Test Case
+              Add Hidden Test Case
             </button>
           </div>
-          
-          {questions[currentQuestion]?.testCases?.map((testCase, index) => (
+          <p className="section-subtitle">These test cases will be used for judging and are NOT visible to the student.</p>
+
+          {questions[currentQuestion]?.hiddenTestCases?.map((testCase, index) => (
             <div key={index} className="test-case-card">
               <div className="test-case-header">
-                <span>Test Case {index + 1}</span>
-                {questions[currentQuestion].testCases.length > 1 && (
+                <span>Hidden Case {index + 1}</span>
+                {questions[currentQuestion].hiddenTestCases.length > 1 && (
                   <button 
                     className="remove-test-case-btn"
-                    onClick={() => removeTestCase(index)}
+                    onClick={() => removeHiddenTestCase(index)}
                   >
                     Remove
                   </button>
@@ -543,7 +593,7 @@ function CreateContestQuestions() {
                     rows="3"
                     placeholder="Test case input..."
                     value={testCase.input}
-                    onChange={(e) => handleTestCaseChange(index, 'input', e.target.value)}
+                    onChange={(e) => handleHiddenTestCaseChange(index, 'input', e.target.value)}
                   />
                 </div>
                 <div className="form-group">
@@ -552,7 +602,7 @@ function CreateContestQuestions() {
                     rows="3"
                     placeholder="Expected output..."
                     value={testCase.output}
-                    onChange={(e) => handleTestCaseChange(index, 'output', e.target.value)}
+                    onChange={(e) => handleHiddenTestCaseChange(index, 'output', e.target.value)}
                   />
                 </div>
               </div>

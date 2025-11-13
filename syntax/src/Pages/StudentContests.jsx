@@ -1,3 +1,4 @@
+// /syntax/src/Pages/StudentContests.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Trophy, Clock, Users, Code, BookOpen, Target, Calendar, Award, Play, Eye, Zap } from 'lucide-react';
@@ -73,10 +74,6 @@ const StudentContests = () => {
     setSearchErrorMessage('');
   };
 
-
-
-
-
   // Add mock contest data for cards styled like StudentPractice
   const mockContestCards = [
     { id: 1, type: 'Coding Contest', title: 'Algo Sprint', duration: '2 hours', department: 'CSE' },
@@ -135,12 +132,24 @@ const StudentContests = () => {
   };
 
 
-
+  // --- MODIFIED FUNCTION ---
   const handleViewContest = (contest) => {
-    // Navigate to contest preview page with contest data
-    navigate('/student-contests-preview', {
-      state: { contestData: contest }
-    });
+    // Determine if it's API data or mock data
+    const isApiData = !!contest.eventTitle;
+    
+    // Check if it's a coding contest
+    const isCodingContest = (isApiData && contest.eventType === 'coding contest') || 
+                           (!isApiData && contest.type === 'Coding Contest');
+
+    if (isCodingContest) {
+      // Navigate to the NEW code playground page
+      navigate(`/contest/${contest.id}`);
+    } else {
+      // Navigate to the ORIGINAL quiz preview page
+      navigate('/student-contests-preview', {
+        state: { contestData: contest }
+      });
+    }
   };
 
   // Modal handlers
@@ -154,12 +163,25 @@ const StudentContests = () => {
     setSelectedContest(null);
   };
 
+  // --- MODIFIED FUNCTION ---
   const handleJoinContest = (contest) => {
-    // Navigate to contest preview page with contest data
-    navigate('/student-contests-preview', {
-      state: { contestData: contest }
-    });
-    handleCloseModal();
+    // Determine if it's API data or mock data
+    const isApiData = !!contest.eventTitle;
+    
+    // Check if it's a coding contest
+    const isCodingContest = (isApiData && contest.eventType === 'coding contest') || 
+                           (!isApiData && contest.type === 'Coding Contest');
+
+    if (isCodingContest) {
+      // Navigate to the NEW code playground page
+      navigate(`/contest/${contest.id}`);
+    } else {
+      // Navigate to the ORIGINAL quiz preview page
+      navigate('/student-contests-preview', {
+        state: { contestData: contest }
+      });
+    }
+    handleCloseModal(); // Close the modal
   };
 
   // Pagination calculations

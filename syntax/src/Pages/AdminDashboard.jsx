@@ -16,7 +16,7 @@ import AdminNavbar from '../Components/AdminNavbar';
 import { useNavigate } from 'react-router-dom';
 import { useContestContext } from '../contexts/ContestContext';
 
-import Admin_Home from '../assets/Images/Admin_home.png';
+import Admin_Home from '../assets/Images/Admin_Home.png';
 
 function AdminDashboard() {
   // Use ContestContext

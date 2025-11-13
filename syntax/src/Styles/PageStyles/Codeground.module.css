@@ -1,0 +1,480 @@
+/* /syntax/src/Styles/PageStyles/Codeground.module.css */
+
+.codeground-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 85px);
+    background: white;
+    background-attachment: fixed;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    color: #333;
+    margin-top: 85px;
+    overflow: hidden;
+}
+
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    overflow: hidden;
+}
+
+.editor-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.editor-panel:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+    color: #fff;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.panel-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-tab {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(10px);
+}
+
+.panel-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lang-selector {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.lang-selector:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.lang-selector option {
+    background-color: #1e1e1e;
+    color: #fff;
+}
+
+.action-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-button.copy {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-button.copy:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.action-button.download {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-button.download:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.action-button.run {
+    background: rgb(255, 255, 255);
+    color: black;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.action-button.run:hover:not(:disabled) {
+    background:whiteS;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.editor-wrapper {
+    flex-grow: 1;
+    overflow: hidden;
+    background-color: #1e1e1e;
+    border-radius: 0 0 12px 12px;
+}
+
+.output-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.output-panel:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.output-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background:linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9em;
+    color: #fff;
+    font-weight: 600;
+}
+
+.output-clear-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.output-clear-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.console-output {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    padding: 20px;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Scrollbar styling */
+.console-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.console-output::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.console-output::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.console-output::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Output rendering styles */
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 10px;
+}
+
+.empty-output {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: #666;
+    text-align: center;
+}
+
+.empty-output p {
+    font-size: 1em;
+    margin: 0;
+    color: #888;
+}
+
+.empty-output small {
+    font-size: 0.85em;
+    color: #999;
+}
+
+.error-output {
+    color: #ef4444;
+}
+
+.error-output h4 {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.error-output pre {
+    background-color: #2d2d2d;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ef4444;
+    overflow-x: auto;
+}
+
+.result-output {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.output-section {
+    margin-bottom: 10px;
+}
+
+.output-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.output-section pre {
+    background-color: #2d2d2d;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 0;
+    overflow-x: auto;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.output-success {
+    color: #10b981;
+}
+
+.output-error {
+    color: #ef4444;
+}
+
+.output-warning {
+    color: #f59e0b;
+}
+
+.output-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 12px 15px;
+    background-color: #2d2d2d;
+    border-radius: 8px;
+    font-size: 0.9em;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #aaa;
+}
+
+.meta-item strong {
+    color: #fff;
+}
+
+/* Custom Input Section */
+.custom-input-section {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    margin: 0 20px 20px 20px;
+    transition: all 0.3s ease;
+}
+
+.custom-input-section:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.custom-input-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #ff7043 ;
+    font-size: 1.1em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.custom-input-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.9em;
+    background-color: #f9fafb;
+    resize: vertical;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.custom-input-textarea:focus {
+    border-color: rgb(124, 247, 124);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-input-textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-input-textarea::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.custom-input-textarea::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.custom-input-textarea::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .main-content {
+        flex-direction: column;
+        padding: 15px;
+        gap: 15px;
+    }
+
+    .editor-panel, .output-panel {
+        flex: none;
+        width: 100%;
+    }
+
+    .editor-wrapper {
+        height: 50vh;
+    }
+
+    .console-output {
+        height: 30vh;
+    }
+
+    .custom-input-section {
+        margin: 15px;
+    }
+}
+
+@media (max-width: 600px) {
+    .codeground-page {
+        margin-top: 70px;
+    }
+
+    .main-content {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 15px;
+    }
+
+    .panel-header-right {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .action-button {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 12px;
+        font-size: 0.8em;
+    }
+
+    .lang-selector {
+        width: 100%;
+    }
+
+    .custom-input-section {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .custom-input-section h3 {
+        font-size: 1em;
+    }
+
+    .editor-wrapper {
+        height: 45vh;
+    }
+}

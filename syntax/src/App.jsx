@@ -21,6 +21,9 @@ import StudentPractice from"./Pages/StudentPractice.jsx";
 import StudentUser from "./Pages/StudentUser.jsx";
 import ContestsPreview from "./Pages/ContestsPreview.jsx";
 import StudentQuiz from "./Pages/StudentQuiz.jsx";
+import CodingContestPage from './Pages/CodingContestPage';
+import Codeground from './Pages/Codeground.jsx';
+
 
 
 
@@ -55,14 +58,15 @@ function App() {
             <Route path="/student-leader" element={<StudentLeader />} />
             <Route path="/student-practice" element={<StudentPractice />} />
             <Route path="/student-user" element={<StudentUser />} />
+            <Route path="/codeground" element={<Codeground/>}/>
             
             {/* Super Admin Routes */}
             <Route path="/super-dashboard" element={<SuperAdminDashboard />} />
             <Route path="/super-manage-users" element={<SuperManageUsers />} />
             <Route path="/super-manage-contests" element={<SuperManageContests />} />
             <Route path="/super-profile" element={<SuperAdminProfile />} />
+            <Route path="/contest/:problemId" element={<CodingContestPage />} />
             
-            <Route path="*" element={<Navigate to="/student-login" replace />} />
            </Routes>
         </Router>
       </ContestProvider>
