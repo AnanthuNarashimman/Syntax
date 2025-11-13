@@ -331,10 +331,121 @@ const bulkStudentAdd = async(req, res) => {
 }
 
 
+// Submit contest solution
+const submitContest = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const {
+      contestId,
+      problemId,
+      code,
+      language,
+      testResults,
+      score,
+      totalTests,
+      passedTests,
+      submittedAt
+    } = req.body;
+
+    // Validate required fields
+    if (!contestId || !problemId || !code || !language || !testResults) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields"
+      });
+    }
+
+    // Get user data
+    const userRef = db.collection("users").doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const userData = userDoc.data();
+
+    // Create submission record in eventAttempts collection
+    const submissionData = {
+      userId,
+      userName: userData.userName || "Unknown",
+      userEmail: userData.email || "",
+      eventId: contestId,
+      problemId,
+      code,
+      language,
+      testResults,
+      score: score || 0,
+      totalTests: totalTests || 0,
+      passedTests: passedTests || 0,
+      submittedAt: submittedAt || new Date().toISOString(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    const attemptRef = await db.collection("eventAttempts").add(submissionData);
+
+    // Update or create eventResults entry for leaderboard
+    const resultsQuery = await db.collection("eventResults")
+      .where("userId", "==", userId)
+      .where("eventId", "==", contestId)
+      .limit(1)
+      .get();
+
+    if (resultsQuery.empty) {
+      // Create new result entry
+      await db.collection("eventResults").add({
+        userId,
+        eventId: contestId,
+        points: score || 0,
+        submittedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      // Update existing entry if new score is higher
+      const resultDoc = resultsQuery.docs[0];
+      const currentPoints = resultDoc.data().points || 0;
+
+      if (score > currentPoints) {
+        await resultDoc.ref.update({
+          points: score,
+          submittedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    // Update user stats if all tests passed
+    if (score > 0) {
+      await userRef.update({
+        totalScore: admin.firestore.FieldValue.increment(score),
+        lastActive: new Date().toISOString(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Submission recorded successfully",
+      submissionId: attemptRef.id,
+      score: score || 0
+    });
+
+  } catch (error) {
+    console.error("Error submitting contest:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to submit contest",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   addStudent,
   fetchStudents,
   deleteStudent,
   banStudent,
-  bulkStudentAdd
+  bulkStudentAdd,
+  submitContest
 }
