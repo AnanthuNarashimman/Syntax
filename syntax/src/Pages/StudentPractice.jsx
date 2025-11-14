@@ -124,11 +124,12 @@ const StudentPractice = () => {
 
     // On mount, show all
     useEffect(() => {
-        setFilteredProblems(mockProblems);
-        setTimeout(() => {
-            setLoading(false);
-        }, 2000);
-    }, []);
+        if (studentArticles.length > 0) {
+            setFilteredProblems(studentArticles);
+        } else {
+            setFilteredProblems(mockProblems);
+        }
+    }, [studentArticles]);
 
     useEffect(() => {
         fetchStudentArticles();

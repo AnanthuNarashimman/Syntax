@@ -241,7 +241,8 @@ const ContestsPreview = () => {
       if (eventType === 'quiz') {
         navigate('/student-quiz', { state: { quizData: contestData } });
       } else {
-        alert(`Resume contest functionality coming soon!`);
+        // Navigate to contest execution page
+        navigate(`/contest/${contestData.id}`);
       }
       return;
     }
@@ -276,8 +277,8 @@ const ContestsPreview = () => {
         if (eventType === 'quiz') {
           navigate('/student-quiz', { state: { quizData: contestData } });
         } else {
-          // For contests, show alert since we don't have a contest page yet
-          alert(`Contest functionality coming soon! This would start the ${eventType}.`);
+          // Navigate to contest execution page
+          navigate(`/contest/${contestData.id}`);
         }
       } else {
         throw new Error('Failed to start event');

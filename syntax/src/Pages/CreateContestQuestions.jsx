@@ -78,7 +78,8 @@ function CreateContestQuestions() {
         },
         starterCode: {
           python: 'print("hello world")',
-          java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello world");\n    }\n}'
+          java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello world");\n    }\n}',
+          javascript: 'console.log("hello world");'
         }
       };
     }
@@ -212,9 +213,14 @@ function CreateContestQuestions() {
       showError('Please enter Python starter code');
       return;
     }
-    
+
     if (!questions[currentQuestion].starterCode?.java?.trim()) {
       showError('Please enter Java starter code');
+      return;
+    }
+
+    if (!questions[currentQuestion].starterCode?.javascript?.trim()) {
+      showError('Please enter JavaScript starter code');
       return;
     }
     
@@ -268,6 +274,10 @@ function CreateContestQuestions() {
         }
         if (!questions[i].starterCode?.java?.trim()) {
             showError(`Please complete Java starter code for question ${i}`);
+            return;
+        }
+        if (!questions[i].starterCode?.javascript?.trim()) {
+            showError(`Please complete JavaScript starter code for question ${i}`);
             return;
         }
     }
@@ -376,7 +386,7 @@ function CreateContestQuestions() {
               <p>Python programming language</p>
             </div>
             
-            <div 
+            <div
               className={`language-card ${selectedLanguage === 'java' ? 'selected' : ''}`}
               onClick={() => setSelectedLanguage('java')}
             >
@@ -386,16 +396,27 @@ function CreateContestQuestions() {
               <h3>Java</h3>
               <p>Java programming language</p>
             </div>
-            
-            <div 
+
+            <div
+              className={`language-card ${selectedLanguage === 'javascript' ? 'selected' : ''}`}
+              onClick={() => setSelectedLanguage('javascript')}
+            >
+              <div className="language-icon">
+                <Code size={24} />
+              </div>
+              <h3>JavaScript</h3>
+              <p>JavaScript programming language</p>
+            </div>
+
+            <div
               className={`language-card ${selectedLanguage === 'both' ? 'selected' : ''}`}
               onClick={() => setSelectedLanguage('both')}
             >
               <div className="language-icon">
                 <Code size={24} />
               </div>
-              <h3>Both</h3>
-              <p>Python and Java</p>
+              <h3>All Three</h3>
+              <p>Python, Java and JavaScript</p>
             </div>
           </div>
         </div>
@@ -554,6 +575,15 @@ function CreateContestQuestions() {
                 placeholder="Java starter code..."
                 value={questions[currentQuestion]?.starterCode?.java || ''}
                 onChange={e => handleStarterCodeChange('java', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <p className="label">JavaScript</p>
+              <textarea
+                rows="3"
+                placeholder="JavaScript starter code..."
+                value={questions[currentQuestion]?.starterCode?.javascript || ''}
+                onChange={e => handleStarterCodeChange('javascript', e.target.value)}
               />
             </div>
           </div>

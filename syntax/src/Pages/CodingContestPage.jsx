@@ -1,281 +1,974 @@
-// /syntax/src/Pages/CodingContestPage.jsx
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+// Enhanced Coding Contest Execution Page
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
-// TODO: Adjust path to your components
-import Loader from '../Components/Loader'; 
-import CustomAlert from '../Components/CustomAlert'; 
-import StudentNavbar from '../Components/StudentNavbar'; // Added Navbar
+import {
+  ArrowLeft, Clock, Trophy, Play, Send, Terminal, CheckCircle,
+  XCircle, AlertCircle, Code, FileText, Lightbulb, Target,
+  RotateCcw, Maximize2, Minimize2, Copy, Check, ChevronDown,
+  ChevronLeft, ChevronRight
+} from 'lucide-react';
 
-// --- Language Configuration ---
+import StudentNavbar from '../Components/StudentNavbar';
+import Loader from '../Components/Loader';
+import { useAlert } from '../contexts/AlertContext';
+import styles from '../Styles/PageStyles/CodingContestPage.module.css';
+
+// Language Configuration with Judge0 IDs
 const languageOptions = {
-  python: { id: 71, monaco: 'python', defaultCode: '# Write your code here...\n' },
-  java: { id: 62, monaco: 'java', defaultCode: 'public class Main {\n    public static void main(String[] args) {\n        // Write your code here...\n    }\n}' },
-  c: { id: 50, monaco: 'c', defaultCode: '#include <stdio.h>\n\nint main() {\n    // Write your code here...\n    return 0;\n}' },
-  cpp: { id: 54, monaco: 'cpp', defaultCode: '#include <iostream>\n\nint main() {\n    // Write your code here...\n    return 0;\n}' },
-  javascript: { id: 63, monaco: 'javascript', defaultCode: '// Write your code here...\n' },
+  python: {
+    id: 71,
+    monaco: 'python',
+    name: 'Python',
+    defaultCode: '# Write your solution here\n\n'
+  },
+  java: {
+    id: 62,
+    monaco: 'java',
+    name: 'Java',
+    defaultCode: 'public class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}'
+  },
+  c: {
+    id: 50,
+    monaco: 'c',
+    name: 'C',
+    defaultCode: '#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}'
+  },
+  cpp: {
+    id: 54,
+    monaco: 'cpp',
+    name: 'C++',
+    defaultCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}'
+  },
+  javascript: {
+    id: 63,
+    monaco: 'javascript',
+    name: 'JavaScript',
+    defaultCode: '// Write your solution here\n\n'
+  }
 };
-const defaultLanguage = 'python';
 
 function CodingContestPage() {
-  const { problemId } = useParams(); // This is the CONTEST ID
-  // TODO: We need to know WHICH question to show (e.g., '1', '2', etc.)
-  // For now, we will hardcode it to show the FIRST question ('1')
-  const questionIndex = '1';
+  const { problemId } = useParams(); // Contest ID from URL
+  const navigate = useNavigate();
+  const { showError, showSuccess, showInfo } = useAlert();
 
-  const [contest, setContest] = useState(null); // Full contest object
-  const [problem, setProblem] = useState(null); // The specific question (e.g., contest.questions['1'])
-  
-  const [code, setCode] = useState(languageOptions[defaultLanguage].defaultCode);
-  const [selectedLang, setSelectedLang] = useState(defaultLanguage);
-  const [languageId, setLanguageId] = useState(languageOptions[defaultLanguage].id);
-  
+  // Contest & Problem State
+  const [contest, setContest] = useState(null);
+  const [problems, setProblems] = useState([]);
+  const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
+  const [isLoadingContest, setIsLoadingContest] = useState(true);
+
+  // Editor State
+  const [code, setCode] = useState('');
+  const [selectedLang, setSelectedLang] = useState('python');
   const [customInput, setCustomInput] = useState('');
-  const [output, setOutput] = useState(null); 
-  
-  const [isLoadingProblem, setIsLoadingProblem] = useState(true);
-  const [isExecuting, setIsExecuting] = useState(false);
-  
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // --- 1. Fetch Problem Details on Mount ---
+  // Execution State
+  const [output, setOutput] = useState(null);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionType, setExecutionType] = useState(null); // 'run' or 'submit'
+
+  // Timer State
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [timerStarted, setTimerStarted] = useState(false);
+
+  // UI State
+  const [activeTab, setActiveTab] = useState('problem');
+  const [showOutput, setShowOutput] = useState(false);
+
+  // Refs
+  const autoSaveTimer = useRef(null);
+  const editorRef = useRef(null);
+
+  // Fetch Contest Data
   useEffect(() => {
-    const fetchProblem = async () => {
-      setIsLoadingProblem(true);
+    const fetchContest = async () => {
+      setIsLoadingContest(true);
       try {
-        // TODO: Ensure this endpoint exists on your backend to fetch a single contest
-        const response = await axios.get(`/api/admin/contest/${problemId}`, {
-          // TODO: Add your auth token header if this is a protected route
-          // headers: { Authorization: `Bearer ${your_token}` }
+        const response = await axios.get(`/api/student/events`, {
+          withCredentials: true
         });
-        
-        setContest(response.data); // Save the full contest
-        
-        // --- Extract the specific question we want to display ---
-        const questionData = response.data?.questions?.[questionIndex];
-        if (questionData) {
-            setProblem(questionData);
-            // Set default code based on problem or language
-            const defaultSnippet = questionData?.starterCode?.[selectedLang] || languageOptions[selectedLang].defaultCode;
-            setCode(defaultSnippet);
+
+        const allContests = response.data.events || [];
+        const foundContest = allContests.find(c => c.id === problemId);
+
+        if (!foundContest) {
+          showError('Contest not found');
+          navigate('/student-contests');
+          return;
+        }
+
+        setContest(foundContest);
+
+        // Extract problems from contest
+        if (foundContest.problems && Array.isArray(foundContest.problems)) {
+          setProblems(foundContest.problems);
+
+          // Load saved state from localStorage
+          const savedState = localStorage.getItem(`contest_${problemId}_state`);
+          if (savedState) {
+            const parsed = JSON.parse(savedState);
+            setCurrentProblemIndex(parsed.currentProblemIndex || 0);
+            setSelectedLang(parsed.selectedLang || 'python');
+          }
+
+          // Initialize timer
+          if (foundContest.eventMode === 'strict' && foundContest.durationMinutes) {
+            const savedTimer = localStorage.getItem(`contest_${problemId}_timer`);
+            if (savedTimer) {
+              const timerData = JSON.parse(savedTimer);
+              const elapsed = Math.floor((Date.now() - timerData.startTime) / 1000);
+              const remaining = timerData.initialTime - elapsed;
+              if (remaining > 0) {
+                setTimeRemaining(remaining);
+                setTimerStarted(true);
+              } else {
+                setTimeRemaining(0);
+              }
+            }
+          }
         } else {
-            throw new Error(`Question ${questionIndex} not found in contest.`);
+          showError('No problems found in this contest');
+          navigate('/student-contests');
         }
 
       } catch (error) {
-        console.error('Error fetching problem:', error);
-        setAlert({ show: true, message: 'Failed to load problem.', type: 'error' });
+        console.error('Error fetching contest:', error);
+        showError('Failed to load contest');
+        navigate('/student-contests');
       }
-      setIsLoadingProblem(false);
+      setIsLoadingContest(false);
     };
 
-    fetchProblem();
-  }, [problemId, questionIndex, selectedLang]); // Re-fetch if language changes to update starter code
+    fetchContest();
+  }, [problemId, navigate, showError]);
 
-  // --- 2. Handle Language Change ---
+  // Load Code from localStorage or starter code
+  useEffect(() => {
+    if (problems.length > 0 && currentProblemIndex < problems.length) {
+      const problem = problems[currentProblemIndex];
+      const storageKey = `contest_${problemId}_problem_${currentProblemIndex}_${selectedLang}`;
+
+      const savedCode = localStorage.getItem(storageKey);
+      if (savedCode) {
+        setCode(savedCode);
+      } else {
+        const starterCode = problem.starterCode?.[selectedLang] || languageOptions[selectedLang].defaultCode;
+        setCode(starterCode);
+      }
+    }
+  }, [currentProblemIndex, selectedLang, problems, problemId]);
+
+  // Auto-save code
+  useEffect(() => {
+    if (code && problems.length > 0) {
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+      }
+
+      autoSaveTimer.current = setTimeout(() => {
+        const storageKey = `contest_${problemId}_problem_${currentProblemIndex}_${selectedLang}`;
+        localStorage.setItem(storageKey, code);
+
+        // Save state
+        localStorage.setItem(`contest_${problemId}_state`, JSON.stringify({
+          currentProblemIndex,
+          selectedLang,
+          lastSaved: Date.now()
+        }));
+      }, 1000);
+    }
+
+    return () => {
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+      }
+    };
+  }, [code, currentProblemIndex, selectedLang, problemId, problems.length]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (!timerStarted || timeRemaining === null || timeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          // Timer expired - will be handled by checking timeRemaining === 0
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timerStarted, timeRemaining]);
+
+  // Handle time expiry
+  useEffect(() => {
+    if (timeRemaining === 0 && timerStarted) {
+      handleAutoSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRemaining, timerStarted]);
+
+  // Start timer on first interaction
+  const startTimer = useCallback(() => {
+    if (!timerStarted && contest?.eventMode === 'strict' && contest?.durationMinutes) {
+      const initialTime = contest.durationMinutes * 60;
+      setTimeRemaining(initialTime);
+      setTimerStarted(true);
+
+      localStorage.setItem(`contest_${problemId}_timer`, JSON.stringify({
+        startTime: Date.now(),
+        initialTime
+      }));
+    }
+  }, [timerStarted, contest, problemId]);
+
+  // Format time display
+  const formatTime = (seconds) => {
+    if (seconds === null) return '--:--';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle language change
   const handleLanguageChange = (e) => {
     const lang = e.target.value;
+    const problem = problems[currentProblemIndex];
+
+    // Check if language is supported
+    if (problem.languagesSupported && !problem.languagesSupported.includes(lang)) {
+      showError(`${languageOptions[lang].name} is not supported for this problem`);
+      return;
+    }
+
     setSelectedLang(lang);
-    setLanguageId(languageOptions[lang].id);
-    // Update code to the default for the new language
-    // It will be overwritten by useEffect if starter code exists
-    setCode(languageOptions[lang].defaultCode); 
+    startTimer();
   };
 
-  // --- 3. Handle "Run" Button ---
+  // Handle Run Code
   const handleRun = async () => {
+    if (!code.trim()) {
+      showError('Please write some code first');
+      return;
+    }
+
+    startTimer();
     setIsExecuting(true);
+    setExecutionType('run');
+    setShowOutput(true);
     setOutput(null);
-    setAlert({ show: false });
 
     try {
-      const response = await axios.post('/api/judge/run', 
-        {
-          source_code: code,
-          language_id: languageId,
-          stdin: customInput,
-        },
-        // TODO: Add auth token header
-        // { headers: { Authorization: `Bearer ${your_token}` } }
-      );
-      
-      setOutput(response.data); 
+      const response = await axios.post('/api/judge/run', {
+        source_code: code,
+        language_id: languageOptions[selectedLang].id,
+        stdin: customInput
+      });
+
+      setOutput(response.data);
+
+      if (response.data.status?.id === 3) {
+        showSuccess('Code executed successfully');
+      }
     } catch (error) {
       console.error('Error running code:', error);
-      setOutput(error.response?.data || { stderr: 'An unknown error occurred.' });
+      const errorData = error.response?.data;
+      setOutput(errorData || { stderr: 'An unexpected error occurred' });
+      showError('Failed to run code');
     }
+
     setIsExecuting(false);
   };
 
-  // --- 4. Handle "Submit" Button ---
+  // Handle Submit Solution
   const handleSubmit = async () => {
+    if (!code.trim()) {
+      showError('Please write some code first');
+      return;
+    }
+
+    const problem = problems[currentProblemIndex];
+
+    if (!problem) {
+      showError('Problem data not found');
+      return;
+    }
+
+    startTimer();
     setIsExecuting(true);
+    setExecutionType('submit');
+    setShowOutput(true);
     setOutput(null);
-    setAlert({ show: false });
-    
+
     try {
-      const response = await axios.post('/api/judge/submit', 
+      // Run against all test cases
+      const visibleTestCases = problem.examples || [];
+      const hiddenTestCases = problem.testCases || [];
+      const allTestCases = [...visibleTestCases, ...hiddenTestCases];
+
+      if (allTestCases.length === 0) {
+        showError('No test cases available for this problem');
+        setIsExecuting(false);
+        return;
+      }
+
+      // Execute against all test cases using batch submission
+      const submissions = allTestCases.map(tc => ({
+        source_code: code,
+        language_id: languageOptions[selectedLang].id,
+        stdin: tc.input,
+        expected_output: tc.output
+      }));
+
+      // Step 1: Submit batch and get tokens
+      const batchResponse = await axios.post('https://judge0-ce.p.rapidapi.com/submissions/batch',
+        { submissions },
         {
-          source_code: code,
-          language_id: languageId,
-          problem_id: problemId, // Send the main CONTEST ID
-          // TODO: Send questionIndex if your backend supports it
-        },
-        // TODO: Add auth token header
-        // { headers: { Authorization: `Bearer ${your_token}` } }
+          params: { base64_encoded: 'false' },
+          headers: {
+            'content-type': 'application/json',
+            'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
+            'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
+          }
+        }
       );
-      
-      setOutput(response.data); // Store the final verdict
-      setAlert({
-        show: true,
-        message: response.data.verdict,
-        type: response.data.success ? 'success' : 'error',
+
+      const tokens = batchResponse.data;
+      console.log('Judge0 Tokens:', tokens);
+
+      // Validate tokens
+      if (!Array.isArray(tokens)) {
+        throw new Error('Invalid response from Judge0 API: Expected array of tokens');
+      }
+
+      // Step 2: Get the tokens and fetch results
+      const tokenList = tokens.map(t => t.token).join(',');
+
+      // Step 3: Poll for results until all are complete
+      let results = [];
+      let attempts = 0;
+      const maxAttempts = 30; // 30 seconds max
+
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between polls
+
+        const resultsResponse = await axios.get(`https://judge0-ce.p.rapidapi.com/submissions/batch`,
+          {
+            params: {
+              tokens: tokenList,
+              base64_encoded: 'false',
+              fields: 'stdout,stderr,status,time,memory,compile_output'
+            },
+            headers: {
+              'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
+              'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
+            }
+          }
+        );
+
+        results = resultsResponse.data.submissions;
+
+        // Check if all submissions are complete (status.id not in [1, 2] which are "In Queue" and "Processing")
+        const allComplete = results.every(r => r.status && r.status.id !== 1 && r.status.id !== 2);
+
+        if (allComplete) {
+          console.log(`Judge0 Results (attempt ${attempts + 1}):`, results);
+          break;
+        }
+
+        attempts++;
+      }
+
+      if (attempts >= maxAttempts) {
+        throw new Error('Timeout waiting for Judge0 results');
+      }
+
+      // Validate response structure
+      if (!Array.isArray(results)) {
+        throw new Error('Invalid response from Judge0 API: Expected array of results');
+      }
+
+      // Process results with error handling
+      const testResults = results.map((result, index) => {
+        const isVisible = index < visibleTestCases.length;
+        const testCase = allTestCases[index];
+
+        // Handle different response structures
+        const statusId = result.status?.id || result.statusId || 0;
+        const statusDesc = result.status?.description || result.statusDescription || 'Unknown';
+
+        // Get actual output and expected output
+        const actualOutput = (result.stdout || result.output || '').trim();
+        const expectedOutput = (testCase.output || '').trim();
+
+        // Check if code executed successfully AND output matches
+        const executedSuccessfully = statusId === 3; // Status 3 = Accepted (no runtime errors)
+        const outputMatches = actualOutput === expectedOutput;
+        const passed = executedSuccessfully && outputMatches;
+
+        return {
+          index: index + 1,
+          isVisible,
+          passed,
+          input: testCase.input,
+          expectedOutput: testCase.output,
+          actualOutput: result.stdout || result.output || '',
+          status: passed ? 'Accepted' : (executedSuccessfully ? 'Wrong Answer' : statusDesc),
+          time: result.time || 0,
+          memory: result.memory || 0,
+          stderr: result.stderr || result.error || '',
+          compile_output: result.compile_output || ''
+        };
       });
+
+      const passedCount = testResults.filter(r => r.passed).length;
+      const totalCount = testResults.length;
+      const allPassed = passedCount === totalCount;
+
+      // Find first failed test case
+      const firstFailure = testResults.find(r => !r.passed);
+
+      // Calculate score
+      const pointsEarned = allPassed ? problem.points : 0;
+
+      // Store submission in Firebase
+      await saveSubmission({
+        problemId: problem.questionId,
+        code,
+        language: selectedLang,
+        testResults,
+        score: pointsEarned,
+        totalTests: totalCount,
+        passedTests: passedCount
+      });
+
+      setOutput({
+        isSubmission: true,
+        allPassed,
+        passedCount,
+        totalCount,
+        pointsEarned,
+        maxPoints: problem.points,
+        testResults: firstFailure ? [firstFailure] : testResults.filter(r => r.isVisible),
+        firstFailure
+      });
+
+      if (allPassed) {
+        showSuccess(`All tests passed! You earned ${pointsEarned} points!`);
+      } else {
+        showError(`${passedCount}/${totalCount} tests passed. Keep trying!`);
+      }
+
     } catch (error) {
       console.error('Error submitting code:', error);
-      setOutput(error.response?.data || { message: 'An unknown error occurred.' });
-      setAlert({ show: true, message: 'Submission failed.', type: 'error' });
+      console.error('Error details:', error.response?.data || error.message);
+
+      let errorMessage = 'Submission failed';
+
+      if (error.response?.status === 401) {
+        errorMessage = 'Unauthorized: Please check your API key';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Rate limit exceeded: Too many requests';
+      } else if (error.response?.data) {
+        errorMessage = error.response.data.message || JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setOutput({
+        error: true,
+        message: errorMessage,
+        details: error.response?.data
+      });
+      showError(errorMessage);
     }
+
     setIsExecuting(false);
   };
 
-  // --- 5. Render Helper for Output ---
+  // Save submission to Firebase
+  const saveSubmission = async (submissionData) => {
+    try {
+      await axios.post('/api/student/submit-contest', {
+        contestId: problemId,
+        ...submissionData,
+        submittedAt: new Date().toISOString()
+      }, {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Error saving submission:', error);
+      // Don't show error to user as this is background operation
+    }
+  };
+
+  // Auto-submit when timer expires
+  const handleAutoSubmit = async () => {
+    showInfo('Time expired! Auto-submitting your solution...');
+    await handleSubmit();
+    setTimeout(() => {
+      navigate('/student-contests');
+    }, 3000);
+  };
+
+  // Copy code to clipboard
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    showSuccess('Code copied to clipboard');
+  };
+
+  // Reset code to starter code
+  const handleResetCode = () => {
+    const problem = problems[currentProblemIndex];
+    const starterCode = problem.starterCode?.[selectedLang] || languageOptions[selectedLang].defaultCode;
+    setCode(starterCode);
+    showInfo('Code reset to starter template');
+  };
+
+  // Clear output
+  const handleClearOutput = () => {
+    setOutput(null);
+    setShowOutput(false);
+  };
+
+  // Render output section
   const renderOutput = () => {
-    if (!output) return <p>Click "Run" or "Submit" to see the output.</p>;
-    
-    if (output.verdict) { // Submission verdict
+    if (!output) {
+      return <div className={styles.outputPlaceholder}>Run your code or submit to see results here...</div>;
+    }
+
+    // Submission results
+    if (output.isSubmission) {
       return (
-        <div style={{ color: output.success ? 'green' : 'red' }}>
-          <h3>Verdict: {output.verdict}</h3>
-          {output.onTestCase && <p>Failed on: {output.onTestCase}</p>}
-          {output.message && <pre>{output.message}</pre>}
+        <div className={styles.testResultsGrid}>
+          <div className={`${styles.verdictSection} ${output.allPassed ? styles.success : styles.error}`}>
+            <h3 className={`${styles.verdictTitle} ${output.allPassed ? styles.success : styles.error}`}>
+              {output.allPassed ? <CheckCircle size={24} /> : <XCircle size={24} />}
+              {output.allPassed ? 'All Tests Passed!' : 'Some Tests Failed'}
+            </h3>
+            <div className={styles.verdictMessage}>
+              <p>Tests Passed: {output.passedCount} / {output.totalCount}</p>
+              <p>Score: {output.pointsEarned} / {output.maxPoints} points</p>
+              {output.allPassed && <p>You've solved this problem!</p>}
+            </div>
+          </div>
+
+          {output.firstFailure && (
+            <div className={`${styles.testCaseResult} ${styles.failed}`}>
+              <div className={styles.testCaseHeader}>
+                <span className={styles.testCaseName}>
+                  <XCircle size={16} />
+                  {output.firstFailure.isVisible ? `Example ${output.firstFailure.index}` : `Test Case ${output.firstFailure.index}`}
+                </span>
+                <span className={`${styles.statusBadge} ${styles.failed}`}>Failed</span>
+              </div>
+              <div className={styles.testCaseDetails}>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Input</span>
+                  <pre className={styles.detailValue}>{output.firstFailure.input}</pre>
+                </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Expected Output</span>
+                  <pre className={styles.detailValue}>{output.firstFailure.expectedOutput}</pre>
+                </div>
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Your Output</span>
+                  <pre className={styles.detailValue}>{output.firstFailure.actualOutput || '(empty)'}</pre>
+                </div>
+                {output.firstFailure.stderr && (
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Error</span>
+                    <pre className={styles.detailValue}>{output.firstFailure.stderr}</pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
-    
-    // Custom run output
+
+    // Run results
     return (
-      <>
-        {output.status?.description && <h3>Status: {output.status.description}</h3>}
+      <div className={styles.outputContent}>
+        {output.status && (
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Status:</strong> {output.status.description}
+          </div>
+        )}
+
         {output.stdout && (
-          <>
-            <h4>Output:</h4>
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Output:</strong>
             <pre>{output.stdout}</pre>
-          </>
+          </div>
         )}
+
         {output.stderr && (
-          <>
-            <h4>Error:</h4>
-            <pre style={{ color: 'red' }}>{output.stderr}</pre>
-          </>
+          <div style={{ marginBottom: '1rem', color: '#ef4444' }}>
+            <strong>Error:</strong>
+            <pre>{output.stderr}</pre>
+          </div>
         )}
+
         {output.compile_output && (
-          <>
-            <h4>Compile Output:</h4>
-            <pre style={{ color: 'orange' }}>{output.compile_output}</pre>
-          </>
+          <div style={{ marginBottom: '1rem', color: '#f59e0b' }}>
+            <strong>Compilation Output:</strong>
+            <pre>{output.compile_output}</pre>
+          </div>
         )}
-        {output.time && <p>Time: {output.time}s</p>}
-        {output.memory && <p>Memory: {output.memory} KB</p>}
-      </>
+
+        {output.time && <div>Time: {output.time}s</div>}
+        {output.memory && <div>Memory: {output.memory} KB</div>}
+      </div>
     );
   };
 
-  if (isLoadingProblem) {
-    return <Loader />;
-  }
-  
-  if (!problem || !contest) {
+  // Loading state
+  if (isLoadingContest) {
     return (
-      <>
+      <div className={styles.codingContestPage}>
         <StudentNavbar />
-        <h2>Problem not found.</h2>
-        {alert.show && <CustomAlert type={alert.type} message={alert.message} />}
-      </>
+        <div className={styles.loadingContainer}>
+          <Loader />
+          <p className={styles.loadingText}>Loading contest...</p>
+        </div>
+      </div>
     );
   }
 
-  // --- 6. Main Component JSX ---
-  return (
-    <>
-    <StudentNavbar />
-    <div style={{ display: 'flex', height: 'calc(100vh - 60px)', padding: '16px' }}> {/* Adjusted height for navbar */}
-      
-      {/* --- Left Column: Problem Details --- */}
-      <div style={{ flex: 1, paddingRight: '16px', overflowY: 'auto' }}>
-        <h2>{contest.eventTitle}</h2>
-        <h3>Problem: {problem.problem}</h3>
-        <p>{contest.eventDescription}</p>
-
-        <h4>Input Format</h4>
-        <p>{problem.problemDetails?.inputFormat}</p>
-
-        <h4>Output Format</h4>
-        <p>{problem.problemDetails?.outputFormat}</p>
-        
-        <hr />
-
-        <h3>Visible Test Cases</h3>
-        {problem.visibleTestCases?.map((tc, index) => (
-          <div key={index} style={{ marginBottom: '10px', background: '#f4f4f4', padding: '8px', borderRadius: '4px' }}>
-            <strong>Input:</strong>
-            <pre>{tc.input}</pre>
-            <strong>Expected Output:</strong>
-            <pre>{tc.output}</pre>
+  // No problems found
+  if (!contest || problems.length === 0) {
+    return (
+      <div className={styles.codingContestPage}>
+        <StudentNavbar />
+        <div className={styles.contestContainer}>
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <h2>Contest not found or has no problems</h2>
+            <button className={styles.backBtn} onClick={() => navigate('/student-contests')}>
+              <ArrowLeft size={16} />
+              Back to Contests
+            </button>
           </div>
-        ))}
+        </div>
       </div>
+    );
+  }
 
-      {/* --- Right Column: Code Editor & Output --- */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '16px' }}>
-        
-        <div style={{ marginBottom: '8px' }}>
-          <label htmlFor="language">Language: </label>
-          <select id="language" value={selectedLang} onChange={handleLanguageChange}>
-            {Object.keys(languageOptions).map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
+  const currentProblem = problems[currentProblemIndex];
+  const supportedLanguages = currentProblem.languagesSupported || Object.keys(languageOptions);
+
+  return (
+    <div className={styles.codingContestPage}>
+      <StudentNavbar />
+
+      <div className={styles.contestContainer}>
+        {/* Header */}
+        <div className={styles.contestHeader}>
+          <div className={styles.headerLeft}>
+            <button className={styles.backBtn} onClick={() => navigate('/student-contests')}>
+              <ArrowLeft size={16} />
+              Back
+            </button>
+            <div className={styles.contestInfo}>
+              <h1 className={styles.contestTitle}>{contest.eventTitle}</h1>
+              <div className={styles.contestMeta}>
+                <span className={styles.metaItem}>
+                  <Code size={14} />
+                  Problem {currentProblemIndex + 1} of {problems.length}
+                </span>
+                <span className={styles.metaItem}>
+                  <Target size={14} />
+                  {currentProblem.points} points
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.headerRight}>
+            {contest.eventMode === 'strict' && (
+              <div className={styles.timerCard}>
+                <Clock className={styles.timerIcon} />
+                <div className={styles.timerInfo}>
+                  <span className={styles.timerLabel}>Time Left</span>
+                  <span className={styles.timerValue}>{formatTime(timeRemaining)}</span>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.scoreCard}>
+              <Trophy className={styles.scoreIcon} />
+              <div className={styles.scoreInfo}>
+                <span className={styles.scoreLabel}>Score</span>
+                <span className={styles.scoreValue}>0 / {currentProblem.points}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div style={{ height: '50vh', border: '1px solid #ccc' }}>
-          <Editor
-            height="100%"
-            language={languageOptions[selectedLang].monaco}
-            value={code}
-            onChange={(value) => setCode(value || '')}
-            theme="vs-dark"
-          />
-        </div>
-        
-        <div style={{ marginTop: '16px' }}>
-          <h4>Custom Input:</h4>
-          <textarea
-            value={customInput}
-            onChange={(e) => setCustomInput(e.target.value)}
-            style={{ width: '100%', height: '80px', fontFamily: 'monospace', background: '#f4f4f4', border: '1px solid #ccc' }}
-          />
-        </div>
+        {/* Main Content */}
+        <div className={styles.mainContent}>
+          {/* Left Panel - Problem Description */}
+          <div className={styles.leftPanel}>
+            <div className={styles.problemTabs}>
+              <button
+                className={`${styles.tab} ${activeTab === 'problem' ? styles.active : ''}`}
+                onClick={() => setActiveTab('problem')}
+              >
+                <FileText size={16} />
+                Problem
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'examples' ? styles.active : ''}`}
+                onClick={() => setActiveTab('examples')}
+              >
+                <Lightbulb size={16} />
+                Examples
+              </button>
+            </div>
 
-        <div style={{ margin: '16px 0' }}>
-          <button onClick={handleRun} disabled={isExecuting} style={{ marginRight: '8px', padding: '10px', cursor: 'pointer' }}>
-            {isExecuting ? 'Running...' : 'Run Code'}
-          </button>
-          <button onClick={handleSubmit} disabled={isExecuting} style={{ background: 'green', color: 'white', padding: '10px', cursor: 'pointer', border: 'none' }}>
-            {isExecuting ? 'Submitting...' : 'Submit Solution'}
-          </button>
-        </div>
-        
-        {alert.show && <CustomAlert type={alert.type} message={alert.message} />}
+            <div className={styles.problemContent}>
+              {activeTab === 'problem' && (
+                <>
+                  <div className={styles.problemSection}>
+                    <h2 className={styles.sectionTitle}>
+                      <FileText size={20} />
+                      Description
+                    </h2>
+                    <div className={styles.sectionContent}>
+                      <pre className={styles.problemDescription}>{currentProblem.description}</pre>
+                    </div>
+                  </div>
 
-        <div style={{ flex: 1, background: '#1e1e1e', color: 'white', padding: '16px', overflowY: 'auto', borderRadius: '4px' }}>
-          <h3>Output:</h3>
-          {isExecuting ? <Loader /> : renderOutput()}
+                  <div className={styles.problemSection}>
+                    <h3 className={styles.sectionTitle}>Input / Output Format</h3>
+                    <div className={styles.formatGrid}>
+                      <div className={styles.formatCard}>
+                        <div className={styles.formatLabel}>Input Format</div>
+                        <div className={styles.formatText}>
+                          {currentProblem.problemDetails?.inputFormat || 'Not specified'}
+                        </div>
+                      </div>
+                      <div className={styles.formatCard}>
+                        <div className={styles.formatLabel}>Output Format</div>
+                        <div className={styles.formatText}>
+                          {currentProblem.problemDetails?.outputFormat || 'Not specified'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {currentProblem.problemDetails?.constraints && currentProblem.problemDetails.constraints.length > 0 && (
+                    <div className={styles.problemSection}>
+                      <h3 className={styles.sectionTitle}>Constraints</h3>
+                      <ul className={styles.constraintsList}>
+                        {currentProblem.problemDetails.constraints.map((constraint, idx) => (
+                          <li key={idx} className={styles.constraintItem}>{constraint}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {currentProblem.problemDetails?.hint && (
+                    <div className={styles.problemSection}>
+                      <h3 className={styles.sectionTitle}>
+                        <Lightbulb size={18} />
+                        Hint
+                      </h3>
+                      <div className={styles.hintBox}>
+                        {currentProblem.problemDetails.hint}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeTab === 'examples' && (
+                <div className={styles.problemSection}>
+                  <h2 className={styles.sectionTitle}>
+                    <Lightbulb size={20} />
+                    Example Test Cases
+                  </h2>
+                  <div className={styles.examplesList}>
+                    {currentProblem.examples && currentProblem.examples.length > 0 ? (
+                      currentProblem.examples.map((example, idx) => (
+                        <div key={idx} className={styles.exampleCard}>
+                          <div className={styles.exampleTitle}>
+                            <CheckCircle size={16} />
+                            Example {idx + 1}
+                          </div>
+                          <div className={styles.exampleBox}>
+                            <div className={styles.exampleLabel}>Input</div>
+                            <pre className={styles.exampleValue}>{example.input}</pre>
+                          </div>
+                          <div className={styles.exampleBox}>
+                            <div className={styles.exampleLabel}>Output</div>
+                            <pre className={styles.exampleValue}>{example.output}</pre>
+                          </div>
+                          {example.explanation && (
+                            <div className={styles.explanation}>{example.explanation}</div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className={styles.sectionContent}>No examples available</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Panel - Code Editor */}
+          <div className={styles.rightPanel}>
+            <div className={styles.editorHeader}>
+              <div className={styles.languageSelector}>
+                <span className={styles.languageLabel}>Language:</span>
+                <select
+                  className={styles.languageSelect}
+                  value={selectedLang}
+                  onChange={handleLanguageChange}
+                >
+                  {Object.entries(languageOptions).map(([key, lang]) => (
+                    <option
+                      key={key}
+                      value={key}
+                      disabled={!supportedLanguages.includes(key)}
+                    >
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.editorActions}>
+                <button
+                  className={styles.iconBtn}
+                  onClick={handleCopyCode}
+                  title="Copy code"
+                >
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+                <button
+                  className={styles.iconBtn}
+                  onClick={handleResetCode}
+                  title="Reset to starter code"
+                >
+                  <RotateCcw size={16} />
+                </button>
+                <button
+                  className={styles.iconBtn}
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.editorWrapper}>
+              <Editor
+                height="100%"
+                language={languageOptions[selectedLang].monaco}
+                value={code}
+                onChange={(value) => setCode(value || '')}
+                theme="vs-dark"
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: true },
+                  lineNumbers: 'on',
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                }}
+                onMount={(editor) => {
+                  editorRef.current = editor;
+                }}
+              />
+            </div>
+
+            <div className={styles.editorFooter}>
+              <div className={styles.customInputSection}>
+                <label className={styles.inputLabel}>Custom Input (for Run only):</label>
+                <textarea
+                  className={styles.customInputArea}
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  placeholder="Enter custom input here..."
+                />
+              </div>
+
+              <div className={styles.actionButtons}>
+                <button
+                  className={styles.runBtn}
+                  onClick={handleRun}
+                  disabled={isExecuting}
+                >
+                  {isExecuting && executionType === 'run' ? (
+                    <>Running...</>
+                  ) : (
+                    <>
+                      <Play size={16} />
+                      Run Code
+                    </>
+                  )}
+                </button>
+                <button
+                  className={styles.submitBtn}
+                  onClick={handleSubmit}
+                  disabled={isExecuting}
+                >
+                  {isExecuting && executionType === 'submit' ? (
+                    <>Submitting...</>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      Submit
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Output Section */}
+            {showOutput && (
+              <div className={styles.outputSection}>
+                <div className={styles.outputHeader}>
+                  <h3 className={styles.outputTitle}>
+                    <Terminal size={16} />
+                    Output
+                  </h3>
+                  <button className={styles.clearBtn} onClick={handleClearOutput}>
+                    Clear
+                  </button>
+                </div>
+                <div className={styles.outputContent}>
+                  {isExecuting ? (
+                    <div className={styles.loadingContainer}>
+                      <Loader />
+                      <p className={styles.loadingText}>
+                        {executionType === 'submit' ? 'Running test cases...' : 'Executing code...'}
+                      </p>
+                    </div>
+                  ) : (
+                    renderOutput()
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-    </>
   );
 }
 
