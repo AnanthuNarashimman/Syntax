@@ -80,6 +80,10 @@ function CodingContestPage() {
   const [activeTab, setActiveTab] = useState('problem');
   const [showOutput, setShowOutput] = useState(false);
 
+  // Score & Results State
+  const [problemResults, setProblemResults] = useState({});
+  const [showResults, setShowResults] = useState(false);
+
   // Refs
   const autoSaveTimer = useRef(null);
   const editorRef = useRef(null);
@@ -310,8 +314,17 @@ function CodingContestPage() {
     try {
       // Run against all test cases
       const visibleTestCases = problem.examples || [];
-      const hiddenTestCases = problem.testCases || [];
+      const hiddenTestCases = (problem.testCases || []).map(tc => ({
+        ...tc,
+        output: tc.expectedOutput || tc.output // Normalize field name
+      }));
       const allTestCases = [...visibleTestCases, ...hiddenTestCases];
+
+      console.log('Test Cases:', {
+        visible: visibleTestCases,
+        hidden: hiddenTestCases,
+        all: allTestCases
+      });
 
       if (allTestCases.length === 0) {
         showError('No test cases available for this problem');
@@ -460,7 +473,20 @@ function CodingContestPage() {
         firstFailure
       });
 
+      // Save result for this problem
       if (allPassed) {
+        setProblemResults(prev => ({
+          ...prev,
+          [currentProblemIndex]: {
+            problemCode: problem.contestProblemCode,
+            problemTitle: problem.title,
+            pointsEarned,
+            maxPoints: problem.points,
+            passedTests: passedCount,
+            totalTests: totalCount,
+            solved: true
+          }
+        }));
         showSuccess(`All tests passed! You earned ${pointsEarned} points!`);
       } else {
         showError(`${passedCount}/${totalCount} tests passed. Keep trying!`);
@@ -516,6 +542,41 @@ function CodingContestPage() {
     setTimeout(() => {
       navigate('/student-contests');
     }, 3000);
+  };
+
+  // Save final contest results
+  const saveFinalResults = async () => {
+    try {
+      const totalScore = Object.values(problemResults).reduce(
+        (sum, result) => sum + (result?.pointsEarned || 0),
+        0
+      );
+      const totalPossible = problems.reduce((sum, prob) => sum + prob.points, 0);
+      const solvedCount = Object.keys(problemResults).length;
+
+      await axios.post('/api/student/finish-contest', {
+        contestId: problemId,
+        totalScore,
+        totalPossible,
+        solvedProblems: solvedCount,
+        totalProblems: problems.length,
+        problemResults: Object.entries(problemResults).map(([idx, result]) => ({
+          problemId: problems[idx].questionId,
+          problemCode: problems[idx].contestProblemCode,
+          ...result
+        })),
+        completedAt: new Date().toISOString()
+      }, {
+        withCredentials: true
+      });
+
+      showSuccess('Contest results saved successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error saving final results:', error);
+      showError('Failed to save results');
+      return false;
+    }
   };
 
   // Copy code to clipboard
@@ -708,10 +769,20 @@ function CodingContestPage() {
             <div className={styles.scoreCard}>
               <Trophy className={styles.scoreIcon} />
               <div className={styles.scoreInfo}>
-                <span className={styles.scoreLabel}>Score</span>
-                <span className={styles.scoreValue}>0 / {currentProblem.points}</span>
+                <span className={styles.scoreLabel}>Total Score</span>
+                <span className={styles.scoreValue}>
+                  {Object.values(problemResults).reduce((sum, result) => sum + (result?.pointsEarned || 0), 0)} / {problems.reduce((sum, prob) => sum + prob.points, 0)}
+                </span>
               </div>
             </div>
+
+            <button
+              className={styles.viewResultsBtn}
+              onClick={() => setShowResults(true)}
+              title="View all results"
+            >
+              View Results
+            </button>
           </div>
         </div>
 
@@ -719,6 +790,36 @@ function CodingContestPage() {
         <div className={styles.mainContent}>
           {/* Left Panel - Problem Description */}
           <div className={styles.leftPanel}>
+            {/* Problem Navigation */}
+            <div className={styles.problemNavigation}>
+              <button
+                className={styles.navBtn}
+                onClick={() => setCurrentProblemIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentProblemIndex === 0}
+              >
+                ← Previous Problem
+              </button>
+              <div className={styles.problemIndicators}>
+                {problems.map((prob, idx) => (
+                  <button
+                    key={idx}
+                    className={`${styles.problemIndicator} ${idx === currentProblemIndex ? styles.active : ''} ${problemResults[idx]?.solved ? styles.solved : ''}`}
+                    onClick={() => setCurrentProblemIndex(idx)}
+                    title={`Problem ${prob.contestProblemCode}: ${problemResults[idx]?.solved ? 'Solved' : 'Unsolved'}`}
+                  >
+                    {prob.contestProblemCode}
+                  </button>
+                ))}
+              </div>
+              <button
+                className={styles.navBtn}
+                onClick={() => setCurrentProblemIndex(prev => Math.min(problems.length - 1, prev + 1))}
+                disabled={currentProblemIndex === problems.length - 1}
+              >
+                Next Problem →
+              </button>
+            </div>
+
             <div className={styles.problemTabs}>
               <button
                 className={`${styles.tab} ${activeTab === 'problem' ? styles.active : ''}`}
@@ -968,6 +1069,93 @@ function CodingContestPage() {
           </div>
         </div>
       </div>
+
+      {/* Results Modal */}
+      {showResults && (
+        <div className={styles.resultsModal}>
+          <div className={styles.resultsModalContent}>
+            <div className={styles.resultsHeader}>
+              <h2 className={styles.resultsTitle}>
+                <Trophy size={24} />
+                Contest Results
+              </h2>
+              <button
+                className={styles.closeModalBtn}
+                onClick={() => setShowResults(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.resultsBody}>
+              <div className={styles.totalScoreCard}>
+                <div className={styles.totalScoreLabel}>Total Score</div>
+                <div className={styles.totalScoreValue}>
+                  {Object.values(problemResults).reduce((sum, result) => sum + (result?.pointsEarned || 0), 0)} / {problems.reduce((sum, prob) => sum + prob.points, 0)}
+                </div>
+                <div className={styles.totalScoreSubtext}>
+                  {Object.keys(problemResults).length} of {problems.length} problems solved
+                </div>
+              </div>
+
+              <div className={styles.problemResultsList}>
+                {problems.map((problem, idx) => {
+                  const result = problemResults[idx];
+                  const isSolved = result?.solved || false;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`${styles.problemResultCard} ${isSolved ? styles.solved : styles.unsolved}`}
+                    >
+                      <div className={styles.problemResultHeader}>
+                        <div className={styles.problemResultCode}>
+                          Problem {problem.contestProblemCode}
+                        </div>
+                        <div className={`${styles.problemResultStatus} ${isSolved ? styles.solved : styles.unsolved}`}>
+                          {isSolved ? '✓ Solved' : '✗ Unsolved'}
+                        </div>
+                      </div>
+                      <div className={styles.problemResultTitle}>
+                        {problem.title}
+                      </div>
+                      <div className={styles.problemResultScore}>
+                        <span className={styles.earnedPoints}>{result?.pointsEarned || 0}</span>
+                        <span className={styles.maxPoints}>/ {problem.points} points</span>
+                      </div>
+                      {result && (
+                        <div className={styles.problemResultTests}>
+                          Tests Passed: {result.passedTests} / {result.totalTests}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.resultsActions}>
+                <button
+                  className={styles.continueBtn}
+                  onClick={() => setShowResults(false)}
+                >
+                  Continue Solving
+                </button>
+                <button
+                  className={styles.finishBtn}
+                  onClick={async () => {
+                    const saved = await saveFinalResults();
+                    if (saved) {
+                      setTimeout(() => navigate('/student-contests'), 1500);
+                    }
+                  }}
+                >
+                  Finish Contest
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

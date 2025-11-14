@@ -22,6 +22,8 @@ const ContestsPreview = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [userAttemptData, setUserAttemptData] = useState(null);
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [contestResults, setContestResults] = useState(null);
 
   // Get contest data from navigation state
   const passedContestData = location.state?.contestData;
@@ -82,6 +84,10 @@ const ContestsPreview = () => {
       // If completed, fetch results from the new API
       if (response.data.eventStatus === 'completed') {
         await fetchEventResults(eventId);
+        // For coding contests, fetch contest-specific results
+        if (passedContestData?.eventType === 'contest') {
+          await fetchContestResults(eventId);
+        }
       }
     } catch (error) {
       console.error('Error checking event status:', error);
@@ -117,6 +123,25 @@ const ContestsPreview = () => {
           setEventResults(parsedResults.validationResults);
         }
       }
+    }
+  };
+
+  // Function to fetch contest results for coding contests
+  const fetchContestResults = async (eventId) => {
+    try {
+      const response = await axios.get(`/api/student/contest-results/${eventId}`, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Contest Results Response:', response.data);
+      if (response.data.success && response.data.results) {
+        setContestResults(response.data.results);
+      }
+    } catch (error) {
+      console.error('Error fetching contest results:', error);
     }
   };
 
@@ -684,13 +709,19 @@ const ContestsPreview = () => {
                   <>
                     <button
                       className={`${styles.primaryBtn} ${eventStatus === 'completed' ? styles.submittedBtn : ''}`}
-                      onClick={handleStartContest}
-                      disabled={isStarting || eventStatus === 'completed' || (eventInfo.status === 'ended' && eventStatus !== 'in_progress')}
+                      onClick={() => {
+                        if (eventStatus === 'completed') {
+                          setShowResultsModal(true);
+                        } else {
+                          handleStartContest();
+                        }
+                      }}
+                      disabled={isStarting || (eventInfo.status === 'ended' && eventStatus !== 'in_progress' && eventStatus !== 'completed')}
                     >
                       {eventStatus === 'completed' ? (
                         <>
-                          <CheckCircle size={20} />
-                          Submitted
+                          <Trophy size={20} />
+                          Show Results
                         </>
                       ) : (
                         <>
@@ -713,6 +744,77 @@ const ContestsPreview = () => {
           </div>
         </div>
       </div>
+
+      {/* Results Modal for Coding Contests */}
+      {showResultsModal && contestResults && (
+        <div className={styles.resultsModal}>
+          <div className={styles.resultsModalContent}>
+            <div className={styles.resultsHeader}>
+              <h2 className={styles.resultsTitle}>
+                <Trophy size={24} />
+                Contest Results
+              </h2>
+              <button
+                className={styles.closeModalBtn}
+                onClick={() => setShowResultsModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.resultsBody}>
+              <div className={styles.totalScoreCard}>
+                <div className={styles.totalScoreLabel}>Total Score</div>
+                <div className={styles.totalScoreValue}>
+                  {contestResults.totalScore} / {contestResults.totalPossible}
+                </div>
+                <div className={styles.totalScoreSubtext}>
+                  {contestResults.solvedProblems} of {contestResults.totalProblems} problems solved
+                </div>
+              </div>
+
+              <div className={styles.problemResultsList}>
+                {contestResults.problemResults && contestResults.problemResults.map((result, idx) => (
+                  <div
+                    key={idx}
+                    className={`${styles.problemResultCard} ${result.solved ? styles.solved : styles.unsolved}`}
+                  >
+                    <div className={styles.problemResultHeader}>
+                      <div className={styles.problemResultCode}>
+                        Problem {result.problemCode}
+                      </div>
+                      <div className={`${styles.problemResultStatus} ${result.solved ? styles.solved : styles.unsolved}`}>
+                        {result.solved ? '✓ Solved' : '✗ Unsolved'}
+                      </div>
+                    </div>
+                    <div className={styles.problemResultTitle}>
+                      {result.problemTitle}
+                    </div>
+                    <div className={styles.problemResultScore}>
+                      <span className={styles.earnedPoints}>{result.pointsEarned}</span>
+                      <span className={styles.maxPoints}>/ {result.maxPoints} points</span>
+                    </div>
+                    {result.passedTests !== undefined && (
+                      <div className={styles.problemResultTests}>
+                        Tests Passed: {result.passedTests} / {result.totalTests}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.resultsActions}>
+                <button
+                  className={styles.closeResultsBtn}
+                  onClick={() => setShowResultsModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
