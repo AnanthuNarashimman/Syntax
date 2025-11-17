@@ -1,5 +1,7 @@
-**Syntax** 🎯
-=============
+<img width="100%" height="300" alt="_Syntax" src="https://github.com/user-attachments/assets/9033a0d8-9329-4a8e-876a-cab98d4fe20a" />
+
+**Syntax** 
+===========
 
 **A comprehensive quiz and coding contest platform designed for educational institutions and competitive programming communities.**
 
