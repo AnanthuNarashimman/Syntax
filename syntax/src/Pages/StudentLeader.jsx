@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Medal, Crown, TrendingUp, Users, Filter, Award, Star, Flame, RefreshCw, User } from 'lucide-react';
+import { Trophy, Medal, Crown, TrendingUp, Users, Filter, Award, Star, Flame, RefreshCw, User, Shield, Zap, Sword, Diamond, Gem, Target } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
 import styles from '../Styles/PageStyles/StudentLeader.module.css';
@@ -73,22 +73,61 @@ const StudentLeader = () => {
     }
   };
 
+  const getTierFromScore = (score) => {
+    if (score >= 10000) return 'legend';
+    if (score >= 5000) return 'titan';
+    if (score >= 2000) return 'vanguard';
+    if (score >= 800) return 'adept';
+    if (score >= 250) return 'challenger';
+    return 'novice';
+  };
+
   const getTierColor = (tier) => {
     switch (tier) {
-      case 'gold': return '#FFD700';
-      case 'silver': return '#C0C0C0';
-      case 'bronze': return '#CD7F32';
+      case 'legend': return '#FFD700';
+      case 'titan': return '#E5E7EB';
+      case 'vanguard': return '#CD7F32';
+      case 'adept': return '#8B5CF6';
+      case 'challenger': return '#10B981';
+      case 'novice': return '#6B7280';
       default: return '#9E9E9E';
     }
   };
 
   const getTierIcon = (tier) => {
     switch (tier) {
-      case 'gold': return '🥇';
-      case 'silver': return '🥈';
-      case 'bronze': return '🥉';
-      default: return '⚪';
+      case 'legend': return <Crown size={16} />;
+      case 'titan': return <Diamond size={16} />;
+      case 'vanguard': return <Shield size={16} />;
+      case 'adept': return <Zap size={16} />;
+      case 'challenger': return <Sword size={16} />;
+      case 'novice': return <Target size={16} />;
+      default: return <Star size={16} />;
     }
+  };
+
+  const getTierName = (tier) => {
+    switch (tier) {
+      case 'legend': return 'Legend';
+      case 'titan': return 'Titan';
+      case 'vanguard': return 'Vanguard';
+      case 'adept': return 'Adept';
+      case 'challenger': return 'Challenger';
+      case 'novice': return 'Novice';
+      default: return 'Unranked';
+    }
+  };
+
+  // Contrast helper: return dark text on light backgrounds and light text on dark backgrounds
+  const getContrastColor = (hex) => {
+    if (!hex) return '#fff';
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    // Perceived luminance
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 180 ? '#1f2937' : '#ffffff';
   };
 
   const getPositionIcon = (position) => {
@@ -100,14 +139,6 @@ const StudentLeader = () => {
     }
   };
 
-  // Function to assign tier based on position
-  const getTierFromPosition = (position) => {
-    if (position <= 3) return 'gold';
-    if (position <= 10) return 'silver';
-    if (position <= 20) return 'bronze';
-    return 'none';
-  };
-
   // Function to get department from real data or assign default
   const getDepartmentFromUser = (user) => {
     return user.department || 'Unknown';
@@ -115,7 +146,7 @@ const StudentLeader = () => {
 
   const filteredData = leaderboardData.filter(user => {
     const userDepartment = getDepartmentFromUser(user);
-    const userTier = getTierFromPosition(user.position);
+    const userTier = getTierFromScore(user.totalScore || 0);
     const matchesDepartment = filterDepartment === '' || userDepartment === filterDepartment;
     const matchesTier = filterTier === '' || userTier === filterTier;
     return matchesDepartment && matchesTier;
@@ -208,9 +239,15 @@ const StudentLeader = () => {
                   <Trophy size={16} />
                   <span>{userProfile?.points || 0} points</span>
                 </div>
-                <div className={styles.tierBadge}>
+                <div
+                  className={styles.profileTierBadge}
+                  style={{
+                    backgroundColor: getTierColor(getTierFromScore(userProfile?.points || 0)),
+                    color: getContrastColor(getTierColor(getTierFromScore(userProfile?.points || 0)))
+                  }}
+                >
                   <Star size={14} />
-                  <span>{userProfile && userProfile.rank <= 3 ? 'Gold' : userProfile && userProfile.rank <= 10 ? 'Silver' : 'Bronze'} Tier</span>
+                  <span>{getTierName(getTierFromScore(userProfile?.points || 0))} Tier</span>
                 </div>
               </div>
             </div>
@@ -245,9 +282,12 @@ const StudentLeader = () => {
                   <Users size={16} />
                   <select value={filterTier} onChange={(e) => setFilterTier(e.target.value)} className={styles.filterSelect}>
                     <option value="">All Tiers</option>
-                    <option value="gold">Gold</option>
-                    <option value="silver">Silver</option>
-                    <option value="bronze">Bronze</option>
+                    <option value="legend">Legend</option>
+                    <option value="titan">Titan</option>
+                    <option value="vanguard">Vanguard</option>
+                    <option value="adept">Adept</option>
+                    <option value="challenger">Challenger</option>
+                    <option value="novice">Novice</option>
                   </select>
                 </div>
                 <button className={styles.refreshButton} onClick={fetchLeaderboardData}>
@@ -270,7 +310,7 @@ const StudentLeader = () => {
 
             <div className={styles.tableBody}>
               {paginatedData.map((user) => {
-                const userTier = getTierFromPosition(user.position);
+                const userTier = getTierFromScore(user.totalScore || 0);
                 const userDepartment = getDepartmentFromUser(user);
                 const isCurrentUser = userProfile && user.userId === userProfile.userId;
                 
@@ -301,7 +341,13 @@ const StudentLeader = () => {
                       <span className={styles.departmentBadge}>{userDepartment}</span>
                     </div>
                     <div className={styles.tableCell}>
-                      <div className={styles.tierBadge} style={{ backgroundColor: getTierColor(userTier) }}>
+                      <div
+                        className={styles.tierBadge}
+                        style={{
+                          backgroundColor: getTierColor(userTier),
+                          color: getContrastColor(getTierColor(userTier))
+                        }}
+                      >
                         {getTierIcon(userTier)}
                       </div>
                     </div>
