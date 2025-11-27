@@ -1,0 +1,507 @@
+/* Admin Dashboard Page - Unique Class Names */
+.admin-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.AdminDashboardMainContent {
+  flex: 1;
+  margin-left: 280px;
+  padding: 2rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 0.5rem;
+}
+
+.header-content p {
+  color: #718096;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #e95a49 0%, #c94138 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* Admin Hero Section */
+.admin-hero-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border-radius: 1rem;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  color: white;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  margin-top: -25px;
+}
+
+.admin-hero-content {
+  flex: 1;
+  max-width: 60%;
+  z-index: 2;
+  position: relative;
+  color: #312f2fcc;
+}
+
+.admin-hero-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 0.5rem 0;
+  color: #1a202c;
+  text-shadow: none;
+}
+
+.admin-hero-content p {
+  font-size: 1.2rem;
+  color: #718096;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+  margin-top: 20px;
+  width: 90%;
+}
+
+.admin-hero-content h2 {
+  font-size: 1.7rem;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
+  color: #312f2fcc;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-hero-image {
+  flex: 0 0 35%;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  z-index: 2;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.admin-hero-image img {
+  width: 130%;
+}
+
+.admin-hero-image::after {
+  content: 'Image placeholder';
+  font-style: italic;
+}
+
+.btn-secondary {
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.AdminDashboardStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.AdminDashboardStatCard {
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: transform 0.2s ease;
+}
+
+.AdminDashboardStatCard:hover {
+  transform: translateY(-4px);
+}
+
+.AdminDashboardStatIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.AdminDashboardStatContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  margin-top: 7%;
+}
+
+.AdminDashboardStatContent h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #1a202c;
+  line-height: 1.2;
+}
+
+.AdminDashboardStatContent p {
+  color: #718096;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.AdminDashboardCard {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.AdminDashboardFullWidth {
+  width: 100%;
+  margin: 0 0 0.5rem 0;
+  box-sizing: border-box;
+}
+
+.AdminDashboardCardHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.AdminDashboardCardHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.AdminDashboardContestList {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.AdminDashboardContestCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+}
+
+.AdminDashboardContestCard:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.AdminDashboardContestCardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+}
+
+.AdminDashboardContestItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.AdminDashboardContestItem:last-child {
+  border-bottom: none;
+}
+
+.AdminDashboardContestInfo h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.AdminDashboardContestInfo p {
+  color: #718096;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.AdminDashboardContestStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.AdminDashboardStatusBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.AdminDashboardStatusBadge.live {
+  background: #fde8e6;
+  color: #c94138;
+}
+
+.AdminDashboardStatusBadge.scheduled {
+  background: #fef5e7;
+  color: #c05621;
+}
+
+.AdminDashboardStatusBadge.completed {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.AdminDashboardContestTime {
+  color: #718096;
+  margin: 0;
+  margin-right: 10%;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.AdminDashboardEmptyContests {
+  padding: 2rem;
+  text-align: center;
+  color: #718096;
+  font-style: italic;
+}
+
+.AdminDashboardEmptyContests p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.AdminDashboardQuickActions {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  min-height: 200px;
+  align-items: center;
+}
+
+.AdminDashboardActionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  color: #4a5568;
+  text-align: center;
+  height: 100%;
+  min-height: 120px;
+}
+
+.AdminDashboardActionBtn.large {
+  padding: 2rem;
+  gap: 1rem;
+  min-height: 140px;
+}
+
+.AdminDashboardActionBtn.large span {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1a202cbd;
+}
+
+.AdminDashboardActionBtn:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(233, 90, 73, 0.15);
+}
+
+.AdminDashboardChartPlaceholder {
+  padding: 2rem 1.5rem;
+}
+
+.AdminDashboardChartBars {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  height: 200px;
+  margin-bottom: 1rem;
+}
+
+.AdminDashboardBar {
+  flex: 1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0.25rem;
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+.AdminDashboardBar:hover {
+  opacity: 0.8;
+}
+
+.AdminDashboardChartLabels {
+  display: flex;
+  justify-content: space-between;
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.column-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.AdminDashboardRow {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.AdminDashboardRecentContests {
+  flex: 2 1 0;
+  min-width: 0;
+}
+
+.AdminDashboardQuickActionsCard {
+  flex: 1 1 0;
+  min-width: 300px;
+}
+
+@media (max-width: 900px) {
+  .AdminDashboardRow {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .AdminDashboardRecentContests,
+  .AdminDashboardQuickActionsCard {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .AdminDashboardMainContent {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  .header-actions {
+    width: 100%;
+  }
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .AdminDashboardStatsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .AdminDashboardQuickActions {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .AdminDashboardCardHeader {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  .AdminDashboardContestItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .AdminDashboardContestStatus {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .AdminDashboardMainContent {
+    padding: 0.5rem;
+  }
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+  .header-content p {
+    font-size: 1rem;
+  }
+  .AdminDashboardStatCard {
+    padding: 1rem;
+    flex-direction: column;
+    text-align: center;
+  }
+  .AdminDashboardStatContent h3 {
+    font-size: 1.5rem;
+  }
+  .AdminDashboardChartBars {
+    height: 150px;
+  }
+}

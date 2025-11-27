@@ -1,0 +1,466 @@
+.SuperManageContests {
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin-left: 280px;
+}
+
+/* Page Header */
+.PageHeader {
+  margin-bottom: 2rem;
+}
+
+.PageHeader h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.PageHeader p {
+  font-size: 1.1rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* Controls Section */
+.ControlsSection {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.SearchBar {
+  position: relative;
+  max-width: 500px;
+}
+
+.SearchBar input {
+  width: 100%;
+  padding: 12px 16px 12px 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.SearchBar input:focus {
+  outline: none;
+  border-color: #e95a49;
+}
+
+.SearchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+  width: 20px;
+  height: 20px;
+}
+
+/* Contests Grid */
+.ContestsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.ContestCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #e2e8f0;
+}
+
+.ContestCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ContestHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ContestIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e95a49 0%, #c94138 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.Icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.ContestInfo {
+  flex: 1;
+}
+
+.ContestInfo h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.ContestDescription {
+  color: #718096;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ContestBadges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.Badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.StatusBadge {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.StatusBadge.Active {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.StatusBadge.Upcoming {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.StatusBadge.Completed {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.ModeBadge {
+  background: #F3E8FF;
+  color: #7C3AED;
+}
+
+.ContestDetails {
+  margin-bottom: 1.5rem;
+}
+
+.DetailItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #718096;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.DetailIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.ContestActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.BtnView,
+.BtnDelete {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.BtnView {
+  background: #e95a49;
+  color: white;
+}
+
+.BtnView:hover:not(:disabled) {
+  background: #c94138;
+  transform: translateY(-1px);
+}
+
+.BtnDelete {
+  background: #EF4444;
+  color: white;
+}
+
+.BtnDelete:hover:not(:disabled) {
+  background: #DC2626;
+  transform: translateY(-1px);
+}
+
+.BtnView:disabled,
+.BtnDelete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ActionIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Empty State */
+.EmptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.EmptyIcon {
+  width: 64px;
+  height: 64px;
+  color: #a0aec0;
+  margin-bottom: 1rem;
+}
+
+.EmptyState h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.EmptyState p {
+  color: #718096;
+  margin: 0;
+}
+
+/* Loading State */
+.LoadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  font-size: 1.1rem;
+  color: #718096;
+}
+
+/* Modal Styles */
+.ModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.ModalContent {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.ModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ModalHeader h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.CloseButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.CloseButton:hover:not(:disabled) {
+  color: #718096;
+}
+
+.CloseButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ModalBody {
+  padding: 1.5rem;
+}
+
+.ContestDetailsModal {
+  display: grid;
+  gap: 1rem;
+}
+
+.DetailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.DetailRow:last-child {
+  border-bottom: none;
+}
+
+.DetailLabel {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.DetailValue {
+  color: #2d3748;
+  text-align: right;
+}
+
+.ModalActions {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.BtnSecondary,
+.BtnDanger {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.BtnSecondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.BtnSecondary:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.BtnDanger {
+  background: #EF4444;
+  color: white;
+}
+
+.BtnDanger:hover:not(:disabled) {
+  background: #DC2626;
+}
+
+.BtnSecondary:disabled,
+.BtnDanger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.WarningText {
+  color: #DC2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .SuperManageContests {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .ContestsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ContestActions {
+    flex-direction: column;
+  }
+
+  .ModalContent {
+    margin: 1rem;
+  }
+
+  .ModalActions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .PageHeader h1 {
+    font-size: 2rem;
+  }
+
+  .ContestHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .ContestBadges {
+    justify-content: center;
+  }
+
+  .DetailRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .DetailValue {
+    text-align: left;
+  }
+} 
