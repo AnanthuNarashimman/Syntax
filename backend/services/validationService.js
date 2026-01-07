@@ -128,11 +128,12 @@ async function submitEvent(eventId, userId, points) {
             throw new Error("Event not started");
         }
 
-        // Update the attempt status to completed
+        // OPTIMIZED: Store points directly in attempt to avoid N+1 queries later
         const attemptDoc = eventSnapshot.docs[0];
         await attemptDoc.ref.update({
             status: 'completed',
-            completed_at: admin.firestore.FieldValue.serverTimestamp()
+            completed_at: admin.firestore.FieldValue.serverTimestamp(),
+            points: points  // Store points directly in attempt
         });
 
         // Create result record
@@ -149,7 +150,7 @@ async function submitEvent(eventId, userId, points) {
         //     const userSnapshot = await userDocRef.get();
 
         //     if (userSnapshot.exists) {
-        //         await userDocRef.update({ 
+        //         await userDocRef.update({
         //             Submissions: admin.firestore.FieldValue.arrayUnion(eventId),
         //             contestsParticipated: admin.firestore.FieldValue.increment(1)
         //         });
@@ -163,7 +164,7 @@ async function submitEvent(eventId, userId, points) {
 
         const resultRef = await db.collection('eventResults').add(resultData);
 
-        // Update attempt with result reference
+        // Update attempt with result reference (kept for backward compatibility)
         await attemptDoc.ref.update({
             result_ref: resultRef.id
         });

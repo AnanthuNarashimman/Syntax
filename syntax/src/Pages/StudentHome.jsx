@@ -172,35 +172,8 @@ const StudentHome = () => {
     }
   }, [submissionsLoading, studentSubmissions, submissionsError]);
 
-  // Fallback: fetch submissions directly if context data is not available
-  useEffect(() => {
-    if (!loading && submissionsLoading) {
-      const fetchSubmissionsDirectly = async () => {
-        try {
-          console.log('StudentHome - Fetching submissions directly...');
-          const response = await fetch('/api/student/profile/submissions', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('StudentHome - Direct submissions result:', data);
-            setSubmissionStats({
-              contestsParticipated: data.Count || 0,
-              totalScore: data.Points || 0
-            });
-          }
-        } catch (error) {
-          console.error('StudentHome - Error fetching submissions:', error);
-        }
-      };
-
-      const timer = setTimeout(fetchSubmissionsDirectly, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, submissionsLoading]);
+  // REMOVED FALLBACK TIMER - This was causing duplicate Firebase reads
+  // Context now handles data fetching properly without automatic initialization
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {

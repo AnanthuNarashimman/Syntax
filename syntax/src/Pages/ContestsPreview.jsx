@@ -60,11 +60,12 @@ const ContestsPreview = () => {
     loadContestData();
   }, [passedContestData, location.state]);
 
-  // Function to check event status
+  // OPTIMIZED: Check event status and fetch results in single API call
   const checkEventStatus = async (eventId) => {
     try {
       setStatusLoading(true);
-      const response = await axios.post('/api/student/check-status', {
+      // Use optimized combined endpoint
+      const response = await axios.post('/api/student/status-with-results', {
         eventId: eventId
       }, {
         withCredentials: true,
@@ -73,25 +74,39 @@ const ContestsPreview = () => {
         }
       });
 
-      console.log('Event Status Response:', response.data);
+      console.log('Event Status & Results Response:', response.data);
       setEventStatus(response.data.eventStatus);
-      
+
       // Store user attempt data if available
-      if (response.data.data) {
-        setUserAttemptData(response.data.data);
+      if (response.data.attemptData) {
+        setUserAttemptData(response.data.attemptData);
       }
 
-      // If completed, fetch results from the new API
-      if (response.data.eventStatus === 'completed') {
-        await fetchEventResults(eventId);
-        // For coding contests, fetch contest-specific results
-        if (passedContestData?.eventType === 'contest') {
-          await fetchContestResults(eventId);
-        }
+      // Results are already included in the response if event is completed
+      if (response.data.result) {
+        setEventResults(response.data.result);
       }
+
+      // Note: Contest-specific results endpoint doesn't exist in backend,
+      // so we're not calling fetchContestResults anymore
     } catch (error) {
       console.error('Error checking event status:', error);
       setEventStatus('not_started'); // Default to not started on error
+
+      // Fallback: Try localStorage for results
+      if (eventId) {
+        const savedResults = localStorage.getItem(`quiz_${eventId}_final`);
+        if (savedResults) {
+          try {
+            const parsedResults = JSON.parse(savedResults);
+            if (parsedResults.validationResults) {
+              setEventResults(parsedResults.validationResults);
+            }
+          } catch (e) {
+            console.error('Error parsing saved results:', e);
+          }
+        }
+      }
     } finally {
       setStatusLoading(false);
     }

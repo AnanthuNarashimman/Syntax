@@ -7,5 +7,6 @@ router.post("/validate-quiz", middleware.requireStudentAuth, validationControlle
 router.post("/check-status", middleware.requireStudentAuth, validationController.checkStatus);
 router.post("/start-event", middleware.requireStudentAuth, validationController.startEvent);
 router.post("/event-result", middleware.requireStudentAuth, validationController.getResult);
+router.post("/status-with-results", middleware.requireStudentAuth, validationController.getStatusWithResults); // OPTIMIZED: Combined endpoint
 
 module.exports = router;

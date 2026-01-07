@@ -88,24 +88,23 @@ function CodingContestPage() {
   const autoSaveTimer = useRef(null);
   const editorRef = useRef(null);
 
-  // Fetch Contest Data
+  // OPTIMIZED: Fetch Contest Data - fetch single contest instead of all
   useEffect(() => {
     const fetchContest = async () => {
       setIsLoadingContest(true);
       try {
-        const response = await axios.get(`/api/student/events`, {
+        // Fetch single contest by ID instead of fetching all contests
+        const response = await axios.get(`/api/student/events/${problemId}`, {
           withCredentials: true
         });
 
-        const allContests = response.data.events || [];
-        const foundContest = allContests.find(c => c.id === problemId);
-
-        if (!foundContest) {
+        if (!response.data.event) {
           showError('Contest not found');
           navigate('/student-contests');
           return;
         }
 
+        const foundContest = response.data.event;
         setContest(foundContest);
 
         // Extract problems from contest
