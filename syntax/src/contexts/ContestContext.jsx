@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const ContestContext = createContext();
 
 export const useContestContext = () => {
   const context = useContext(ContestContext);
   if (!context) {
-    throw new Error('useContestContext must be used within a ContestProvider');
+    throw new Error("useContestContext must be used within a ContestProvider");
   }
   return context;
 };
@@ -15,7 +15,7 @@ export const ContestProvider = ({ children }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [adminName, setAdminName] = useState('');
+  const [adminName, setAdminName] = useState("");
   const [adminNameLoading, setAdminNameLoading] = useState(true);
 
   // Student-specific state
@@ -31,7 +31,7 @@ export const ContestProvider = ({ children }) => {
   // Student submissions state
   const [studentSubmissions, setStudentSubmissions] = useState({
     totalPoints: 0,
-    contestsParticipated: 0
+    contestsParticipated: 0,
   });
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [submissionsError, setSubmissionsError] = useState(null);
@@ -41,19 +41,19 @@ export const ContestProvider = ({ children }) => {
     const fetchAdminName = async () => {
       try {
         setAdminNameLoading(true);
-        const response = await fetch('/api/user/profile', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+        const response = await fetch("/api/user/profile", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (response.ok) {
           const data = await response.json();
-          setAdminName(data.userName || 'Admin');
+          setAdminName(data.userName || "Admin");
         } else {
-          setAdminName('Admin');
+          setAdminName("Admin");
         }
       } catch (err) {
-        setAdminName('Admin');
+        setAdminName("Admin");
       } finally {
         setAdminNameLoading(false);
       }
@@ -92,10 +92,10 @@ export const ContestProvider = ({ children }) => {
   // Check student authentication status
   const checkStudentAuth = async () => {
     try {
-      const response = await fetch('/api/user/student-profile', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+      const response = await fetch("/api/user/student-profile", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -106,7 +106,7 @@ export const ContestProvider = ({ children }) => {
         return false;
       }
     } catch (error) {
-      console.error('Student auth check failed:', error);
+      console.error("Student auth check failed:", error);
       setIsStudentAuthenticated(false);
       return false;
     } finally {
@@ -120,18 +120,18 @@ export const ContestProvider = ({ children }) => {
       setStudentContestsLoading(true);
       setStudentContestsError(null);
 
-      const response = await fetch('/api/student/events', {
-        method: 'GET',
+      const response = await fetch("/api/student/events", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (response.status === 403 && retryCount < 2) {
         // Wait a bit and retry for 403 errors (authentication timing issues)
         console.log(`403 error, retrying... (attempt ${retryCount + 1})`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return fetchStudentContests(retryCount + 1);
       }
 
@@ -147,7 +147,7 @@ export const ContestProvider = ({ children }) => {
         setStudentContests([]);
       }
     } catch (error) {
-      console.error('Error fetching student contests:', error);
+      console.error("Error fetching student contests:", error);
       setStudentContestsError(error.message);
       setStudentContests([]);
     } finally {
@@ -161,18 +161,18 @@ export const ContestProvider = ({ children }) => {
       setStudentArticlesLoading(true);
       setStudentArticlesError(null);
 
-      const response = await fetch('/api/student/articles', {
-        method: 'GET',
+      const response = await fetch("/api/student/articles", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (response.status === 403 && retryCount < 2) {
         // Wait a bit and retry for 403 errors (authentication timing issues)
         console.log(`403 error, retrying... (attempt ${retryCount + 1})`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return fetchStudentArticles(retryCount + 1);
       }
 
@@ -188,7 +188,7 @@ export const ContestProvider = ({ children }) => {
         setStudentArticles([]);
       }
     } catch (error) {
-      console.error('Error fetching student articles:', error);
+      console.error("Error fetching student articles:", error);
       setStudentArticlesError(error.message);
       setStudentArticles([]);
     } finally {
@@ -202,17 +202,19 @@ export const ContestProvider = ({ children }) => {
       setSubmissionsLoading(true);
       setSubmissionsError(null);
 
-      const response = await fetch('/api/student/profile/submissions', {
-        method: 'GET',
+      const response = await fetch("/api/student/profile/submissions", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (response.status === 403 && retryCount < 2) {
-        console.log('Student submissions fetch: Authentication failed, retrying...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log(
+          "Student submissions fetch: Authentication failed, retrying..."
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return fetchStudentSubmissions(retryCount + 1);
       }
 
@@ -224,14 +226,14 @@ export const ContestProvider = ({ children }) => {
 
       setStudentSubmissions({
         totalPoints: data.Points || 0,
-        contestsParticipated: data.Count || 0
+        contestsParticipated: data.Count || 0,
       });
     } catch (error) {
-      console.error('Error fetching student submissions:', error);
+      console.error("Error fetching student submissions:", error);
       setSubmissionsError(error.message);
       setStudentSubmissions({
         totalPoints: 0,
-        contestsParticipated: 0
+        contestsParticipated: 0,
       });
     } finally {
       setSubmissionsLoading(false);
@@ -283,30 +285,35 @@ export const ContestProvider = ({ children }) => {
       title: backendEvent.eventTitle,
       description: backendEvent.eventDescription,
       mode: backendEvent.eventMode === "strict" ? "strict" : "practice",
-      eventMode: backendEvent.eventMode, 
+      eventMode: backendEvent.eventMode,
       status: status,
-      participants: typeof backendEvent.participants === 'number' 
-        ? backendEvent.participants 
-        : (Array.isArray(backendEvent.participants) ? backendEvent.participants.length : 0),
+      participants:
+        typeof backendEvent.participants === "number"
+          ? backendEvent.participants
+          : Array.isArray(backendEvent.participants)
+          ? backendEvent.participants.length
+          : 0,
       timeLeft: timeLeft,
       type: type,
       backendStatus: backendEvent.status,
       createdAt: createdAt,
       durationMinutes: backendEvent.durationMinutes,
-      pointsPerQuestion: backendEvent.pointsPerQuestion || backendEvent.pointsPerProgram,
-      numberOfQuestions: backendEvent.numberOfQuestions || backendEvent.numberOfPrograms,
+      pointsPerQuestion:
+        backendEvent.pointsPerQuestion || backendEvent.pointsPerProgram,
+      numberOfQuestions:
+        backendEvent.numberOfQuestions || backendEvent.numberOfPrograms,
     };
   };
 
   // Get categorized events
   const getCategorizedEvents = () => {
     const transformedEvents = events.map(transformEventData);
-    
+
     return {
-      active: transformedEvents.filter(event => event.status === "ongoing"),
-      queue: transformedEvents.filter(event => event.status === "queue"),
-      ended: transformedEvents.filter(event => event.status === "ended"),
-      all: transformedEvents
+      active: transformedEvents.filter((event) => event.status === "ongoing"),
+      queue: transformedEvents.filter((event) => event.status === "queue"),
+      ended: transformedEvents.filter((event) => event.status === "ended"),
+      all: transformedEvents,
     };
   };
 
@@ -323,8 +330,11 @@ export const ContestProvider = ({ children }) => {
     const categorized = getCategorizedEvents();
     return {
       activeContests: categorized.active.length,
-      totalParticipants: categorized.all.reduce((sum, event) => sum + event.participants, 0),
-      completedEvents: categorized.ended.length
+      totalParticipants: categorized.all.reduce(
+        (sum, event) => sum + event.participants,
+        0
+      ),
+      completedEvents: categorized.ended.length,
     };
   };
 
@@ -346,11 +356,9 @@ export const ContestProvider = ({ children }) => {
       }
 
       // Update local state
-      setEvents(prevEvents =>
-        prevEvents.map(event =>
-          event.id === eventId
-            ? { ...event, status: newStatus }
-            : event
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, status: newStatus } : event
         )
       );
 
@@ -378,11 +386,9 @@ export const ContestProvider = ({ children }) => {
       }
 
       // Update local state
-      setEvents(prevEvents =>
-        prevEvents.map(event =>
-          event.id === eventId
-            ? { ...event, ...updateData }
-            : event
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, ...updateData } : event
         )
       );
 
@@ -394,7 +400,7 @@ export const ContestProvider = ({ children }) => {
 
   // Add new event to local state (for when a new contest is created)
   const addNewEvent = (newEvent) => {
-    setEvents(prevEvents => [newEvent, ...prevEvents]);
+    setEvents((prevEvents) => [newEvent, ...prevEvents]);
   };
 
   // Get recent student contests (3 latest for home page)
@@ -410,24 +416,24 @@ export const ContestProvider = ({ children }) => {
 
   // Helper function to format date for student data
   const formatStudentDate = (timestamp) => {
-    if (!timestamp) return 'No date';
+    if (!timestamp) return "No date";
     const date = new Date(timestamp._seconds * 1000);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   // Helper function to get contest status badge
   const getStudentContestStatus = (status) => {
     const statusMap = {
-      'active': { label: 'Active', color: '#10b981' },
-      'upcoming': { label: 'Upcoming', color: '#3b82f6' },
-      'ended': { label: 'Ended', color: '#6b7280' },
-      'draft': { label: 'Draft', color: '#f59e0b' }
+      active: { label: "Active", color: "#10b981" },
+      upcoming: { label: "Upcoming", color: "#3b82f6" },
+      ended: { label: "Ended", color: "#6b7280" },
+      draft: { label: "Draft", color: "#f59e0b" },
     };
-    return statusMap[status] || { label: status, color: '#6b7280' };
+    return statusMap[status] || { label: status, color: "#6b7280" };
   };
 
   // REMOVED AUTOMATIC FETCHES - Components should call fetch functions explicitly when needed
@@ -473,12 +479,10 @@ export const ContestProvider = ({ children }) => {
     studentSubmissions,
     submissionsLoading,
     submissionsError,
-    fetchStudentSubmissions
+    fetchStudentSubmissions,
   };
 
   return (
-    <ContestContext.Provider value={value}>
-      {children}
-    </ContestContext.Provider>
+    <ContestContext.Provider value={value}>{children}</ContestContext.Provider>
   );
-}; 
+};
