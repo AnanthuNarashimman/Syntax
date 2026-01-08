@@ -181,7 +181,7 @@
 
   .password-toggle {
     position: absolute;
-    right: 15%;
+    right: 13% !important;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -208,7 +208,7 @@
   
   /* Login Button */
   .login-button {
-    width: 70%;
+    width: 50% !important;
     height: 45px;
     background-color: #385A64;
     margin-left: 50%;

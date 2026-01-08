@@ -53,17 +53,43 @@ function Articles() {
     <div className="Article_Dashboard">
       <AdminNavbar />
       <div className="Article_MainContent">
-        <header className="Article_DashboardHeader">
-          <div className="Article_HeaderContent">
-            <div className="Article_HeaderIcon">
-              <BookOpen size={32} />
+        <div className="Article_HeaderSection">
+          <h1>Articles & Resources</h1>
+          <p>Explore our curated collection of programming articles and learning resources</p>
+        </div>
+
+        {!loading && !error && (
+          <div className="Article_StatsOverview">
+            <div className="Article_StatCard">
+              <div className="stat-icon-wrapper">
+                <BookOpen className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <h3>Total Articles</h3>
+                <span className="stat-number">{articles.length}</span>
+              </div>
             </div>
-            <div className="Article_HeaderText">
-              <h1>Articles & Resources</h1>
-              <p>Explore our curated collection of programming articles and learning resources</p>
+            <div className="Article_StatCard">
+              <div className="stat-icon-wrapper">
+                <FileText className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <h3>Internal Content</h3>
+                <span className="stat-number">{articles.filter(a => a.articleContent).length}</span>
+              </div>
+            </div>
+            <div className="Article_StatCard">
+              <div className="stat-icon-wrapper">
+                <ExternalLink className="stat-icon" />
+              </div>
+              <div className="stat-content">
+                <h3>External Links</h3>
+                <span className="stat-number">{articles.filter(a => a.articleLink).length}</span>
+              </div>
             </div>
           </div>
-        </header>
+        )}
+
         <div className="Article_ContentGrid">
           {loading ? (
             <div className="Article_LoadingContainer">

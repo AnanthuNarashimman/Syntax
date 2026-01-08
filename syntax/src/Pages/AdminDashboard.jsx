@@ -1,13 +1,14 @@
-import { 
-  Home, 
-  Plus, 
-  Settings, 
-  User, 
-  Users, 
-  Trophy, 
+import {
+  Home,
+  Plus,
+  Settings,
+  User,
+  Users,
+  Trophy,
   TrendingUp,
   Award,
-  BookOpen
+  BookOpen,
+  Clock
 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
@@ -144,11 +145,17 @@ function AdminDashboard() {
                     <div className="AdminDashboardContestCardContent">
                       <div className="AdminDashboardContestInfo">
                         <h4>{contest.name}</h4>
-                        <p>{contest.participants} participants</p>
+                        <p>
+                          <Users size={16} />
+                          {contest.participants} participants
+                        </p>
                       </div>
                       <div className="AdminDashboardContestStatus">
                         <span className={`AdminDashboardStatusBadge ${contest.status.toLowerCase()}`}>{contest.status}</span>
-                        <p className="AdminDashboardContestTime">{contest.time}</p>
+                        <p className="AdminDashboardContestTime">
+                          <Clock size={14} />
+                          {contest.time}
+                        </p>
                       </div>
                     </div>
                   </div>

@@ -5,7 +5,7 @@ import {
     MessageSquare,
     User,
     TrendingUp,
-    Activity, Clock, EllipsisVertical ,Users, Trophy, BookOpen, Brain,Search, Filter, MoreVertical, Mail, Phone, Calendar, Award, UserCheck, UserX, Download, Eye, X, Save, Trash2, Ban, Upload, FileSpreadsheet
+    Activity, Clock, EllipsisVertical ,Users, Trophy, BookOpen, Brain,Search, Filter, MoreVertical, Mail, Phone, Calendar, UserCheck, UserX, Download, Eye, X, Save, Trash2, Ban, Upload, FileSpreadsheet, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import AdminNavbar from "../Components/AdminNavbar";
@@ -102,46 +102,29 @@ function Participants() {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [confirmMessage, setConfirmMessage] = useState('');
+    const [expandedRows, setExpandedRows] = useState([]);
 
-    // Format last active date to "Jan 12 2025 - 12:30 AM" format
-    const formatLastActive = (lastActive) => {
-        if (!lastActive) return 'Never';
-        
-        let date;
-        
-        // Handle Firestore timestamp
-        if (lastActive._seconds) {
-            date = new Date(lastActive._seconds * 1000);
-        } else if (lastActive.seconds) {
-            date = new Date(lastActive.seconds * 1000);
-        } else if (typeof lastActive === 'string' || typeof lastActive === 'number') {
-            date = new Date(lastActive);
-        } else if (lastActive instanceof Date) {
-            date = lastActive;
-        } else {
-            return 'Never';
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalStudents, setTotalStudents] = useState(0);
+    const [pageCache, setPageCache] = useState({});
+    const STUDENTS_PER_PAGE = 20;
+
+    // Fetch participants data from backend API with pagination
+    const fetchParticipants = async (page = 1, useCache = true) => {
+        // Check cache first
+        if (useCache && pageCache[page]) {
+            console.log(`Loading page ${page} from cache`);
+            setParticipants(pageCache[page].students);
+            setCurrentPage(page);
+            setLoading(false);
+            return;
         }
-        
-        if (isNaN(date.getTime())) return 'Never';
-        
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[date.getMonth()];
-        const day = date.getDate();
-        const year = date.getFullYear();
-        
-        let hours = date.getHours();
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; // 0 should be 12
-        
-        return `${month} ${day} ${year} - ${hours}:${minutes} ${ampm}`;
-    };
 
-    // Fetch participants data from backend API
-    const fetchParticipants = async () => {
         try {
-            const response = await fetch('/api/admin/students', {
+            setLoading(true);
+            const response = await fetch(`/api/admin/students?page=${page}&limit=${STUDENTS_PER_PAGE}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -150,12 +133,28 @@ function Participants() {
             if (response.ok) {
                 const data = await response.json();
                 console.log(data);
+
                 const students = data.students.map(student => ({
                     ...student,
                     name: student.name || 'Unknown Student',
                     avatar: student.name ? student.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'UN'
                 }));
+
+                // Update state
                 setParticipants(students);
+                setCurrentPage(page);
+                setTotalStudents(data.total || students.length);
+                setTotalPages(Math.ceil((data.total || students.length) / STUDENTS_PER_PAGE));
+
+                // Cache the page data
+                setPageCache(prev => ({
+                    ...prev,
+                    [page]: {
+                        students,
+                        timestamp: Date.now()
+                    }
+                }));
+
                 setError(null);
             } else {
                 throw new Error('Failed to fetch participants');
@@ -168,10 +167,16 @@ function Participants() {
         }
     };
 
+    // Clear cache and refetch current page
+    const refreshParticipants = () => {
+        setPageCache({});
+        fetchParticipants(currentPage, false);
+    };
+
     // Fetch data when authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            fetchParticipants();
+            fetchParticipants(1, false);
         }
     }, [isAuthenticated]);
 
@@ -188,7 +193,7 @@ function Participants() {
                 if (response.ok) {
                     console.log('Student deleted successfully');
                     showSuccess('Student deleted successfully');
-                    fetchParticipants();
+                    refreshParticipants();
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.message || 'Failed to delete student');
@@ -196,6 +201,43 @@ function Participants() {
             } catch (error) {
                 console.error('Error deleting student:', error);
                 showError(error.message || 'Failed to delete student. Please try again.');
+            }
+            setShowConfirmModal(false);
+        });
+        setShowConfirmModal(true);
+    };
+
+    const handleBulkDelete = async () => {
+        const count = selectedParticipants.length;
+        setConfirmMessage(`Are you sure you want to delete ${count} student${count > 1 ? 's' : ''}? This action cannot be undone.`);
+        setConfirmAction(() => async () => {
+            try {
+                const deletePromises = selectedParticipants.map(studentId =>
+                    fetch(`/api/admin/students/${studentId}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                    })
+                );
+
+                const results = await Promise.all(deletePromises);
+
+                const successCount = results.filter(response => response.ok).length;
+                const failCount = count - successCount;
+
+                if (successCount > 0) {
+                    showSuccess(`Successfully deleted ${successCount} student${successCount > 1 ? 's' : ''}`);
+                }
+
+                if (failCount > 0) {
+                    showError(`Failed to delete ${failCount} student${failCount > 1 ? 's' : ''}`);
+                }
+
+                setSelectedParticipants([]);
+                refreshParticipants();
+            } catch (error) {
+                console.error('Error deleting students:', error);
+                showError('Failed to delete students. Please try again.');
             }
             setShowConfirmModal(false);
         });
@@ -222,7 +264,7 @@ function Participants() {
                 setShowBanModal(false);
                 setBanReason('');
                 setSelectedStudent(null);
-                fetchParticipants();
+                refreshParticipants();
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to ban student');
@@ -231,6 +273,33 @@ function Participants() {
             console.error('Error banning student:', error);
             showError(error.message || 'Failed to ban student. Please try again.');
         }
+    };
+
+    const handleUnbanStudent = async (student) => {
+        setConfirmMessage(`Are you sure you want to unban ${student.name}? This will restore their access.`);
+        setConfirmAction(() => async () => {
+            try {
+                const response = await fetch(`/api/admin/students/${student.id}/unban`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                });
+
+                if (response.ok) {
+                    console.log('Student unbanned successfully');
+                    showSuccess('Student unbanned successfully');
+                    refreshParticipants();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to unban student');
+                }
+            } catch (error) {
+                console.error('Error unbanning student:', error);
+                showError(error.message || 'Failed to unban student. Please try again.');
+            }
+            setShowConfirmModal(false);
+        });
+        setShowConfirmModal(true);
     };
 
     const handleViewStudent = (student) => {
@@ -273,7 +342,7 @@ function Participants() {
                 setShowBulkImportModal(false);
                 setBulkImportFile(null);
                 setBulkImportPreview([]);
-                fetchParticipants();
+                refreshParticipants();
             } else {
                 throw new Error(data.message || 'Failed to import students');
             }
@@ -366,9 +435,9 @@ function Participants() {
                 });
                 setFormErrors({});
                 setShowAddForm(false);
-                
+
                 // Refresh participants list
-                fetchParticipants();
+                refreshParticipants();
             } else {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to add student');
@@ -418,6 +487,14 @@ function Participants() {
         } else {
             setSelectedParticipants(filteredParticipants.map(p => p.id));
         }
+    };
+
+    const toggleRowExpansion = (participantId) => {
+        setExpandedRows(prev =>
+            prev.includes(participantId)
+                ? prev.filter(id => id !== participantId)
+                : [...prev, participantId]
+        );
     };
 
     const getStatusBadge = (status) => {
@@ -494,32 +571,32 @@ function Participants() {
 
                 <div className="participants-stats-overview">
                     <div className="participant-stat-card">
+                        <div className="stat-icon-wrapper total-icon">
+                            <Users className="participant-stat-icon" />
+                        </div>
+                        <div className="stat-content">
+                            <h3>Total Students</h3>
+                            <span className="stat-number">{totalStudents}</span>
+                        </div>
+                    </div>
+
+                    <div className="participant-stat-card">
                         <div className="stat-icon-wrapper active-icon">
                             <UserCheck className="participant-stat-icon" />
                         </div>
                         <div className="stat-content">
-                            <h3>Active Users</h3>
+                            <h3>Active Students</h3>
                             <span className="stat-number">{participants.filter(p => p.status === 'active').length}</span>
                         </div>
                     </div>
 
                     <div className="participant-stat-card">
-                        <div className="stat-icon-wrapper total-icon">
-                            <Award className="participant-stat-icon" />
-                        </div>
-                        <div className="stat-content">
-                            <h3>Total Participants</h3>
-                            <span className="stat-number">{participants.length}</span>
-                        </div>
-                    </div>
-
-                    <div className="participant-stat-card">
-                        <div className="stat-icon-wrapper inactive-icon">
+                        <div className="stat-icon-wrapper banned-icon">
                             <UserX className="participant-stat-icon" />
                         </div>
                         <div className="stat-content">
-                            <h3>Inactive Users</h3>
-                            <span className="stat-number">{participants.filter(p => p.status === 'inactive').length}</span>
+                            <h3>Banned Students</h3>
+                            <span className="stat-number">{participants.filter(p => p.status === 'banned').length}</span>
                         </div>
                     </div>
                 </div>
@@ -567,9 +644,9 @@ function Participants() {
                     </div>
 
                     <div className="participant-bulk-actions">
-                        <button 
+                        <button
                             className="bulk-action-btn refresh-btn"
-                            onClick={fetchParticipants}
+                            onClick={refreshParticipants}
                             disabled={loading}
                         >
                             {loading ? 'Refreshing...' : 'Refresh'}
@@ -1000,129 +1077,197 @@ function Participants() {
                             <span className="selected-count">
                                 {selectedParticipants.length > 0 && `${selectedParticipants.length} selected`}
                             </span>
+                            {selectedParticipants.length > 0 && (
+                                <button
+                                    className="bulk-delete-btn"
+                                    onClick={handleBulkDelete}
+                                    title="Delete selected students"
+                                >
+                                    <Trash2 className="btn-icon" />
+                                    Delete Selected
+                                </button>
+                            )}
                         </div>
                         <div className="table-header-right">
-                            <span className="participants-total">Total: {filteredParticipants.length} participants</span>
+                            <span className="participants-total">
+                                Showing {filteredParticipants.length > 0 ? ((currentPage - 1) * STUDENTS_PER_PAGE + 1) : 0}-{Math.min(currentPage * STUDENTS_PER_PAGE, totalStudents)} of {totalStudents} participants
+                            </span>
                         </div>
                     </div>
 
+                    {/* Table Header Row */}
+                    <div className="participants-table-head">
+                        <div className="table-col-checkbox"></div>
+                        <div className="table-col-name-email">Name / Email</div>
+                        <div className="table-col-dept">Department</div>
+                        <div className="table-col-year">Year</div>
+                        <div className="table-col-section">Section</div>
+                        <div className="table-col-semester">Semester</div>
+                        <div className="table-col-status">Status</div>
+                        <div className="table-col-actions">Actions</div>
+                    </div>
+
                     <div className="participants-table">
-                        {filteredParticipants.map((participant, index) => (
-                            <div key={participant.id}>
+                        {filteredParticipants.map((participant) => (
+                            <div key={participant.id} className="participant-row-wrapper">
                                 <div className="participant-row">
-                                <div className="participant-select">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedParticipants.includes(participant.id)}
-                                        onChange={() => handleSelectParticipant(participant.id)}
-                                        className="participant-checkbox"
-                                    />
-                                </div>
-
-                                <div className="participant-profile">
-                                    <div className="participant-avatar">
-                                        {participant.avatar}
+                                    <div className="table-col-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedParticipants.includes(participant.id)}
+                                            onChange={() => handleSelectParticipant(participant.id)}
+                                            className="participant-checkbox"
+                                        />
                                     </div>
-                                    <div className="participant-info">
-                                             <h4 className="participant-name">{participant.name || 'Unknown Student'}</h4>
-                                        <div className="participant-contact">
-                                            <Mail className="contact-icon" />
-                                            <span>{participant.email}</span>
+                                    <div className="table-col-name-email">
+                                        <div className="participant-avatar">{participant.avatar}</div>
+                                        <div className="name-email-wrapper">
+                                            <span className="participant-name">{participant.name || 'Unknown Student'}</span>
+                                            <span className="participant-email">{participant.email}</span>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="participant-details">
-                                    <div className="detail-item">
-                                            <span className="detail-label">Dept:</span>
-                                            <span>{participant.department}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <span className="detail-label">Year:</span>
-                                            <span>{participant.year}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <span className="detail-label">Section:</span>
-                                            <span>{participant.section}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <span className="detail-label">Semester:</span>
-                                            <span>{participant.semester}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                            <span className="detail-label">Batch:</span>
-                                            <span>{participant.batch}</span>
-                                        </div>
-                                </div>
-
-                                <div className="participant-performance">
-                                    <div className="performance-stat">
-                                        <span className="stat-label">Contests</span>
-                                            <span className="stat-value">{participant.contestsParticipated || 0}</span>
-                                    </div>
-                                    <div className="performance-stat">
-                                        <span className="stat-label">Score</span>
-                                            <span className="stat-value">{participant.totalScore || 0}</span>
-                                        </div>
-                                        <div className={`participant-rank ${getRankBadge(index + 1)}`}>
-                                            #{index + 1}
-                                    </div>
-                                </div>
-
-                                <div className="participant-status-section">
+                                    <div className="table-col-dept">{participant.department}</div>
+                                    <div className="table-col-year">{participant.year}</div>
+                                    <div className="table-col-section">{participant.section}</div>
+                                    <div className="table-col-semester">{participant.semester}</div>
+                                    <div className="table-col-status">
                                         <div className={`participant-status-badge ${getStatusBadge(participant.status || 'active').className}`}>
                                             {getStatusBadge(participant.status || 'active').text}
-                                    </div>
-                                    <div className="participant-last-active">
-                                            Last active: {formatLastActive(participant.lastActive)}
                                         </div>
-                                </div>
-
-                                <div className="participant-achievements">
-                                        {(participant.achievements || []).slice(0, 2).map((achievement, index) => (
-                                        <span key={index} className="achievement-badge">
-                                            {achievement}
-                                        </span>
-                                    ))}
-                                        {(participant.achievements || []).length > 2 && (
-                                        <span className="achievement-more">
-                                                +{(participant.achievements || []).length - 2} more
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="participant-actions">
-                                        <button 
-                                            className="participant-action-btn view-btn" 
-                                            onClick={() => handleViewStudent(participant)}
-                                            title="View Details"
-                                        >
-                                            <Eye className="action-icon" />
-                                        </button>
-                                        <button 
-                                            className="participant-action-btn ban-btn" 
-                                            onClick={() => {
-                                                setSelectedStudent(participant);
-                                                setShowBanModal(true);
-                                            }}
-                                            title="Ban Student"
-                                            disabled={(participant.status || 'active') === 'banned'}
-                                        >
-                                            <Ban className="action-icon" />
-                                        </button>
-                                        <button 
-                                            className="participant-action-btn delete-btn" 
+                                    </div>
+                                    <div className="table-col-actions">
+                                        {(participant.status || 'active') === 'banned' ? (
+                                            <button
+                                                className="participant-action-btn unban-btn"
+                                                onClick={() => handleUnbanStudent(participant)}
+                                                title="Unban Student"
+                                            >
+                                                <UserCheck className="action-icon" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="participant-action-btn ban-btn"
+                                                onClick={() => {
+                                                    setSelectedStudent(participant);
+                                                    setShowBanModal(true);
+                                                }}
+                                                title="Ban Student"
+                                            >
+                                                <Ban className="action-icon" />
+                                            </button>
+                                        )}
+                                        <button
+                                            className="participant-action-btn delete-btn"
                                             onClick={() => handleDeleteStudent(participant.id)}
                                             title="Delete Student"
                                         >
                                             <Trash2 className="action-icon" />
-                                    </button>
+                                        </button>
+                                        <button
+                                            className={`participant-action-btn dropdown-btn ${expandedRows.includes(participant.id) ? 'expanded' : ''}`}
+                                            onClick={() => toggleRowExpansion(participant.id)}
+                                            title="Show More Details"
+                                        >
+                                            {expandedRows.includes(participant.id) ? (
+                                                <ChevronUp className="action-icon" />
+                                            ) : (
+                                                <ChevronDown className="action-icon" />
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
-                                {index < filteredParticipants.length - 1 && <hr className="participant-divider" />}
+                                {expandedRows.includes(participant.id) && (
+                                    <div className="participant-expanded-details">
+                                        <div className="expanded-details-grid">
+                                            <div className="detail-group">
+                                                <span className="detail-label">Batch:</span>
+                                                <span className="detail-value">{participant.batch}</span>
+                                            </div>
+                                            <div className="detail-group">
+                                                <span className="detail-label">Contests Participated:</span>
+                                                <span className="detail-value">{participant.contestsParticipated || 0}</span>
+                                            </div>
+                                            <div className="detail-group">
+                                                <span className="detail-label">Total Score:</span>
+                                                <span className="detail-value">{participant.totalScore || 0}</span>
+                                            </div>
+                                            <div className="detail-group">
+                                                <span className="detail-label">Join Date:</span>
+                                                <span className="detail-value">{participant.joinDate ? new Date(participant.joinDate).toLocaleDateString() : 'N/A'}</span>
+                                            </div>
+                                            {(participant.status === 'banned' && participant.banReason) && (
+                                                <div className="detail-group ban-reason-group">
+                                                    <span className="detail-label">Ban Reason:</span>
+                                                    <span className="detail-value ban-reason-text">{participant.banReason}</span>
+                                                </div>
+                                            )}
+                                            {participant.achievements && participant.achievements.length > 0 && (
+                                                <div className="detail-group achievements-group">
+                                                    <span className="detail-label">Achievements:</span>
+                                                    <div className="achievements-list-expanded">
+                                                        {participant.achievements.map((achievement, index) => (
+                                                            <span key={index} className="achievement-badge-expanded">
+                                                                {achievement}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="pagination-container">
+                            <button
+                                className="pagination-btn"
+                                onClick={() => fetchParticipants(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </button>
+
+                            <div className="pagination-numbers">
+                                {[...Array(totalPages)].map((_, index) => {
+                                    const pageNumber = index + 1;
+                                    // Show first page, last page, current page, and pages around current
+                                    if (
+                                        pageNumber === 1 ||
+                                        pageNumber === totalPages ||
+                                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                                    ) {
+                                        return (
+                                            <button
+                                                key={pageNumber}
+                                                className={`pagination-number ${currentPage === pageNumber ? 'active' : ''}`}
+                                                onClick={() => fetchParticipants(pageNumber)}
+                                            >
+                                                {pageNumber}
+                                            </button>
+                                        );
+                                    } else if (
+                                        pageNumber === currentPage - 2 ||
+                                        pageNumber === currentPage + 2
+                                    ) {
+                                        return <span key={pageNumber} className="pagination-ellipsis">...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+
+                            <button
+                                className="pagination-btn"
+                                onClick={() => fetchParticipants(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {filteredParticipants.length === 0 && (

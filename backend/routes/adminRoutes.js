@@ -28,6 +28,7 @@ router.post('/students', middleware.requireAdminAuth, studentController.addStude
 router.get('/students', middleware.requireAdminAuth, studentController.fetchStudents);
 router.delete('/students/:studentId', middleware.requireAdminAuth, studentController.deleteStudent);
 router.put('/students/:studentId/ban', middleware.requireAdminAuth, studentController.banStudent);
+router.put('/students/:studentId/unban', middleware.requireAdminAuth, studentController.unbanStudent);
 router.post('/students/bulk-import', middleware.requireAdminAuth, upload.single("file"), studentController.bulkStudentAdd);
 
 module.exports = router;

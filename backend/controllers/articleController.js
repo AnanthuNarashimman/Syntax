@@ -52,14 +52,27 @@ const createArticle = async (req, res) => {
 
 const getAdminArticles = async(req, res) => {
     try {
+    // Get current admin's userId from the authenticated request
+    const userId = req.user.userId;
+
+    // Fetch only articles created by the current admin
     const snapshot = await db
       .collection("articles")
-      .orderBy("createdAt", "desc")
+      .where("uploader", "==", userId)
       .get();
+
     const articles = [];
     snapshot.forEach((doc) => {
       articles.push({ id: doc.id, ...doc.data() });
     });
+
+    // Sort articles by createdAt in descending order (newest first)
+    articles.sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt?._seconds * 1000) || new Date(0);
+      const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt?._seconds * 1000) || new Date(0);
+      return bTime - aTime;
+    });
+
     res.status(200).json({ articles });
   } catch (error) {
     console.error("Error fetching articles:", error);

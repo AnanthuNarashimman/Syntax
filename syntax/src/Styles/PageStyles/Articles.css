@@ -2,56 +2,83 @@
 
 .Article_Dashboard {
     min-height: 100vh;
-    background-color: #f8fafc;
-    font-family: 'Nunito sans';
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin-left: 280px;
-  }
-  
-  .Article_MainContent {
     padding: 2rem;
-    max-width: 1200px;
+  }
+
+  .Article_MainContent {
+    max-width: 1400px;
     margin: 0 auto;
   }
-  
-  .Article_DashboardHeader {
+
+  .Article_HeaderSection {
     margin-bottom: 2rem;
   }
 
-  .Article_HeaderContent {
+  .Article_HeaderSection h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .Article_HeaderSection p {
+    font-size: 1.1rem;
+    color: #718096;
+    margin: 0;
+  }
+
+  /* Stats Overview */
+  .Article_StatsOverview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .Article_StatCard {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     gap: 1rem;
   }
 
-  .Article_HeaderIcon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
-    border-radius: 16px;
+  .Article_StatCard .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+    background: #fed7d7;
+    color: #e53e3e;
   }
 
-  .Article_HeaderText {
-    flex: 1;
+  .Article_StatCard .stat-icon {
+    width: 24px;
+    height: 24px;
   }
-  
-  .Article_HeaderContent h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #1a202c;
-    margin: 0 0 0.5rem 0;
-  }
-  
-  .Article_HeaderContent p {
-    font-size: 1.125rem;
+
+  .Article_StatCard .stat-content h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
     color: #718096;
-    margin: 0;
+    margin: 0 0 0.25rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-  
+
+  .Article_StatCard .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+  }
+
   .Article_ContentGrid {
     display: grid;
     gap: 2rem;
@@ -66,20 +93,20 @@
 
   .Article_IndividualCard {
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(226, 232, 240, 0.5);
+    transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
     height: 100%;
   }
 
   .Article_IndividualCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.04);
-    border-color: rgba(255, 138, 101, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    border-color: #cbd5e0;
   }
 
   .Article_CardContent {
@@ -114,7 +141,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ff8a65;
+    color: #e53e3e;
     flex-shrink: 0;
   }
 
@@ -140,7 +167,7 @@
   }
 
   .Article_MetaItem svg {
-    color: #ff8a65;
+    color: #e53e3e;
     flex-shrink: 0;
   }
 
@@ -167,12 +194,12 @@
     justify-content: center;
     gap: 0.5rem;
     width: 100%;
-    background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+    background: #e53e3e;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 0.75rem 1rem;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -181,8 +208,9 @@
   }
 
   .Article_BtnPrimary:hover {
+    background: #c53030;
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(255, 138, 101, 0.4);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .Article_BtnPrimary:active {
@@ -219,7 +247,7 @@
     width: 40px;
     height: 40px;
     border: 3px solid #f3f4f6;
-    border-top: 3px solid #ff8a65;
+    border-top: 3px solid #e53e3e;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -471,7 +499,7 @@
   }
   
   .Article_ModalArticleContent blockquote {
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #e53e3e;
     padding-left: 1rem;
     margin: 1rem 0;
     color: #4a5568;
@@ -503,20 +531,12 @@
   
   /* Responsive Design */
   @media (max-width: 768px) {
-    .Article_MainContent {
+    .Article_Dashboard {
       padding: 1rem;
+      margin-left: 0;
     }
 
-    .Article_HeaderContent {
-      gap: 0.75rem;
-    }
-
-    .Article_HeaderIcon {
-      width: 50px;
-      height: 50px;
-    }
-    
-    .Article_HeaderContent h1 {
+    .Article_HeaderSection h1 {
       font-size: 2rem;
     }
 
@@ -558,19 +578,17 @@
   }
   
   @media (max-width: 480px) {
-    .Article_HeaderContent {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 1rem;
-    }
-
-    .Article_HeaderContent h1 {
+    .Article_HeaderSection h1 {
       font-size: 1.75rem;
     }
-    
-    .Article_HeaderContent p {
+
+    .Article_HeaderSection p {
       font-size: 1rem;
+    }
+
+    .Article_StatsOverview {
+      grid-template-columns: 1fr;
+      gap: 1rem;
     }
 
     .Article_CardsGrid {
@@ -647,7 +665,7 @@
   /* Focus states for accessibility */
   .Article_BtnPrimary:focus,
   .Article_ModalCloseBtn:focus {
-    outline: 2px solid #ff8a65;
+    outline: 2px solid #e53e3e;
     outline-offset: 2px;
   }
   

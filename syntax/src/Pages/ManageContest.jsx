@@ -16,6 +16,7 @@ import {
   BookOpen,
   Brain,
   Download,
+  Copy
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import AdminNavbar from "../Components/AdminNavbar";
@@ -48,6 +49,12 @@ function ManageContest() {
   const [sortConfig, setSortConfig] = useState({
     key: "points",
     direction: "descending",
+  });
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [participantFilters, setParticipantFilters] = useState({
+    department: "all",
+    year: "all",
+    section: "all",
   });
 
   // Use ContestContext
@@ -228,10 +235,50 @@ function ManageContest() {
     setSelectedEvent(null);
     // Reset sort to default when closing
     setSortConfig({ key: "points", direction: "descending" });
+    // Reset search and filters
+    setParticipantSearch("");
+    setParticipantFilters({
+      department: "all",
+      year: "all",
+      section: "all",
+    });
   };
 
   const sortedLeaderboardData = useMemo(() => {
     let sortableItems = [...leaderboardData];
+
+    // Apply search filter
+    if (participantSearch.trim()) {
+      const searchLower = participantSearch.toLowerCase();
+      sortableItems = sortableItems.filter(
+        (item) =>
+          item.userName?.toLowerCase().includes(searchLower) ||
+          item.userEmail?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply department filter
+    if (participantFilters.department !== "all") {
+      sortableItems = sortableItems.filter(
+        (item) => item.userDepartment === participantFilters.department
+      );
+    }
+
+    // Apply year filter
+    if (participantFilters.year !== "all") {
+      sortableItems = sortableItems.filter(
+        (item) => item.userYear === parseInt(participantFilters.year)
+      );
+    }
+
+    // Apply section filter
+    if (participantFilters.section !== "all") {
+      sortableItems = sortableItems.filter(
+        (item) => item.userSection === participantFilters.section
+      );
+    }
+
+    // Apply sorting
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         // Handle different data types (string vs number)
@@ -248,7 +295,7 @@ function ManageContest() {
       });
     }
     return sortableItems;
-  }, [leaderboardData, sortConfig]);
+  }, [leaderboardData, sortConfig, participantSearch, participantFilters]);
 
   const requestSort = (key) => {
     let direction = "ascending";
@@ -449,8 +496,9 @@ function ManageContest() {
 
       // Prepare data for Excel export
       const excelData = sortedLeaderboardData.map((user, index) => ({
-        Rank: index + 1,
+        "S No": index + 1,
         Name: user.userName,
+        Email: user.userEmail,
         Department: user.userDepartment,
         Year: user.userYear,
         Section: user.userSection,
@@ -464,8 +512,9 @@ function ManageContest() {
 
       // Auto-size columns
       const colWidths = [
-        { wch: 6 },  // Rank
+        { wch: 6 },  // S No
         { wch: 20 }, // Name
+        { wch: 25 }, // Email
         { wch: 15 }, // Department
         { wch: 8 },  // Year
         { wch: 10 }, // Section
@@ -624,7 +673,7 @@ function ManageContest() {
                                 onClick={() => copyContestId(item.id)}
                                 title="Copy Contest ID"
                               >
-                                📋
+                                <Copy size={17}/>
                               </button>
                             </div>
                           </div>
@@ -704,7 +753,7 @@ function ManageContest() {
         {/* Leaderboard / Participants Modal */}
         {showLeaderboardModal && (
           <div className="modal-overlay">
-            <div className="modal-content event-details-modal">
+            <div className="modal-content event-details-modal participants-modal">
               <div className="modal-header">
                 <h3>Participants for: {selectedEvent?.eventTitle}</h3>
                 <button
@@ -715,113 +764,203 @@ function ManageContest() {
                 </button>
               </div>
 
+              {/* Search and Filter Controls */}
+              {!isLeaderboardLoading && leaderboardData.length > 0 && (
+                <div className="participants-controls">
+                  <div className="participants-search-bar">
+                    <Search className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search by name or email..."
+                      value={participantSearch}
+                      onChange={(e) => setParticipantSearch(e.target.value)}
+                      className="participants-search-input"
+                    />
+                  </div>
+
+                  <div className="participants-filters">
+                    <select
+                      value={participantFilters.department}
+                      onChange={(e) =>
+                        setParticipantFilters((prev) => ({
+                          ...prev,
+                          department: e.target.value,
+                        }))
+                      }
+                      className="filter-select"
+                    >
+                      <option value="all">All Departments</option>
+                      {[
+                        ...new Set(
+                          leaderboardData.map((p) => p.userDepartment)
+                        ),
+                      ]
+                        .filter(Boolean)
+                        .sort()
+                        .map((dept) => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
+                        ))}
+                    </select>
+
+                    <select
+                      value={participantFilters.year}
+                      onChange={(e) =>
+                        setParticipantFilters((prev) => ({
+                          ...prev,
+                          year: e.target.value,
+                        }))
+                      }
+                      className="filter-select"
+                    >
+                      <option value="all">All Years</option>
+                      {[
+                        ...new Set(leaderboardData.map((p) => p.userYear)),
+                      ]
+                        .filter(Boolean)
+                        .sort()
+                        .map((year) => (
+                          <option key={year} value={year}>
+                            Year {year}
+                          </option>
+                        ))}
+                    </select>
+
+                    <select
+                      value={participantFilters.section}
+                      onChange={(e) =>
+                        setParticipantFilters((prev) => ({
+                          ...prev,
+                          section: e.target.value,
+                        }))
+                      }
+                      className="filter-select"
+                    >
+                      <option value="all">All Sections</option>
+                      {[
+                        ...new Set(
+                          leaderboardData.map((p) => p.userSection)
+                        ),
+                      ]
+                        .filter(Boolean)
+                        .sort()
+                        .map((section) => (
+                          <option key={section} value={section}>
+                            Section {section}
+                          </option>
+                        ))}
+                    </select>
+
+                    {(participantSearch ||
+                      participantFilters.department !== "all" ||
+                      participantFilters.year !== "all" ||
+                      participantFilters.section !== "all") && (
+                      <button
+                        className="clear-filters-btn"
+                        onClick={() => {
+                          setParticipantSearch("");
+                          setParticipantFilters({
+                            department: "all",
+                            year: "all",
+                            section: "all",
+                          });
+                        }}
+                      >
+                        <Filter className="icon" size={16} />
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="participants-count">
+                    Showing {sortedLeaderboardData.length} of{" "}
+                    {leaderboardData.length} participants
+                  </div>
+                </div>
+              )}
+
               <div className="participants-content">
                 {isLeaderboardLoading ? (
                   <div className="loading-state">Loading participants...</div>
-                ) : sortedLeaderboardData.length > 0 ? (
-                  <div className="leaderboard-table-container">
-                    <table className="leaderboard-table">
-                      <thead>
-                        <tr>
-                          {/* Clickable Table Headers for Sorting */}
-                          <th>S/N</th>
-                          <th>
-                            <button
-                              onClick={() => requestSort("userName")}
-                              className="sort-button"
-                            >
-                              Name{" "}
-                              {sortConfig.key === "userName"
-                                ? sortConfig.direction === "ascending"
-                                  ? "▲"
-                                  : "▼"
-                                : ""}
-                            </button>
-                          </th>
-                          <th>
-                            <button
-                              onClick={() => requestSort("userDepartment")}
-                              className="sort-button"
-                            >
-                              Department{" "}
-                              {sortConfig.key === "userDepartment"
-                                ? sortConfig.direction === "ascending"
-                                  ? "▲"
-                                  : "▼"
-                                : ""}
-                            </button>
-                          </th>
-                          <th>
-                            <button
-                              onClick={() => requestSort("userYear")}
-                              className="sort-button"
-                            >
-                              Year{" "}
-                              {sortConfig.key === "userYear"
-                                ? sortConfig.direction === "ascending"
-                                  ? "▲"
-                                  : "▼"
-                                : ""}
-                            </button>
-                          </th>
-                          <th>
-                            <button
-                              onClick={() => requestSort("userSection")}
-                              className="sort-button"
-                            >
-                              Section{" "}
-                              {sortConfig.key === "userSection"
-                                ? sortConfig.direction === "ascending"
-                                  ? "▲"
-                                  : "▼"
-                                : ""}
-                            </button>
-                          </th>
-                          <th>
-                            <button
-                              onClick={() => requestSort("points")}
-                              className="sort-button"
-                            >
-                              Score{" "}
-                              {sortConfig.key === "points"
-                                ? sortConfig.direction === "ascending"
-                                  ? "▲"
-                                  : "▼"
-                                : ""}
-                            </button>
-                          </th>
-                          <th>
-                            <button
-                              onClick={() => requestSort("submittedAt")}
-                              className="sort-button"
-                            >
-                              Submitted At{" "}
-                              {sortConfig.key === "submittedAt"
-                                ? sortConfig.direction === "ascending"
-                                  ? "▲"
-                                  : "▼"
-                                : ""}
-                            </button>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedLeaderboardData.map((user, index) => (
-                          <tr key={user.resultId}>
-                            <td>{index + 1}</td>
-                            <td>{user.userName}</td>
-                            <td>{user.userDepartment}</td>
-                            <td>{user.userYear}</td>
-                            <td>{user.userSection}</td>
-                            <td>{user.points}</td>
-                            <td>
-                              {new Date(user.submittedAt).toLocaleString()}
-                            </td>
+                ) : leaderboardData.length > 0 ? (
+                  sortedLeaderboardData.length > 0 ? (
+                    <div className="leaderboard-table-container">
+                      <table className="leaderboard-table">
+                        <thead>
+                          <tr>
+                            <th>S No</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Year</th>
+                            <th>Section</th>
+                            <th>
+                              <button
+                                onClick={() => requestSort("points")}
+                                className="sort-button"
+                              >
+                                Score{" "}
+                                {sortConfig.key === "points"
+                                  ? sortConfig.direction === "ascending"
+                                    ? "▲"
+                                    : "▼"
+                                  : "⇅"}
+                              </button>
+                            </th>
+                            <th>
+                              <button
+                                onClick={() => requestSort("submittedAt")}
+                                className="sort-button"
+                              >
+                                Submitted At{" "}
+                                {sortConfig.key === "submittedAt"
+                                  ? sortConfig.direction === "ascending"
+                                    ? "▲"
+                                    : "▼"
+                                  : "⇅"}
+                              </button>
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {sortedLeaderboardData.map((user, index) => (
+                            <tr key={user.resultId}>
+                              <td className="sno-cell">{index + 1}</td>
+                              <td className="name-cell">{user.userName}</td>
+                              <td className="email-cell">{user.userEmail}</td>
+                              <td>{user.userDepartment}</td>
+                              <td>{user.userYear}</td>
+                              <td>{user.userSection}</td>
+                              <td className="score-cell">
+                                <span className="score-badge">{user.points}</span>
+                              </td>
+                              <td className="date-cell">
+                                {new Date(user.submittedAt).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      <p>No participants match the current filters.</p>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => {
+                          setParticipantSearch("");
+                          setParticipantFilters({
+                            department: "all",
+                            year: "all",
+                            section: "all",
+                          });
+                        }}
+                      >
+                        Clear All Filters
+                      </button>
+                    </div>
+                  )
                 ) : (
                   <div className="empty-state">
                     <p>

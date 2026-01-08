@@ -1,6 +1,7 @@
 const { db, admin } = require("../config/firebase");
 const passwordUtils = require("../utils/passwordUtil");
 const cache = require('../utils/cache');
+const XLSX = require('xlsx');
 
 const addStudent = async(req, res) => {
     try {
@@ -81,10 +82,26 @@ const addStudent = async(req, res) => {
 
 const fetchStudents = async(req, res) => {
     try {
-    const snapshot = await db
+    // Get pagination parameters from query string
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // Get total count of students
+    const totalSnapshot = await db
       .collection("users")
       .where("isStudent", "==", true)
       .get();
+    const total = totalSnapshot.size;
+
+    // Get paginated students
+    const snapshot = await db
+      .collection("users")
+      .where("isStudent", "==", true)
+      .offset(offset)
+      .limit(limit)
+      .get();
+
     const students = [];
     snapshot.forEach((doc) => {
       const studentData = doc.data();
@@ -98,6 +115,7 @@ const fetchStudents = async(req, res) => {
         semester: studentData.semester,
         batch: studentData.batch,
         status: studentData.status || "active",
+        banReason: studentData.banReason || null,
         contestsParticipated: studentData.contestsParticipated || 0,
         totalScore: studentData.totalScore || 0,
         joinDate: studentData.joinDate
@@ -107,7 +125,14 @@ const fetchStudents = async(req, res) => {
         achievements: studentData.achievements || [],
       });
     });
-    res.status(200).json({ students });
+
+    res.status(200).json({
+      students,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (error) {
     console.error("Error fetching students:", error);
     res
@@ -146,36 +171,73 @@ const banStudent = async(req, res) => {
     try {
           const { studentId } = req.params;
           const { reason } = req.body;
-    
+
           if (!reason || reason.trim() === "") {
             return res.status(400).json({ message: "Ban reason is required." });
           }
-    
+
           const studentRef = db.collection("users").doc(studentId);
           const studentDoc = await studentRef.get();
-    
+
           if (!studentDoc.exists) {
             return res.status(404).json({ message: "Student not found." });
           }
-    
+
           const studentData = studentDoc.data();
           if (!studentData.isStudent) {
             return res.status(400).json({ message: "This user is not a student." });
           }
-    
+
           await studentRef.update({
             status: "banned",
             banReason: reason,
             bannedAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
-    
+
           res.status(200).json({ message: "Student banned successfully." });
         } catch (error) {
           console.error("Error banning student:", error);
           res
             .status(500)
             .json({ message: "Failed to ban student.", error: error.message });
+        }
+}
+
+const unbanStudent = async(req, res) => {
+    try {
+          const { studentId } = req.params;
+
+          const studentRef = db.collection("users").doc(studentId);
+          const studentDoc = await studentRef.get();
+
+          if (!studentDoc.exists) {
+            return res.status(404).json({ message: "Student not found." });
+          }
+
+          const studentData = studentDoc.data();
+          if (!studentData.isStudent) {
+            return res.status(400).json({ message: "This user is not a student." });
+          }
+
+          if (studentData.status !== "banned") {
+            return res.status(400).json({ message: "Student is not currently banned." });
+          }
+
+          await studentRef.update({
+            status: "active",
+            banReason: admin.firestore.FieldValue.delete(),
+            bannedAt: admin.firestore.FieldValue.delete(),
+            unbannedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          res.status(200).json({ message: "Student unbanned successfully." });
+        } catch (error) {
+          console.error("Error unbanning student:", error);
+          res
+            .status(500)
+            .json({ message: "Failed to unban student.", error: error.message });
         }
 }
 
@@ -450,6 +512,7 @@ module.exports = {
   fetchStudents,
   deleteStudent,
   banStudent,
+  unbanStudent,
   bulkStudentAdd,
   submitContest
 }
