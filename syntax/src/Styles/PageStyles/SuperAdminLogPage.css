@@ -144,7 +144,7 @@
 .form-group label {
   position: absolute;
   top: 20%;
-  left: 11%;
+  left: 12.5% !important;
   align-items: center;
   font-size: 18px;
   font-weight: 500;
@@ -154,7 +154,8 @@
 }
 
 .passwordLabel {
-  top: 8% !important;
+  top: 6% !important;
+  margin-top: 1% !important;
 }
 
 .input-field {
