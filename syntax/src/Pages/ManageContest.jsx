@@ -85,7 +85,7 @@ function ManageContest() {
     { id: "create", label: "Create Contest", icon: Plus },
     { id: "manage", label: "Manage Events", icon: Settings },
     { id: "participants", label: "Participants", icon: Users },
-    { id: "analytics", label: "Analytics", icon: TrendingUp },
+    // { id: "analytics", label: "Analytics", icon: TrendingUp }, // Under development
     { id: "profile", label: "Profile", icon: User },
   ];
 
@@ -163,6 +163,10 @@ function ManageContest() {
       setViewLoading(true);
       setSelectedEventId(eventId);
 
+      // Get participant count from categorized events (already has correct count)
+      const existingEvent = categorizedEvents.all.find(e => e.id === eventId);
+      const participantCount = existingEvent?.participants || 0;
+
       const response = await fetch(`/api/admin/events/${eventId}`, {
         credentials: "include",
       });
@@ -172,7 +176,11 @@ function ManageContest() {
       }
 
       const data = await response.json();
-      setSelectedEvent(data.event);
+      // Merge the participant count from the card data
+      setSelectedEvent({
+        ...data.event,
+        participants: participantCount
+      });
       setShowViewModal(true);
     } catch (err) {
       showError(`Error fetching event details: ${err.message}`);
@@ -900,7 +908,9 @@ function ManageContest() {
                     <div className="detail-item">
                       <span className="detail-label">Participants:</span>
                       <span className="detail-value">
-                        {selectedEvent.participants?.length || 0}
+                        {typeof selectedEvent.participants === 'number' 
+                          ? selectedEvent.participants 
+                          : (selectedEvent.participants?.length || 0)}
                       </span>
                     </div>
                   </div>

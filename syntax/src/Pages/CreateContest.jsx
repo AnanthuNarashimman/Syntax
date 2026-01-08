@@ -47,7 +47,7 @@ function CreateContest() {
     { id: 'create', label: 'Create Contest', icon: Plus },
     { id: 'manage', label: 'Manage Events', icon: Settings },
     { id: 'participants', label: 'Participants', icon: Users },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+    // { id: 'analytics', label: 'Analytics', icon: TrendingUp }, // Under development
     { id: 'profile', label: 'Profile', icon: User }
   ];
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from 'lucide-react';
 import { useAlert } from "../contexts/AlertContext";
 
 import { Button } from "../Components/Button.jsx";
@@ -15,6 +16,7 @@ export const StudentLogPage = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const loginData = {
     title: "Student Login",
@@ -132,29 +134,29 @@ export const StudentLogPage = () => {
 
           <div className="form-group">
             <label className={`passwordLabel${formData.password ? " active" : ""}`}>{loginData.passwordLabel}</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="input-field"
-              required
-              placeholder=""
-              autoComplete="off"
-            />
-            <div className="forgot-password">{loginData.forgotPassword}</div>
+            <div className="password-input-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="input-field password-field"
+                required
+                placeholder="Enter your password"
+                autoComplete="off"
+              />
+              <span 
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </span>
+            </div>
           </div>
 
           <Button className="login-button" type="submit" disabled={loading}>
             {loading ? 'Logging In...' : loginData.loginButton}
           </Button>
-
-          <div className="register-link">
-            <span>{loginData.registerText}</span>
-            <span onClick={() => navigate("/register")} className="create-account">
-              {loginData.createAccount}
-            </span>
-          </div>
         </form>
       </div>
     </div>

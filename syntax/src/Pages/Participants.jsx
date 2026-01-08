@@ -71,7 +71,7 @@ function Participants() {
         { id: 'create', label: 'Create Contest', icon: Plus },
         { id: 'manage', label: 'Manage Events', icon: Settings },
         { id: 'participants', label: 'Participants', icon: Users },
-        { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+        // { id: 'analytics', label: 'Analytics', icon: TrendingUp }, // Under development
         { id: 'profile', label: 'Profile', icon: User }
     ];
 
@@ -102,6 +102,41 @@ function Participants() {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [confirmMessage, setConfirmMessage] = useState('');
+
+    // Format last active date to "Jan 12 2025 - 12:30 AM" format
+    const formatLastActive = (lastActive) => {
+        if (!lastActive) return 'Never';
+        
+        let date;
+        
+        // Handle Firestore timestamp
+        if (lastActive._seconds) {
+            date = new Date(lastActive._seconds * 1000);
+        } else if (lastActive.seconds) {
+            date = new Date(lastActive.seconds * 1000);
+        } else if (typeof lastActive === 'string' || typeof lastActive === 'number') {
+            date = new Date(lastActive);
+        } else if (lastActive instanceof Date) {
+            date = lastActive;
+        } else {
+            return 'Never';
+        }
+        
+        if (isNaN(date.getTime())) return 'Never';
+        
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[date.getMonth()];
+        const day = date.getDate();
+        const year = date.getFullYear();
+        
+        let hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 should be 12
+        
+        return `${month} ${day} ${year} - ${hours}:${minutes} ${ampm}`;
+    };
 
     // Fetch participants data from backend API
     const fetchParticipants = async () => {
@@ -1039,7 +1074,7 @@ function Participants() {
                                             {getStatusBadge(participant.status || 'active').text}
                                     </div>
                                     <div className="participant-last-active">
-                                            Last active: {participant.lastActive || 'Never'}
+                                            Last active: {formatLastActive(participant.lastActive)}
                                         </div>
                                 </div>
 

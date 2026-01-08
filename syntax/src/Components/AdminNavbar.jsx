@@ -16,7 +16,7 @@ const sidebarItems = [
   { id: 'create', label: 'Create Contest', icon: Plus, route: '/create-contest' },
   { id: 'manage', label: 'Manage Events', icon: Settings, route: '/manage-contest' },
   { id: 'participants', label: 'Participants', icon: Users, route: '/manage-participants' },
-  { id: 'analytics', label: 'Analytics', icon: TrendingUp, route: '/analytics' },
+  // { id: 'analytics', label: 'Analytics', icon: TrendingUp, route: '/analytics' }, // Under development
   { id: 'articles', label: 'Articles', icon: BookOpen, route: '/manage-articles' },
   { id: 'profile', label: 'Profile', icon: User, route: '/admin-profile' }
 ];

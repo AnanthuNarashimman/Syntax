@@ -169,7 +169,23 @@ function SuperManageUsers() {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    
+    let date;
+    if (timestamp.toDate) {
+      // Firestore Timestamp object (client-side)
+      date = timestamp.toDate();
+    } else if (timestamp._seconds) {
+      // Serialized Firestore timestamp from API
+      date = new Date(timestamp._seconds * 1000);
+    } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      // ISO string or Unix timestamp
+      date = new Date(timestamp);
+    } else {
+      return 'N/A';
+    }
+    
+    if (isNaN(date.getTime())) return 'N/A';
+    
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',

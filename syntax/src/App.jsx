@@ -5,7 +5,7 @@ import AdminDashboard from "./Pages/AdminDashboard.jsx";
 import CreateContest from "./Pages/CreateContest.jsx";
 import ManageContest from "./Pages/ManageContest.jsx";
 import Participants from "./Pages/Participants.jsx";
-import Analytics from "./Pages/Analytics.jsx";
+// import Analytics from "./Pages/Analytics.jsx";
 import AdminProfile from "./Pages/AdminProfile.jsx";
 import CreateQuizQuestions from "./Pages/CreateQuizQuestions.jsx";
 import CreateContestQuestions from "./Pages/CreateContestQuestions.jsx";
@@ -47,7 +47,7 @@ function App() {
             <Route path="/manage-contest" element={<ManageContest />} />
             <Route path="/manage-articles" element={<Articles />} />
             <Route path="/manage-participants" element={<Participants />} />
-            <Route path="/analytics" element={<Analytics />} />
+            {/* <Route path="/analytics" element={<Analytics />} /> */}
             <Route path="/admin-profile" element={<AdminProfile />} />
             <Route path="/create-quiz-questions" element={<CreateQuizQuestions />} />
             <Route path="/create-contest-questions" element={<CreateContestQuestions />} />
