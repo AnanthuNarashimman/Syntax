@@ -285,7 +285,9 @@ export const ContestProvider = ({ children }) => {
       mode: backendEvent.eventMode === "strict" ? "strict" : "practice",
       eventMode: backendEvent.eventMode, 
       status: status,
-      participants: backendEvent.participants ? backendEvent.participants.length : 0,
+      participants: typeof backendEvent.participants === 'number' 
+        ? backendEvent.participants 
+        : (Array.isArray(backendEvent.participants) ? backendEvent.participants.length : 0),
       timeLeft: timeLeft,
       type: type,
       backendStatus: backendEvent.status,
@@ -428,35 +430,12 @@ export const ContestProvider = ({ children }) => {
     return statusMap[status] || { label: status, color: '#6b7280' };
   };
 
-  // Initial fetch for admin events
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  // REMOVED AUTOMATIC FETCHES - Components should call fetch functions explicitly when needed
+  // This prevents unnecessary Firebase reads on every page navigation
 
-  // Initial fetch for student data with small delay to ensure authentication is ready
-  useEffect(() => {
-    const initializeStudentData = async () => {
-      // Small delay to ensure authentication cookie is properly set
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Check authentication first
-      const isAuth = await checkStudentAuth();
-
-      if (isAuth) {
-        // If authenticated, fetch data
-        fetchStudentContests();
-        fetchStudentArticles();
-        fetchStudentSubmissions();
-      } else {
-        // If not authenticated, try fetching anyway (will handle 403 with retry)
-        fetchStudentContests();
-        fetchStudentArticles();
-        fetchStudentSubmissions();
-      }
-    };
-
-    initializeStudentData();
-  }, []);
+  // Optional: Auto-fetch admin name only (lightweight operation)
+  // Admin events, student contests, articles, and submissions should be fetched
+  // by individual pages/components when they actually need the data
 
   const value = {
     // Admin data

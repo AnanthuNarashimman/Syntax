@@ -2,6 +2,7 @@ const { db, admin } = require("../config/firebase");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const passwordUtil = require('../utils/passwordUtil');
+const cache = require('../utils/cache');
 
 
 // Controllers for Profiles
@@ -484,50 +485,29 @@ const getStudentProgressData = async (req, res) => {
         }
 
         if (!userProgressDoc.empty) {
-            // Prepare initial data
+            // OPTIMIZED: Use points directly from eventAttempts (no need to fetch eventResults)
             const userProgressData = userProgressDoc.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
 
-            // Fetch all result documents in parallel
-            const resultPromises = userProgressData.map(async (progressData) => {
-                if (progressData.result_ref) {
-                    try {
-                        const resultDoc = await db.collection("eventResults").doc(progressData.result_ref).get();
-                        if (resultDoc.exists) {
-                            const resultData = resultDoc.data();
-                            return {
-                                ...progressData,
-                                points: resultData.points || 0
-                            };
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching result for doc ${progressData.id}:`, error);
-                    }
-                }
-                return {
-                    ...progressData,
-                    points: 0
-                };
-            });
-
-            const finalProgressData = await Promise.all(resultPromises);
-
-            // Process actual data and update monthly totals
-            finalProgressData.forEach(item => {
+            // Process data and update monthly totals
+            // Points are now stored directly in eventAttempts, no additional queries needed
+            userProgressData.forEach(item => {
                 if (item.completed_at && item.status === 'completed') {
                     // Convert Firebase timestamp to JavaScript Date
                     const completedDate = new Date(item.completed_at._seconds * 1000);
                     const itemYear = completedDate.getFullYear();
-                    
+
                     // Only include data from current year
                     if (itemYear === currentYear) {
                         const monthKey = `${itemYear}-${String(completedDate.getMonth() + 1).padStart(2, '0')}`;
-                        
+
                         if (monthlyData[monthKey]) {
                             monthlyData[monthKey].contestsParticipated += 1;
-                            monthlyData[monthKey].totalScore += item.points || 0;
+                            // Use points from attempt (stored during submission) or from score field
+                            const points = item.points || item.score || 0;
+                            monthlyData[monthKey].totalScore += points;
                         }
                     }
                 }
@@ -558,77 +538,131 @@ const getLeaderboard = async (req, res) => {
     try {
         const userId = req.user.userId; // Get userId from authenticated middleware
 
-        const leaderboardDoc = await db.collection("userSubmissions")
-            .orderBy("totalScore", "desc")
-            .limit(20)
-            .get();
+        // OPTIMIZED: Cache leaderboard data for 30 seconds to reduce reads
+        const cacheKey = 'leaderboard:top20';
+        const cachedLeaderboard = cache.get(cacheKey);
 
-        // Fetch userNames for all users in leaderboard
-        const leaderboardData = await Promise.all(
-            leaderboardDoc.docs.map(async (doc, index) => {
+        let leaderboardData;
+
+        if (cachedLeaderboard) {
+            // Use cached data
+            leaderboardData = cachedLeaderboard;
+            console.log('Serving leaderboard from cache');
+        } else {
+            // Fetch fresh data
+            console.log('Fetching fresh leaderboard data');
+
+            // OPTIMIZED: Single query to get top 20 leaderboard entries
+            const leaderboardDoc = await db.collection("userSubmissions")
+                .orderBy("totalScore", "desc")
+                .limit(20)
+                .get();
+
+            // OPTIMIZED: Collect unique userIds that need user data lookup
+            const userIdsNeedingLookup = new Set();
+            const submissionsMap = new Map();
+
+            leaderboardDoc.docs.forEach((doc, index) => {
                 const submissionData = doc.data();
-                let userName = 'Unknown';
-                let department = 'Unknown';
-                
-                // Fetch userName and department from users collection
-                if (submissionData.userId) {
-                    try {
-                        const userDoc = await db.collection("users").doc(submissionData.userId).get();
-                        if (userDoc.exists) {
-                            const userData = userDoc.data();
-                            userName = userData.userName || 'Unknown';
-                            department = userData.department || 'Unknown';
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching user data for ${submissionData.userId}:`, error);
+                submissionsMap.set(doc.id, {
+                    id: doc.id,
+                    position: index + 1,
+                    ...submissionData
+                });
+
+                // Only lookup if userName/department is missing from submission data
+                if (!submissionData.userName || !submissionData.department) {
+                    if (submissionData.userId) {
+                        userIdsNeedingLookup.add(submissionData.userId);
+                    }
+                }
+            });
+
+            // OPTIMIZED: Batch fetch user data only if needed (use IN query for up to 10 at a time)
+            const userDataMap = new Map();
+            if (userIdsNeedingLookup.size > 0) {
+                const userIdsArray = Array.from(userIdsNeedingLookup);
+
+                // Firestore 'in' query supports max 10 items, so batch them
+                for (let i = 0; i < userIdsArray.length; i += 10) {
+                    const batch = userIdsArray.slice(i, i + 10);
+                    const usersQuery = await db.collection("users")
+                        .where(admin.firestore.FieldPath.documentId(), 'in', batch)
+                        .get();
+
+                    usersQuery.docs.forEach(doc => {
+                        const userData = doc.data();
+                        userDataMap.set(doc.id, {
+                            userName: userData.userName || 'Unknown',
+                            department: userData.department || 'Unknown'
+                        });
+                    });
+                }
+            }
+
+            // OPTIMIZED: Build leaderboard data using cached user data
+            leaderboardData = Array.from(submissionsMap.values()).map(submission => {
+                let userName = submission.userName || 'Unknown';
+                let department = submission.department || 'Unknown';
+
+                // Use cached user data if userName/department was missing
+                if ((!submission.userName || !submission.department) && submission.userId) {
+                    const cachedUserData = userDataMap.get(submission.userId);
+                    if (cachedUserData) {
+                        userName = cachedUserData.userName;
+                        department = cachedUserData.department;
                     }
                 }
 
                 return {
-                    id: doc.id,
-                    position: index + 1,
-                    userName: userName,
-                    department: department,
-                    ...submissionData
+                    ...submission,
+                    userName,
+                    department
                 };
-            })
-        );
+            });
+
+            // Cache the leaderboard for 30 seconds
+            cache.set(cacheKey, leaderboardData, 30);
+        }
 
         let userPosition = null;
 
         if (userId) {
-            // Search by userId field, not document ID
-            const userQuery = await db.collection("userSubmissions")
-                .where("userId", "==", userId)
-                .get();
-            
-            if (!userQuery.empty) {
-                const userDoc = userQuery.docs[0]; // Get the first (should be only) document
-                const userData = userDoc.data();
-                const userScore = userData.totalScore || 0;
+            // Check if user is already in top 20
+            const userInTop20 = leaderboardData.find(user => user.userId === userId);
 
-                // Fetch userName for current user
-                let currentUserName = 'Unknown';
-                let currentUserDepartment = 'Unknown';
-                try {
-                    const currentUserDoc = await db.collection("users").doc(userId).get();
-                    if (currentUserDoc.exists) {
-                        const currentUserData = currentUserDoc.data();
-                        currentUserName = currentUserData.userName || 'Unknown';
-                        currentUserDepartment = currentUserData.department || 'Unknown';
+            if (userInTop20) {
+                userPosition = { ...userInTop20 };
+            } else {
+                // User not in top 20, fetch their position
+                const userQuery = await db.collection("userSubmissions")
+                    .where("userId", "==", userId)
+                    .get();
+
+                if (!userQuery.empty) {
+                    const userDoc = userQuery.docs[0];
+                    const userData = userDoc.data();
+                    const userScore = userData.totalScore || 0;
+
+                    // Get userName and department from submission data or lookup
+                    let currentUserName = userData.userName || 'Unknown';
+                    let currentUserDepartment = userData.department || 'Unknown';
+
+                    // Only fetch from users collection if data is missing
+                    if (!userData.userName || !userData.department) {
+                        // Fallback: single read for current user if not in cache
+                        try {
+                            const currentUserDoc = await db.collection("users").doc(userId).get();
+                            if (currentUserDoc.exists) {
+                                const currentUserData = currentUserDoc.data();
+                                currentUserName = currentUserData.userName || 'Unknown';
+                                currentUserDepartment = currentUserData.department || 'Unknown';
+                            }
+                        } catch (error) {
+                            console.error(`Error fetching current user data:`, error);
+                        }
                     }
-                } catch (error) {
-                    console.error(`Error fetching current user data:`, error);
-                }
 
-                // Check if user is already in top 20
-                const userInTop20 = leaderboardData.find(user => user.userId === userId);
-                
-                if (userInTop20) {
-                    userPosition = {
-                        ...userInTop20
-                    };
-                } else {
                     // Count users with higher scores
                     const higherScoresQuery = await db.collection("userSubmissions")
                         .where("totalScore", ">", userScore)
@@ -654,7 +688,7 @@ const getLeaderboard = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in getLeaderboardWithUserPosition:', error);
+        console.error('Error in getLeaderboard:', error);
         res.status(500).json({
             "error": "Internal server error"
         });

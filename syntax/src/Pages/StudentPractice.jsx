@@ -5,6 +5,7 @@ import Loader from '../Components/Loader';
 import { useContestContext } from '../contexts/ContestContext';
 import styles from '../Styles/PageStyles/StudentPractice.module.css';
 import pracImg from '../assets/Images/prac.jpg';
+import ReactMarkdown from 'react-markdown';
 
 const StudentPractice = () => {
     // Get data from context
@@ -522,7 +523,9 @@ const StudentPractice = () => {
                             <div className={styles.modalBody}>
                                 <div className={styles.modalSection}>
                                     <h3>Description</h3>
-                                    <p>{selectedArticle.description || 'No description available'}</p>
+                                    <div className={styles.markdownContent}>
+                                        <ReactMarkdown>{selectedArticle.description || 'No description available'}</ReactMarkdown>
+                                    </div>
                                 </div>
 
                                 <div className={styles.modalSection}>
@@ -555,7 +558,7 @@ const StudentPractice = () => {
                                     <div className={styles.modalSection}>
                                         <h3>Article Content Preview</h3>
                                         <div className={styles.contentPreview}>
-                                            <p>{selectedArticle.articleContent.substring(0, 200)}...</p>
+                                            <ReactMarkdown>{selectedArticle.articleContent.substring(0, 200) + '...'}</ReactMarkdown>
                                         </div>
                                     </div>
                                 )}
@@ -618,19 +621,9 @@ const StudentPractice = () => {
                             <div className={styles.fullScreenBody}>
                                 <div className={styles.articleContent}>
                                     {articleToRead.articleContent ? (
-                                        <div
-                                            className={styles.markdownContent}
-                                            dangerouslySetInnerHTML={{
-                                                __html: articleToRead.articleContent
-                                                    .replace(/\n/g, '<br>')
-                                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                                                    .replace(/`(.*?)`/g, '<code>$1</code>')
-                                                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                                                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                                                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                                            }}
-                                        />
+                                        <div className={styles.markdownContent}>
+                                            <ReactMarkdown>{articleToRead.articleContent}</ReactMarkdown>
+                                        </div>
                                     ) : (
                                         <p className={styles.noContent}>No content available for this article.</p>
                                     )}

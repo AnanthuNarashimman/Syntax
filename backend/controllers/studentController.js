@@ -1,5 +1,6 @@
 const { db, admin } = require("../config/firebase");
 const passwordUtils = require("../utils/passwordUtil");
+const cache = require('../utils/cache');
 
 const addStudent = async(req, res) => {
     try {
@@ -422,6 +423,9 @@ const submitContest = async (req, res) => {
         lastActive: new Date().toISOString(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
+
+      // OPTIMIZED: Invalidate leaderboard cache after score update
+      cache.delete('leaderboard:top20');
     }
 
     res.status(200).json({

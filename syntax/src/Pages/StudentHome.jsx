@@ -7,6 +7,7 @@ import styles from "../Styles/PageStyles/StudentHome.module.css";
 import welcomeImg from '../assets/Images/welcome.jpg';
 import findImg from '../assets/Images/find.jpg';
 import { useAlert } from "../contexts/AlertContext";
+import { useNavigate } from 'react-router-dom';
 
 const getInitial = (name) => name && name.length > 0 ? name[0].toUpperCase() : '?';
 
@@ -57,7 +58,8 @@ const getNextTierThreshold = (currentTier) => {
 };
 
 const StudentHome = () => {
-  const { showError } = useAlert();
+  const { showError, showAlert } = useAlert();
+  const navigate = useNavigate();
 
   // Get data from context
   const {
@@ -172,35 +174,8 @@ const StudentHome = () => {
     }
   }, [submissionsLoading, studentSubmissions, submissionsError]);
 
-  // Fallback: fetch submissions directly if context data is not available
-  useEffect(() => {
-    if (!loading && submissionsLoading) {
-      const fetchSubmissionsDirectly = async () => {
-        try {
-          console.log('StudentHome - Fetching submissions directly...');
-          const response = await fetch('/api/student/profile/submissions', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('StudentHome - Direct submissions result:', data);
-            setSubmissionStats({
-              contestsParticipated: data.Count || 0,
-              totalScore: data.Points || 0
-            });
-          }
-        } catch (error) {
-          console.error('StudentHome - Error fetching submissions:', error);
-        }
-      };
-
-      const timer = setTimeout(fetchSubmissionsDirectly, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, submissionsLoading]);
+  // REMOVED FALLBACK TIMER - This was causing duplicate Firebase reads
+  // Context now handles data fetching properly without automatic initialization
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {
@@ -322,19 +297,19 @@ const StudentHome = () => {
             <div className={styles.actionsSection}>
               <h2 className={styles.sectionTitle}>Quick Actions</h2>
               <div className={styles.actionsGrid}>
-                <button className={styles.actionCard}>
+                <button className={styles.actionCard} onClick={() => navigate('/student-practice')}>
                   <BookOpen size={24} />
                   <span>Practice Problems</span>
                 </button>
-                <button className={styles.actionCard}>
+                <button className={styles.actionCard} onClick={() => navigate('/student-contests')}>
                   <Users size={24} />
                   <span>Join Contest</span>
                 </button>
-                <button className={styles.actionCard}>
+                <button className={styles.actionCard} onClick={() => navigate('/student-leader')}>
                   <Trophy size={24} />
                   <span>View Leaderboard</span>
                 </button>
-                <button className={styles.actionCard}>
+                <button className={styles.actionCard} onClick={() => showAlert('Daily Challenge feature coming soon! Stay tuned for exciting challenges.', 'info')}>
                   <Zap size={24} />
                   <span>Daily Challenge</span>
                 </button>

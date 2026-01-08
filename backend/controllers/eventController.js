@@ -296,6 +296,64 @@ const fetchEvents = async (req, res) => {
   }
 };
 
+// OPTIMIZED: Fetch a single event by ID for students (avoids fetching all events)
+const fetchStudentEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    if (!eventId) {
+      return res.status(400).json({
+        message: "Event ID is required",
+      });
+    }
+
+    const eventDoc = await db.collection("events").doc(eventId).get();
+
+    if (!eventDoc.exists) {
+      return res.status(404).json({
+        message: "Event not found",
+      });
+    }
+
+    const eventData = eventDoc.data();
+
+    // Check if student's department is allowed
+    const userDepartment = req.user.department;
+    const allowedDepartments = eventData.allowedDepartments;
+
+    if (
+      allowedDepartments !== "Any department" &&
+      allowedDepartments !== userDepartment
+    ) {
+      return res.status(403).json({
+        message: "This event is not available for your department",
+      });
+    }
+
+    // Remove correct answers from questions (for quizzes)
+    if (eventData.questions && Array.isArray(eventData.questions)) {
+      eventData.questions = eventData.questions.map((question) => {
+        const { correctAnswer, ...questionWithoutAnswer } = question;
+        return questionWithoutAnswer;
+      });
+    }
+
+    res.status(200).json({
+      message: "Event retrieved successfully!",
+      event: {
+        id: eventDoc.id,
+        ...eventData,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching student event:", error);
+    res.status(500).json({
+      message: "Failed to fetch event. Please try again.",
+      error: error.message,
+    });
+  }
+};
+
 // Specific events for admin view
 const fetchEvent = async (req, res) => {
   try {
@@ -419,6 +477,7 @@ module.exports = {
   updateContest,
   fetchAdminEvents,
   fetchEvents,
+  fetchStudentEvent,
   fetchEvent,
   fetchSuperEvent,
   deleteSuperEvent,
