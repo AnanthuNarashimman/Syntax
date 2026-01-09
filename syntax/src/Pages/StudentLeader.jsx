@@ -33,10 +33,10 @@ const StudentLeader = () => {
       }
 
       const data = await response.json();
-      
+
       // Set leaderboard data
       setLeaderboardData(data.leaderboard || []);
-      
+
       // Set user profile from userPosition data
       if (data.userPosition) {
         setUserProfile({
@@ -51,14 +51,28 @@ const StudentLeader = () => {
             practices: { count: Math.floor((data.userPosition.submissionCount || 0) * 0.5), points: Math.floor((data.userPosition.totalScore || 0) * 0.2) }
           }
         });
+      } else {
+        // No user position data - set default values
+        setUserProfile({
+          name: 'You',
+          points: 0,
+          rank: 0,
+          avatar: '👑',
+          userId: null,
+          summary: {
+            codefusions: { count: 0, points: 0 },
+            quizzes: { count: 0, points: 0 },
+            practices: { count: 0, points: 0 }
+          }
+        });
       }
-      
+
     } catch (error) {
       console.error('Error fetching leaderboard data:', error);
       // Set default values on error
       setLeaderboardData([]);
       setUserProfile({
-        name: 'User',
+        name: 'You',
         points: 0,
         rank: 0,
         avatar: '👑',
@@ -96,7 +110,7 @@ const StudentLeader = () => {
 
   const getTierIcon = (tier) => {
     switch (tier) {
-      case 'legend': return <Crown size={16} />;
+      case 'legend': return <Crown size={16}/>;
       case 'titan': return <Diamond size={16} />;
       case 'vanguard': return <Shield size={16} />;
       case 'adept': return <Zap size={16} />;
@@ -260,7 +274,7 @@ const StudentLeader = () => {
             <div className={styles.leaderboardHeader}>
               <div className={styles.leaderboardTitle}>
                 <div className={styles.titleIcon}>
-                  <Trophy size={24} />
+                  <Trophy size={24} color='#ff7043'/>
                 </div>
                 <div className={styles.titleText}>
                   <h2>Global Leaderboard</h2>
@@ -309,63 +323,77 @@ const StudentLeader = () => {
             </div>
 
             <div className={styles.tableBody}>
-              {paginatedData.map((user) => {
-                const userTier = getTierFromScore(user.totalScore || 0);
-                const userDepartment = getDepartmentFromUser(user);
-                const isCurrentUser = userProfile && user.userId === userProfile.userId;
-                
-                return (
-                  <div key={user.id} className={`${styles.tableRow} ${isCurrentUser ? styles.currentUser : ''}`}>
-                    <div className={styles.tableCell}>
-                      <div className={styles.rankCell}>
-                        <span className={styles.rankNumber}>Rank {user.position}</span>
-                        {user.position === 1 && <Crown size={16} color="#FFD700" />}
-                        {user.position === 2 && <Medal size={16} color="#C0C0C0" />}
-                        {user.position === 3 && <Award size={16} color="#CD7F32" />}
-                      </div>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <div className={styles.studentCell}>
-                        <div className={styles.studentAvatar}>
-                          {(user.userName || 'U').charAt(0).toUpperCase()}
-                        </div>
-                        <div className={styles.studentInfo}>
-                          <span className={styles.studentName}>{user.userName || 'Unknown'}</span>
-                          {isCurrentUser && (
-                            <span className={styles.youBadge}>You</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.departmentBadge}>{userDepartment}</span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <div
-                        className={styles.tierBadge}
-                        style={{
-                          backgroundColor: getTierColor(userTier),
-                          color: getContrastColor(getTierColor(userTier))
-                        }}
-                      >
-                        {getTierIcon(userTier)}
-                      </div>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.activityCount}>{user.submissionCount || 0}</span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.activityCount}>{Math.floor((user.submissionCount || 0) * 0.7)}</span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <div className={styles.pointsCell}>
-                        <Trophy size={14} />
-                        <span className={styles.pointsValue}>{user.totalScore || 0}</span>
-                      </div>
-                    </div>
+              {paginatedData.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyStateIcon}>
+                    <Trophy size={48} />
                   </div>
-                );
-              })}
+                  <h3 className={styles.emptyStateTitle}>No Rankings Yet</h3>
+                  <p className={styles.emptyStateText}>
+                    {leaderboardData.length === 0
+                      ? "Be the first to compete! Complete contests and quizzes to appear on the leaderboard."
+                      : "No students match the selected filters. Try adjusting your filter criteria."}
+                  </p>
+                </div>
+              ) : (
+                paginatedData.map((user) => {
+                  const userTier = getTierFromScore(user.totalScore || 0);
+                  const userDepartment = getDepartmentFromUser(user);
+                  const isCurrentUser = userProfile && user.userId === userProfile.userId;
+
+                  return (
+                    <div key={user.id} className={`${styles.tableRow} ${isCurrentUser ? styles.currentUser : ''}`}>
+                      <div className={styles.tableCell}>
+                        <div className={styles.rankCell}>
+                          <span className={styles.rankNumber}>Rank {user.position}</span>
+                          {user.position === 1 && <Crown size={16} color="#FFD700" />}
+                          {user.position === 2 && <Medal size={16} color="#C0C0C0" />}
+                          {user.position === 3 && <Award size={16} color="#CD7F32" />}
+                        </div>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <div className={styles.studentCell}>
+                          <div className={styles.studentAvatar}>
+                            {(user.userName || 'U').charAt(0).toUpperCase()}
+                          </div>
+                          <div className={styles.studentInfo}>
+                            <span className={styles.studentName}>{user.userName || 'Unknown'}</span>
+                            {isCurrentUser && (
+                              <span className={styles.youBadge}>You</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <span className={styles.departmentBadge}>{userDepartment}</span>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <div
+                          className={styles.tierBadge}
+                          style={{
+                            backgroundColor: getTierColor(userTier),
+                            color: getContrastColor(getTierColor(userTier))
+                          }}
+                        >
+                          {getTierIcon(userTier)}
+                        </div>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <span className={styles.activityCount}>{user.submissionCount || 0}</span>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <span className={styles.activityCount}>{Math.floor((user.submissionCount || 0) * 0.7)}</span>
+                      </div>
+                      <div className={styles.tableCell}>
+                        <div className={styles.pointsCell}>
+                          <Trophy size={14} />
+                          <span className={styles.pointsValue}>{user.totalScore || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
           </div>

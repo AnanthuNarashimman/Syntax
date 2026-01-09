@@ -216,7 +216,7 @@
 }
 
 .filterTitle svg {
-  color: #8b5cf6;
+  color: #ff8a65;
 }
 
 .filterHeader p {
@@ -257,9 +257,9 @@
 }
 
 .searchInput:focus {
-  border-color: #8b5cf6;
+  border-color: #ff8a65;
   background: white;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.1);
 }
 
 .filterSelect {
@@ -274,9 +274,9 @@
 }
 
 .filterSelect:focus {
-  border-color: #8b5cf6;
+  border-color: #ff8a65;
   background: white;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.1);
 }
 
 .filterBtn {
@@ -284,20 +284,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
   white-space: nowrap;
 }
 
 .filterBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 138, 101, 0.4);
 }
 /* Contest Cards Grid */
 .contestsGrid {
@@ -341,7 +341,7 @@
 }
 
 .contestType svg {
-  color: #8b5cf6;
+  color: #ff8a65;
 }
 
 .typeLabel {

@@ -451,7 +451,7 @@ const StudentHome = () => {
         <div className={styles.upcomingSection}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Upcoming Contests</h2>
-            <button className={styles.viewAllButton}>View All</button>
+            <button className={styles.viewAllButton} onClick={() => {navigate("/student-contests")}}>View All</button>
           </div>
           <div className={styles.contestsGrid}>
             {upcomingContests.map((contest) => {

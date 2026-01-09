@@ -15,8 +15,8 @@
   right: 0;
   bottom: 0;
   background-image:
-    radial-gradient(circle at 25% 25%, rgba(255, 138, 101, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(255, 171, 64, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 25% 25%, rgba(100, 116, 139, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(71, 85, 105, 0.03) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -52,13 +52,14 @@
 .headerIcon {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  background: white;
+  border: 2px solid #fbbf24;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+  color: #fbbf24;
+  box-shadow: none;
 }
 
 .headerText {
@@ -112,8 +113,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
-  color: white;
+  background: white;
+  border: 2px solid #ff8a65;
+  color: #ff8a65;
 }
 
 .statInfo {
@@ -151,13 +153,14 @@
 }
 
 .profileHeader {
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 2rem;
   display: flex;
   align-items: center;
   gap: 2rem;
-  color: white;
+  color: #2d3748;
   position: relative;
+  border-bottom: 3px solid #ff8a65;
 }
 
 .profileHeader::before {
@@ -180,13 +183,14 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  color: #ff8a65;
+  border: 3px solid #ff8a65;
   position: relative;
+  box-shadow: none;
 }
 
 .rankBadge {
@@ -237,20 +241,22 @@
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 1rem 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #1a202c;
 }
 
 .pointsBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.2);
+  background: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
-  backdrop-filter: blur(10px);
   margin-bottom: 0.75rem;
+  color: #2d3748;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .profileTierBadge {
@@ -311,11 +317,12 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  background: white;
+  border: 2px solid #10b981;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #10b981;
   flex-shrink: 0;
 }
 
@@ -389,13 +396,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
-  color: white;
+  background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+  color: #2d3748;
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(255, 138, 101, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
   transition: all 0.3s ease;
 }
 
@@ -431,13 +438,14 @@
 .titleIcon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  background: white;
+  border: 2px solid #ff7043;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+  color: #ff7043;
+  box-shadow: none;
 }
 
 .titleText h2 {
@@ -635,7 +643,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #ff8a65 0%, #ff7043 50%, #ffab40 100%);
+  background: linear-gradient(90deg, #ff8a65 0%, #ff7043 50%, #ff8a65 100%);
 }
 
 .leaderboardHeader {
@@ -745,7 +753,7 @@
 }
 
 .tableRow.currentUser {
-  background: linear-gradient(135deg, rgba(255, 138, 101, 0.1) 0%, rgba(255, 112, 67, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(255, 138, 101, 0.08) 0%, rgba(255, 112, 67, 0.08) 100%);
   border-left: 4px solid #ff8a65;
   position: relative;
 }
@@ -815,22 +823,22 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #ff8a65;
   font-weight: 600;
   font-size: 0.9rem;
   flex-shrink: 0;
-  border: 2px solid rgba(255, 138, 101, 0.2);
+  border: 2px solid #ff8a65;
   transition: all 0.3s ease;
 }
 
 .studentAvatar:hover {
   transform: scale(1.1);
-  border-color: rgba(255, 138, 101, 0.5);
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+  border-color: #ff7043;
+  box-shadow: none;
 }
 
 .studentInfo {
@@ -923,7 +931,7 @@
 }
 
 .pointsCell svg {
-  color: #ff8a65;
+  color: #fbbf24;
 }
 
 .pointsValue {
@@ -956,7 +964,7 @@
   border-color: #ff8a65;
   color: #ff8a65;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.15);
 }
 
 .pageBtn.disabled {
@@ -989,14 +997,14 @@
   border-color: #ff8a65;
   color: #ff8a65;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.15);
 }
 
 .pageNumber.active {
   background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
   color: white;
   border-color: #ff8a65;
-  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.2);
 }
 
 .pageInfo {
@@ -1365,9 +1373,64 @@
   }
 }
 
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: #cbd5e0;
+  border: 3px solid #e2e8f0;
+}
+
+.emptyStateTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+}
+
+.emptyStateText {
+  font-size: 1rem;
+  color: #718096;
+  margin: 0;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
 /* Reduce left margin on smaller screens to prevent wrapping issues */
 @media (max-width: 768px) {
   .profileTierBadge {
     margin-left: 0.5rem;
+  }
+
+  .emptyState {
+    padding: 3rem 1.5rem;
+  }
+
+  .emptyStateIcon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .emptyStateTitle {
+    font-size: 1.25rem;
+  }
+
+  .emptyStateText {
+    font-size: 0.9rem;
   }
 }
