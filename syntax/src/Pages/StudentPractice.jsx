@@ -70,9 +70,7 @@ const StudentPractice = () => {
   // Handle article ID search functionality
   const handleFindArticle = () => {
     if (articleSearch.trim()) {
-      const dataToSearch =
-        studentArticles.length > 0 ? studentArticles : mockProblems;
-      const foundArticle = dataToSearch.find(
+      const foundArticle = studentArticles.find(
         (article) =>
           article.id.toLowerCase().includes(articleSearch.toLowerCase()) ||
           article.title.toLowerCase().includes(articleSearch.toLowerCase())
@@ -124,9 +122,7 @@ const StudentPractice = () => {
 
   // When filter button is clicked, filter the articles
   const handleFilter = () => {
-    const dataToFilter =
-      studentArticles.length > 0 ? studentArticles : mockProblems;
-    const filtered = dataToFilter.filter((item) => {
+    const filtered = studentArticles.filter((item) => {
       const matchesSearch =
         item.title?.toLowerCase().includes(filterSearch.toLowerCase()) ||
         item.description?.toLowerCase().includes(filterSearch.toLowerCase());
@@ -158,11 +154,7 @@ const StudentPractice = () => {
 
   // On mount, show all
   useEffect(() => {
-    if (studentArticles.length > 0) {
-      setFilteredProblems(studentArticles);
-    } else {
-      setFilteredProblems(mockProblems);
-    }
+    setFilteredProblems(studentArticles);
   }, [studentArticles]);
 
   useEffect(() => {
@@ -326,12 +318,8 @@ const StudentPractice = () => {
 
   // Update filtered articles when studentArticles data changes
   useEffect(() => {
-    if (studentArticles.length > 0) {
-      setFilteredProblems(studentArticles);
-      setArticleCount(studentArticles.length);
-    } else {
-      setFilteredProblems(mockProblems);
-    }
+    setFilteredProblems(studentArticles);
+    setArticleCount(studentArticles.length);
   }, [studentArticles]);
 
   // Pagination calculations
@@ -499,7 +487,18 @@ const StudentPractice = () => {
 
         {/* Practice Cards Grid */}
         <div className={styles.practiceGrid}>
-          {problemsToShow.map((problem) => {
+          {problemsToShow.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateIcon}>
+                <Brain size={64} />
+              </div>
+              <h3 className={styles.emptyStateTitle}>No Practice Articles Available</h3>
+              <p className={styles.emptyStateText}>
+                There are currently no practice articles. Check back later for new learning materials!
+              </p>
+            </div>
+          ) : (
+            problemsToShow.map((problem) => {
             const isApiData = problem.articleContent || problem.articleLink; // Check if it's API article data (content or link)
 
             return (
@@ -610,7 +609,8 @@ const StudentPractice = () => {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         {/* Pagination Section */}

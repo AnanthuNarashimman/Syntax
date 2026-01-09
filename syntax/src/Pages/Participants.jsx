@@ -102,6 +102,8 @@ function Participants() {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [confirmMessage, setConfirmMessage] = useState('');
+    const [showDuplicatesModal, setShowDuplicatesModal] = useState(false);
+    const [duplicateData, setDuplicateData] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
 
     // Pagination state
@@ -316,35 +318,68 @@ function Participants() {
         }
 
         try {
+            console.log('Starting bulk import...');
+            console.log('File:', bulkImportFile.name, bulkImportFile.type, bulkImportFile.size);
+            
             setError(null); // Clear any previous errors
             const formData = new FormData();
             formData.append('file', bulkImportFile);
 
+            console.log('Sending request to /api/admin/students/bulk-import');
             const response = await fetch('/api/admin/students/bulk-import', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
             });
 
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
 
-            if (response.ok) {
+            if (response.ok && data.success) {
                 console.log('Bulk import successful:', data);
                 
-                // Show success message with details
-                let successMessage = data.message;
-                if (data.errors && data.errors.length > 0) {
-                    successMessage += `\n\nErrors:\n${data.errors.join('\n')}`;
-                }
-                
-                showSuccess(successMessage);
-                
+                // Close bulk import modal
                 setShowBulkImportModal(false);
                 setBulkImportFile(null);
                 setBulkImportPreview([]);
+                
+                // Show success message
+                const successMsg = `Successfully imported ${data.data?.importedCount || 0} student${data.data?.importedCount !== 1 ? 's' : ''}!`;
+                showSuccess(successMsg);
+                
+                // If there are critical errors, show warning with longer duration
+                if (data.data?.criticalErrors && data.data.criticalErrors.length > 0) {
+                    console.log('Critical errors:', data.data.criticalErrors);
+                    setTimeout(() => {
+                        const errorMsg = `${data.data.criticalErrors.length} row${data.data.criticalErrors.length !== 1 ? 's' : ''} had validation errors:\n${data.data.criticalErrors.slice(0, 3).join('\n')}${data.data.criticalErrors.length > 3 ? '\n... and more' : ''}`;
+                        showWarning(errorMsg, 8000); // 8 seconds for critical errors
+                    }, 2000);
+                }
+                
+                // If there are duplicates, show modal
+                if (data.hasDuplicates && data.data?.duplicates && data.data.duplicates.length > 0) {
+                    console.log('Duplicate emails found:', data.data.duplicates);
+                    setDuplicateData(data.data.duplicates);
+                    setTimeout(() => {
+                        setShowDuplicatesModal(true);
+                    }, 2500);
+                }
+                
                 refreshParticipants();
             } else {
-                throw new Error(data.message || 'Failed to import students');
+                console.error('Bulk import failed:', data);
+                // Show error with longer duration for critical failures
+                const errorMsg = data.message || 'Failed to import students';
+                showError(errorMsg, 8000); // 8 seconds for critical failures
+                
+                // If there are critical errors, show them
+                if (data.data?.criticalErrors && data.data.criticalErrors.length > 0) {
+                    setTimeout(() => {
+                        const detailedErrors = data.data.criticalErrors.slice(0, 5).join('\n');
+                        showError(`Validation errors:\n${detailedErrors}${data.data.criticalErrors.length > 5 ? '\n... and more' : ''}`, 10000); // 10 seconds for detailed errors
+                    }, 2500);
+                }
             }
         } catch (error) {
             console.error('Error importing students:', error);
@@ -1064,6 +1099,57 @@ function Participants() {
                          </div>
                      </div>
                  )}
+
+                {/* Duplicates Modal */}
+                {showDuplicatesModal && (
+                    <div className="add-student-modal">
+                        <div className="modal-content duplicate-modal">
+                            <div className="modal-header">
+                                <h2>Duplicate Emails Found</h2>
+                                <button 
+                                    className="close-btn"
+                                    onClick={() => {
+                                        setShowDuplicatesModal(false);
+                                        setDuplicateData([]);
+                                    }}
+                                >
+                                    <X />
+                                </button>
+                            </div>
+                            <div className="duplicate-modal-content">
+                                <p className="duplicate-info">
+                                    The following {duplicateData.length} email{duplicateData.length !== 1 ? 's' : ''} already exist in the system and were skipped:
+                                </p>
+                                <div className="duplicate-list">
+                                    {duplicateData.map((dup, index) => (
+                                        <div key={index} className="duplicate-item">
+                                            <div className="duplicate-icon">
+                                                <Mail size={18} />
+                                            </div>
+                                            <div className="duplicate-details">
+                                                <div className="duplicate-name">{dup.name}</div>
+                                                <div className="duplicate-email">{dup.email}</div>
+                                            </div>
+                                            <div className="duplicate-row">Row {dup.row}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="form-actions">
+                                    <button 
+                                        type="button" 
+                                        className="save-btn"
+                                        onClick={() => {
+                                            setShowDuplicatesModal(false);
+                                            setDuplicateData([]);
+                                        }}
+                                    >
+                                        Got it
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="participants-table-container">
                     <div className="participants-table-header">

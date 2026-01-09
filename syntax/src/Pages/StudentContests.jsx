@@ -92,12 +92,8 @@ const StudentContests = () => {
 
 
   useEffect(() => {
-    if (studentContests.length > 0) {
-      setFilteredContests(studentContests);
-      setContestCount(studentContests.length);
-    } else {
-      setFilteredContests(mockContestCards);
-    }
+    setFilteredContests(studentContests);
+    setContestCount(studentContests.length);
   }, [studentContests]);
 
   useEffect(() => {
@@ -106,8 +102,7 @@ const StudentContests = () => {
 
   // When filter button is clicked, filter the contests
   const handleFilter = () => {
-    const dataToFilter = studentContests.length > 0 ? studentContests : mockContestCards;
-    const filtered = dataToFilter.filter(contest => {
+    const filtered = studentContests.filter(contest => {
       const matchesSearch = contest.eventTitle?.toLowerCase().includes(filterSearch.toLowerCase()) ||
         contest.title?.toLowerCase().includes(filterSearch.toLowerCase()) ||
         contest.eventDescription?.toLowerCase().includes(filterSearch.toLowerCase()) ||
@@ -326,7 +321,18 @@ const StudentContests = () => {
 
         {/* Contest Cards Grid */}
         <div className={styles.contestsGrid}>
-          {contestCardsToShow.map(contest => {
+          {contestCardsToShow.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyStateIcon}>
+                <Trophy size={64} />
+              </div>
+              <h3 className={styles.emptyStateTitle}>No Contests Available</h3>
+              <p className={styles.emptyStateText}>
+                There are currently no active contests. Check back later for new challenges!
+              </p>
+            </div>
+          ) : (
+            contestCardsToShow.map(contest => {
             const statusInfo = getStudentContestStatus(contest.status || 'active');
             const isApiData = contest.eventTitle; // Check if it's API data
 
@@ -423,7 +429,8 @@ const StudentContests = () => {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         {/* Pagination Section */}

@@ -14,6 +14,8 @@ import {
   Shield,
   Sword,
   Star,
+  Search,
+  Code,
 } from "lucide-react";
 import StudentNavbar from "../Components/StudentNavbar";
 import Loader from "../Components/Loader";
@@ -118,6 +120,14 @@ const StudentHome = () => {
     contestsParticipated: 0,
     totalScore: 0,
   });
+
+  // Modal state for contest search
+  const [showModal, setShowModal] = useState(false);
+  const [selectedContest, setSelectedContest] = useState(null);
+  const [searchErrorMessage, setSearchErrorMessage] = useState("");
+  const [showSearchErrorModal, setShowSearchErrorModal] = useState(false);
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+
   const [studentData, setStudentData] = useState({
     userName: "User",
     department: "",
@@ -222,7 +232,67 @@ const StudentHome = () => {
 
   const handleContestJoin = () => {
     if (contestCode.trim()) {
-      console.log("Joining contest with code:", contestCode);
+      const foundContest = studentContests.find(
+        (contest) =>
+          contest.id.toLowerCase().includes(contestCode.toLowerCase()) ||
+          contest.eventTitle.toLowerCase().includes(contestCode.toLowerCase())
+      );
+
+      if (foundContest) {
+        setSelectedContest(foundContest);
+        setShowModal(true);
+      } else {
+        setSearchErrorMessage(`No contest found for code: "${contestCode}"`);
+        setShowSearchErrorModal(true);
+      }
+    }
+  };
+
+  // Modal handlers
+  const handleViewDetails = (contest) => {
+    setSelectedContest(contest);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedContest(null);
+  };
+
+  const handleCloseSearchErrorModal = () => {
+    setShowSearchErrorModal(false);
+    setSearchErrorMessage("");
+  };
+
+  const handleJoinContest = (contest) => {
+    const isApiData = !!contest.eventTitle;
+    const isCodingContest =
+      (isApiData && contest.eventType === "coding contest") ||
+      (!isApiData && contest.type === "Coding Contest");
+
+    if (isCodingContest) {
+      navigate(`/contest/${contest.id}`);
+    } else {
+      navigate("/student-contests-preview", {
+        state: { contestData: contest },
+      });
+    }
+    handleCloseModal();
+  };
+
+  // Handler for contest card join button
+  const handleContestCardJoin = (contest) => {
+    const isApiData = !!contest.eventTitle;
+    const isCodingContest =
+      (isApiData && contest.eventType === "coding contest") ||
+      (!isApiData && contest.type === "Coding Contest");
+
+    if (isCodingContest) {
+      navigate(`/contest/${contest.id}`);
+    } else {
+      navigate("/student-contests-preview", {
+        state: { contestData: contest },
+      });
     }
   };
 
@@ -403,12 +473,7 @@ const StudentHome = () => {
             </button>
             <button
               className={styles.actionCard}
-              onClick={() =>
-                showAlert(
-                  "Daily Challenge feature coming soon! Stay tuned for exciting challenges.",
-                  "info"
-                )
-              }
+              onClick={() => setShowComingSoonModal(true)}
             >
               <Zap size={24} />
               <span>Daily Challenge</span>
@@ -518,12 +583,254 @@ const StudentHome = () => {
                       </span>
                     </div>
                   </div>
-                  <button className={styles.contestJoinBtn}>Join Now</button>
+                  <button 
+                    className={styles.contestJoinBtn}
+                    onClick={() => handleContestCardJoin(contest)}
+                  >
+                    Join Now
+                  </button>
                 </div>
               );
             })}
           </div>
         </div>
+
+        {/* Contest Details Modal */}
+        {showModal && selectedContest && (
+          <div className={styles.modalOverlay} onClick={handleCloseModal}>
+            <div
+              className={styles.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
+                  {selectedContest.eventTitle || selectedContest.title}
+                </h2>
+                <button className={styles.closeBtn} onClick={handleCloseModal}>
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.modalBody}>
+                <div className={styles.modalSection}>
+                  <h3>Description</h3>
+                  <p>
+                    {selectedContest.eventDescription ||
+                      selectedContest.description ||
+                      "No description available"}
+                  </p>
+                </div>
+
+                <div className={styles.modalSection}>
+                  <h3>Contest Details</h3>
+                  <div className={styles.detailsGrid}>
+                    <div className={styles.detailItem}>
+                      <Clock size={16} />
+                      <span>
+                        Duration:{" "}
+                        {selectedContest.durationMinutes
+                          ? `${selectedContest.durationMinutes} minutes`
+                          : selectedContest.duration}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Users size={16} />
+                      <span>
+                        Departments:{" "}
+                        {selectedContest.allowedDepartments ||
+                          selectedContest.department}
+                      </span>
+                    </div>
+                    {selectedContest.eventType && (
+                      <div className={styles.detailItem}>
+                        {selectedContest.eventType === "quiz" ? (
+                          <BookOpen size={16} />
+                        ) : (
+                          <Code size={16} />
+                        )}
+                        <span>
+                          Type:{" "}
+                          {selectedContest.eventType === "quiz"
+                            ? "Quiz Competition"
+                            : "Coding Contest"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedContest.eventMode && (
+                      <div className={styles.detailItem}>
+                        <Trophy size={16} />
+                        <span>
+                          Mode:{" "}
+                          {selectedContest.eventMode === "strict"
+                            ? "Strict (Timed)"
+                            : "Practice (Flexible)"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedContest.topicsCovered && (
+                      <div className={styles.detailItem}>
+                        <Target size={16} />
+                        <span>Topics: {selectedContest.topicsCovered}</span>
+                      </div>
+                    )}
+                    {selectedContest.totalScore && (
+                      <div className={styles.detailItem}>
+                        <Award size={16} />
+                        <span>Total Points: {selectedContest.totalScore}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.modalSection}>
+                  <h3>Contest Information</h3>
+                  <div className={styles.detailsGrid}>
+                    <div className={styles.detailItem}>
+                      <Target size={16} />
+                      <span className={styles.contestId}>
+                        Contest ID: {selectedContest.id}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Calendar size={16} />
+                      <span>
+                        Created:{" "}
+                        {selectedContest.createdAt
+                          ? formatStudentDate(selectedContest.createdAt)
+                          : "Unknown"}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Users size={16} />
+                      <span>
+                        Participants:{" "}
+                        {selectedContest.participants?.length || 0}
+                      </span>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <Trophy size={16} />
+                      <span>
+                        Status:{" "}
+                        {getStudentContestStatus(
+                          selectedContest.status || "active"
+                        ).label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button
+                  className={styles.joinContestBtn}
+                  onClick={() => handleJoinContest(selectedContest)}
+                >
+                  <Trophy size={16} />
+                  Join Contest
+                </button>
+                <button className={styles.cancelBtn} onClick={handleCloseModal}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search Error Modal */}
+        {showSearchErrorModal && (
+          <div
+            className={styles.modalOverlay}
+            onClick={handleCloseSearchErrorModal}
+          >
+            <div
+              className={styles.errorModalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.errorModalHeader}>
+                <div className={styles.errorIcon}>
+                  <Search size={48} />
+                </div>
+                <h2 className={styles.errorModalTitle}>Contest Not Found</h2>
+                <button
+                  className={styles.closeBtn}
+                  onClick={handleCloseSearchErrorModal}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.errorModalBody}>
+                <p className={styles.errorMessage}>{searchErrorMessage}</p>
+                <div className={styles.errorSuggestions}>
+                  <h4>Please check:</h4>
+                  <ul>
+                    <li>The contest ID is correct</li>
+                    <li>The contest exists and is available</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className={styles.errorModalFooter}>
+                <button
+                  className={styles.tryAgainBtn}
+                  onClick={handleCloseSearchErrorModal}
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Coming Soon Modal */}
+        {showComingSoonModal && (
+          <div
+            className={styles.modalOverlay}
+            onClick={() => setShowComingSoonModal(false)}
+          >
+            <div
+              className={styles.comingSoonModalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.comingSoonModalHeader}>
+                <div className={styles.comingSoonIcon}>
+                  <Zap size={64} />
+                </div>
+                <h2 className={styles.comingSoonTitle}>Coming Soon!</h2>
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setShowComingSoonModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className={styles.comingSoonBody}>
+                <p className={styles.comingSoonMessage}>
+                  Daily Challenge feature is currently under development.
+                </p>
+                <div className={styles.comingSoonFeatures}>
+                  <h4>What to expect:</h4>
+                  <ul>
+                    <li>New coding challenges every day</li>
+                    <li>Earn bonus points and achievements</li>
+                    <li>Compete with students worldwide</li>
+                    <li>Track your daily streak</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className={styles.comingSoonFooter}>
+                <button
+                  className={styles.gotItBtn}
+                  onClick={() => setShowComingSoonModal(false)}
+                >
+                  Got It!
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

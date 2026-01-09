@@ -403,37 +403,37 @@ const StudentUser = () => {
               </p>
             </div>
             <div className={styles.headerStats}>
-              <div className={styles.statCard}>
+              <div className={styles.profstatCard}>
                 <div className={styles.statIcon}>
                   <Trophy size={24} />
                 </div>
-                <div className={styles.statInfo}>
+                <div className={styles.profstatInfo}>
                   <h3 className={styles.statNumber}>
                     {studentData.contestsParticipated}
                   </h3>
-                  <p className={styles.statLabel}>Contests Participated</p>
+                  <p className={styles.statLabel}>Contests</p>
                 </div>
               </div>
-              <div className={styles.statCard}>
+              <div className={styles.profstatCard}>
                 <div className={styles.statIcon}>
                   <Target size={24} />
                 </div>
-                <div className={styles.statInfo}>
+                <div className={styles.profstatInfo}>
                   <h3 className={styles.statNumber}>
                     {studentData.totalScore}
                   </h3>
-                  <p className={styles.statLabel}>Total Points Earned</p>
+                  <p className={styles.statLabel}>Points</p>
                 </div>
               </div>
-              <div className={styles.statCard}>
+              <div className={styles.profstatCard}>
                 <div className={styles.statIcon}>
                   <Star size={24} />
                 </div>
-                <div className={styles.statInfo}>
+                <div className={styles.profstatInfo}>
                   <h3 className={styles.statNumber}>
                     {performanceData.filter(month => month.contests > 0).length}
                   </h3>
-                  <p className={styles.statLabel}>Active Months</p>
+                  <p className={styles.statLabel}>Months</p>
                 </div>
               </div>
             </div>

@@ -243,21 +243,29 @@ const unbanStudent = async(req, res) => {
 
 const bulkStudentAdd = async(req, res) => {
     try {
+      console.log('=== BULK STUDENT IMPORT STARTED ===');
+      console.log('Request file:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
+      
       // Validate file upload
       if (!req.file) {
+        console.log('ERROR: No file uploaded');
         return res.status(400).json({
           success: false,
           message: "No file uploaded."
         });
       }
 
+      console.log('Parsing Excel file...');
       // Parse the Excel file
       const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(worksheet);
 
+      console.log(`Parsed ${data.length} rows from Excel`);
+
       if (data.length === 0) {
+        console.log('ERROR: Excel file is empty');
         return res.status(400).json({
           success: false,
           message: "Excel file is empty or has no data."
@@ -280,15 +288,19 @@ const bulkStudentAdd = async(req, res) => {
       );
 
       if (missingColumns.length > 0) {
+        console.log('ERROR: Missing columns:', missingColumns);
         return res.status(400).json({
           success: false,
           message: `Missing required columns: ${missingColumns.join(", ")}. Please ensure your Excel file has all required columns.`
         });
       }
 
+      console.log('All required columns found. Processing rows...');
+
       const usersRef = db.collection("users");
       const importedStudents = [];
-      const errors = [];
+      const criticalErrors = []; // Missing data, invalid format
+      const duplicateErrors = []; // Duplicate emails
 
       // Process each row
       for (let i = 0; i < data.length; i++) {
@@ -306,24 +318,27 @@ const bulkStudentAdd = async(req, res) => {
             !row.Semester ||
             !row.Batch
           ) {
-            errors.push(`Row ${rowNumber}: Missing required fields`);
+            criticalErrors.push(`Row ${rowNumber}: Missing required fields`);
+            console.log(`Row ${rowNumber}: Missing required fields`);
             continue;
           }
 
           // Validate email format
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(row.Email)) {
-            errors.push(`Row ${rowNumber}: Invalid email format`);
+            criticalErrors.push(`Row ${rowNumber}: Invalid email format - ${row.Email}`);
+            console.log(`Row ${rowNumber}: Invalid email format - ${row.Email}`);
             continue;
           }
 
           // Check if email already exists
           const existingUser = await usersRef
-            .where("email", "==", row.Email)
+            .where("email", "==", row.Email.trim().toLowerCase())
             .limit(1)
             .get();
           if (!existingUser.empty) {
-            errors.push(`Row ${rowNumber}: Email ${row.Email} already exists`);
+            duplicateErrors.push({ row: rowNumber, email: row.Email.trim(), name: row.Name.trim() });
+            console.log(`Row ${rowNumber}: Email ${row.Email} already exists`);
             continue;
           }
 
@@ -331,7 +346,7 @@ const bulkStudentAdd = async(req, res) => {
           const customPassword = `${row.Name.trim()}@${row.Year.toString().trim()}${row.Batch.trim()}`;
 
           // Hash the custom password
-          const hashedPassword = await hashPassword(customPassword);
+          const hashedPassword = await passwordUtils.hashPasswords(customPassword);
 
           // Create student document
           const studentData = {
@@ -355,30 +370,56 @@ const bulkStudentAdd = async(req, res) => {
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           };
 
+          console.log(`Row ${rowNumber}: Adding student ${row.Name} (${row.Email})`);
           const docRef = await usersRef.add(studentData);
+          console.log(`Row ${rowNumber}: Successfully added with ID ${docRef.id}`);
+          
           importedStudents.push({
             id: docRef.id,
             ...studentData,
           });
         } catch (error) {
-          errors.push(`Row ${rowNumber}: ${error.message}`);
+          console.error(`Row ${rowNumber}: Error - ${error.message}`);
+          criticalErrors.push(`Row ${rowNumber}: ${error.message}`);
         }
+      }
+
+      console.log(`=== BULK IMPORT COMPLETED ===`);
+      console.log(`Imported: ${importedStudents.length}/${data.length} students`);
+      console.log(`Critical Errors: ${criticalErrors.length}`);
+      console.log(`Duplicate Errors: ${duplicateErrors.length}`);
+
+      // If there are critical errors and no students imported, return error
+      if (criticalErrors.length > 0 && importedStudents.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Import failed due to data validation errors. Please fix the errors in your Excel file and try again.',
+          data: {
+            criticalErrors: criticalErrors,
+            duplicates: duplicateErrors
+          }
+        });
       }
 
       // Structure response
       const response = {
         success: true,
-        message: `Bulk import completed. ${importedStudents.length} students imported successfully.`,
+        message: `Successfully imported ${importedStudents.length} student${importedStudents.length !== 1 ? 's' : ''}.`,
         data: {
           importedCount: importedStudents.length,
           totalRows: data.length,
-          errors: errors,
+          criticalErrors: criticalErrors,
+          duplicates: duplicateErrors,
           importedStudents: importedStudents
         }
       };
 
-      if (errors.length > 0) {
-        response.message += ` ${errors.length} rows had errors.`;
+      if (criticalErrors.length > 0) {
+        response.message += ` ${criticalErrors.length} row${criticalErrors.length !== 1 ? 's' : ''} had validation errors.`;
+      }
+      
+      if (duplicateErrors.length > 0) {
+        response.hasDuplicates = true;
       }
 
       res.status(200).json(response);
