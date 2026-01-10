@@ -50,10 +50,10 @@ const validationRoutes = require('./routes/validationRoutes');
 const judgeRoutes = require('./routes/judgeRoutes');
 
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); 
 app.use('/api', profileRoutes);
 app.use('/api', eventRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes); 
 app.use('/api/student', studentRoutes);
 app.use('/api/super-admin', superRoutes);
 app.use('/api/student', validationRoutes);

@@ -2,6 +2,31 @@ const validationService = require('../services/validationService');
 const { db, admin } = require('../config/firebase');
 const cache = require('../utils/cache');
 
+// Quiz Submission Validation and Recording (Multi-Collection Update with Denormalized Data)
+// 1) Extracts quiz submission data from request body
+// 2) Gets authenticated user ID from request
+// 3) Validates that both quizId and studentAnswers are present, returns 400 error if missing
+// 4) Calls validationService.validateQuizAnswers to check answers against correct answers stored in Firebase
+// 5) Receives validation result with correctAnswerCount, pointsPerQuestion, and detailed QuizResult array
+// 6) Calculates total points earned (pointsPerQuestion × correctAnswerCount)
+// 7) Fetches user document from 'users' collection to get userName and department for denormalization
+// 8) Updates user document with cumulative stats using Firestore atomic operations:
+//    - Increments totalScores by points earned
+//    - Increments contestsParticipated count by 1
+// 9) Queries 'userSubmissions' collection to check if user has existing submission record
+// 10) If no existing record (first quiz ever):
+//     - Creates new document in userSubmissions with denormalized userName and department
+//     - Initializes totalScore, submissions array with current quizId, submissionCount as 1
+// 11) If existing record found:
+//     - Updates userName and department (in case user data changed)
+//     - Adds quizId to submissions array using arrayUnion (prevents duplicates)
+//     - Increments totalScore and submissionCount using atomic operations
+// 12) Calls validationService.submitEvent to record result in 'eventResults' collection for event-specific leaderboard
+// 13) If submission successful, invalidates leaderboard cache ('leaderboard:top20') to ensure fresh data
+// 14) Returns success response with QuizResult array, CorrectAnswerCount, and total Points earned
+// 15) If submission to eventResults fails, returns 500 error but still shows quiz validation results
+// 16) In case of exceptions during validation or database operations, returns 500 error with details
+// Note: Updates 3 collections (users, userSubmissions, eventResults) to maintain both global and event-specific stats
 const validateQuiz = async (req, res) => {
     try {
         const studentSubmission = req.body;
@@ -104,7 +129,11 @@ const validateQuiz = async (req, res) => {
     }
 }
 
-
+// Checks the status of events
+// 1) Gets the event Id and the user Id from the request
+// 2) Forwards to 'getEventStatus' service
+// 3) Returns back the status
+// 4) In case of errors or exceptions, appropriate logs are made
 const checkStatus = async (req, res) => {
     try {
         const { eventId } = req.body;
@@ -134,7 +163,7 @@ const checkStatus = async (req, res) => {
     }
 }
 
-
+// Marks event as started for the user id
 const startEvent = async (req, res) => {
     try {
         const { eventId } = req.body;
@@ -181,7 +210,7 @@ const startEvent = async (req, res) => {
     }
 }
 
-
+// Getting result
 const getResult = async (req, res) => {
     try {
         const { eventId } = req.body;
@@ -219,7 +248,7 @@ const getResult = async (req, res) => {
     }
 }
 
-// OPTIMIZED: Combined endpoint to get status and results in single request
+// Combined endpoint to get status and results in single request
 const getStatusWithResults = async (req, res) => {
     try {
         const { eventId } = req.body;

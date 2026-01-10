@@ -1,11 +1,17 @@
 const authService = require("../services/authService");
 
-
+// Admin Login Controller
+// 1) Gets email and password from the client request
+// 2) Passes the details to the 'authService' service
+// 3) If the admin account actually exists, response will be sent back. Otherwise errors will be thrown in service
+// 4) A http only cookie with details that expires in 3 hours is created
+// 5) Status (succes or error) is logged appropriately
 const adminLogin = async (req, res) => {
   const { email, password } = req.body;
   try {
     const { id, email: userEmail, userName, isAdmin, token } = await authService.loginAdminUser(email, password);
 
+    // creating cookie
     res.cookie("auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -24,6 +30,13 @@ const adminLogin = async (req, res) => {
   }
 };
 
+
+// Student Login Controller
+// 1) Gets email and password from the client request
+// 2) Passes the details to the 'authService' service
+// 3) If the student account actually exists, response will be sent back. Otherwise errors will be thrown in service
+// 4) A http only cookie with details that expires in 3 hours is created
+// 5) Status (succes or error) is logged appropriately
 const studentLogin = async (req, res) => {
   const { email, password } = req.body;
   console.log("Student login attempt for:", email);
@@ -73,6 +86,13 @@ const studentLogin = async (req, res) => {
   }
 };
 
+
+// Super Admin Login Controller
+// 1) Gets email and password from the client request
+// 2) Passes the details to the 'authService' service
+// 3) If the super admin account actually exists, response will be sent back. Otherwise errors will be thrown in service
+// 4) A http only cookie with details that expires in 1 hour is created
+// 5) Status (succes or error) is logged appropriately
 const superAdminLogin = async (req, res) => {
   const { email, password } = req.body;
   try {

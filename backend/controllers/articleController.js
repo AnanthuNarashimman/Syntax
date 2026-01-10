@@ -1,5 +1,10 @@
 const { db, admin } = require("../config/firebase");
 
+// Article Creation
+// 1) Gets required data from the request
+// 2) Creates a document with the data and user id
+// 3) Pushes it to the firebase
+// 4) In case of errors or exceptions appropriate logs will be made
 const createArticle = async (req, res) => {
     try {
         const {
@@ -50,6 +55,12 @@ const createArticle = async (req, res) => {
     }
 }
 
+// Get articles specific to admin
+// 1) Gets user id from request
+// 2) Fetches articles whose 'createdBy' matches with the user id
+// 3) Sorts articles based on upload time
+// 4) Sends it back to the client
+// 5) In case of errors or exceptions appropriate logs are made
 const getAdminArticles = async(req, res) => {
     try {
     // Get current admin's userId from the authenticated request
@@ -82,7 +93,10 @@ const getAdminArticles = async(req, res) => {
   }
 }
 
-
+// Gets articles for students
+// 1) Gets articles from firebase where the user department is in allowed departments
+// 2) Sorts it based on upload time and sends it back to the user
+// 3) In case of errors or exceptions, appropriate logs are made
 const getStudentArticles = async(req, res) => {
     try {
         const articlesSnapshot = await db.collection('articles')
@@ -96,9 +110,9 @@ const getStudentArticles = async(req, res) => {
                 id: doc.id,
                 ...doc.data()
             });
-        }); // ✅ Close the forEach loop here
+        }); 
 
-        // ✅ Sort and respond OUTSIDE the loop
+        
         articles.sort((a, b) => {
             const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt?._seconds * 1000) || new Date(0);
             const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt?._seconds * 1000) || new Date(0);

@@ -54,7 +54,8 @@ async function validateQuizAnswers(quizId, studentAnswers) {
     }
 }
 
-
+// 1) Checks the 'eventAttempts' document collection with userid and event id
+// 2) Returns status accordingly
 async function getEventStatus(eventId, userId) {
     console.log("UserId:", userId);
     console.log("EventId:", eventId);

@@ -5,8 +5,8 @@ const { comparePasswords } = require("../utils/passwordUtil");
 
 // Authentication Service Logic (JWT) for "Admins"
 // 1) Takes email and password and checks their data types.
-// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be throwed.
-// 3) Compares the password using the function "comparePasswords". If it isnt'a match, an error will be throwed.
+// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be thrown.
+// 3) Compares the password using the utility function "comparePasswords". If it isnt'a match, an error will be thrown.
 // 4) Creates "payload" with necessary datas {userId, userName, email, isAdmin} which will encrypted as token.
 // 5) Creates a token that expires in 3 hours.
 // 6) If an error occurs, appropriate messages will be shown.
@@ -90,9 +90,9 @@ async function loginAdminUser(email, password) {
 
 // Authentication Service Logic (JWT) for "Students"
 // 1) Takes email and password and checks their data types.
-// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be throwed.
-// 3) Compares the password using the function "comparePasswords". If it isnt'a match, an error will be throwed.
-// 4) Creates "payload" with necessary datas {userId, userName, email, isStudent} which will encrypted as token.
+// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be thrown.
+// 3) Compares the password using the function "comparePasswords". If it isnt'a match, an error will be thrown.
+// 4) Creates "payload" with necessary datas {userId, userName, email, isStudent} which will be encrypted as token.
 // 5) Creates a token that expires in 3 hours.
 // 6) If an error occurs, appropriate messages will be shown.
 async function loginStudentUser(email, password) {
@@ -189,8 +189,8 @@ async function loginStudentUser(email, password) {
 
 // Authentication Service Logic (JWT) for "Super Admins".
 // 1) Takes email and password and checks their data types.
-// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be throwed.
-// 3) Compares the password using the function "comparePasswords". If it isnt'a match, an error will be throwed.
+// 2) Looks for the collection "users" in firebase with matching email. If there is not a matching record, an error will be thrown.
+// 3) Compares the password using the function "comparePasswords". If it isnt'a match, an error will be thrown.
 // 4) Creates "payload" with necessary datas {userId, userName, email, isAdmin} which will encrypted as token.
 // 5) Creates a token that expires in 3 hours.
 // 6) If an error occurs, appropriate messages will be shown.

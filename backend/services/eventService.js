@@ -8,7 +8,7 @@ const { db, admin } = require("../config/firebase");
 // 4) Logs an acknowledgement message of what quiz it is going to create.
 // 5) An "eventData" dictionary is created with appropriate values.
 // 6) The "eventData" is added to the collection "events".
-// 7) The id of the created event it's entire data is passed back.
+// 7) The id of the created event and it's entire data is passed back.
 async function handleQuizCreation(req, res, data) {
   try {
     const {
@@ -330,8 +330,13 @@ async function handleCodingContestCreation(req, res, data) {
   }
 }
 
+
+// Fetches event results
+// 1) Gets the result from the collection 'eventResults' with matching event id
+// 2) Sends back the user data to the client
+// 3) In case of errors or exception, appropriate logs are made
 async function fetchResultsForEvent(eventId) {
-  // Step 1: Get all the results for the event, same as before
+  // Get all the results for the event, same as before
   const resultsQuery = db
     .collection("eventResults")
     .where("eventId", "==", eventId)
@@ -343,17 +348,17 @@ async function fetchResultsForEvent(eventId) {
     return []; // Return empty if no one has participated yet
   }
 
-  // Step 2: Create an array of promises to look up each user
+  //  Create an array of promises to look up each user
   const userPromises = resultsSnapshot.docs.map((doc) => {
     const resultData = doc.data();
     // For each result, create a promise to get the corresponding user document
     return db.collection("users").doc(resultData.userId).get();
   });
 
-  // Step 3: Execute all user lookups in parallel
+  // Execute all user lookups in parallel
   const userSnapshots = await Promise.all(userPromises);
 
-  // Step 4: Combine the result data with the user data
+  // Combine the result data with the user data
   const combinedResults = resultsSnapshot.docs.map((doc, index) => {
     const resultData = doc.data();
     const userData = userSnapshots[index].data();

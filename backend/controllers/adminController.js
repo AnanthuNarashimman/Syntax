@@ -2,6 +2,12 @@ const { db, admin } = require("../config/firebase");
 const bcrypt = require("bcrypt");
 const passwordUtils = require("../utils/passwordUtil");
 
+
+// Creates an admin account
+// 1) Gets username , mail and password from the request body
+// 2) Checks if already an admin exists with same email id
+// 3) Hashes the password and the data is stored in 'users' collection
+// 4) In case of errors or exceptions, appropriate logs are made
 const createAdmin = async (req, res) => {
     try {
         const { userName, email, password } = req.body;
@@ -40,6 +46,11 @@ const createAdmin = async (req, res) => {
     }
 }
 
+// Updating admin credentials 
+// 1) Gets the user id and the data to be updated from the request
+// 2) Checks if the admin alreadt exists
+// 3) Updates the data in firebase
+// 4) APpropriate logs will be made in case of errors or exceptions
 const updateAdmin = async (req, res) => {
     try {
         const { adminId } = req.params;
@@ -78,6 +89,13 @@ const updateAdmin = async (req, res) => {
 
 }
 
+
+// Deleting an admin
+// 1) Gets the admin id from the request
+// 2) Checks if admin exists
+// 3) Aborts if the user id is a super admin
+// 4) Deletes the account
+// 5) In case of errors or exceptions, appropriate logs are made
 const deleteAdmin = async(req, res) => {
     try {
       const { adminId } = req.params;
@@ -111,6 +129,10 @@ const deleteAdmin = async(req, res) => {
     }
 }
 
+// Fetches all admins
+// 1) Gets all users from firebase where 'isAdmin' is true
+// 2) Sends the data back to super admin
+// 3) In case of errors or exceptions, appropriate logs are made
 const getAdmins = async(req, res) => {
     try {
     const snapshot = await db

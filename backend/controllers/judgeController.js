@@ -36,10 +36,13 @@ const handleJudge0Error = (error) => {
   };
 };
 
-/**
- * @desc    Run code against custom input
- * @route   POST /api/judge/run
- */
+
+// Runs the code
+// 1) Gets the code, language id and the custom inputs from the request
+// 2) Creates a submission object with the data
+// 3) Creates a judge0 request with the object and executes it
+// 4) Returns the output to the client
+// 5) In case of errors or exceptions, appropriate logs are made
 const handleRunCode = async (req, res) => {
   const { source_code, language_id, stdin } = req.body;
 
@@ -76,10 +79,35 @@ const handleRunCode = async (req, res) => {
   }
 };
 
-/**
- * @desc    Submit code for grading against all test cases
- * @route   POST /api/judge/submit
- */
+
+// Submit Code for Contest Evaluation (Tests Against All Test Cases Using Judge0 API)
+// 1) Extracts submission details from request: source_code, language_id, problem_id, and optional question_number (defaults to '1')
+// 2) Validates that all required fields (source_code, language_id, problem_id) are present
+// 3) Fetches the problem document from 'contestProblems' collection in Firebase using problem_id
+// 4) Validates that the problem exists, returns 404 error if not found
+// 5) Extracts question data for the specific question_number from the problem document
+// 6) Validates that question data exists, returns 404 if question not found in contest
+// 7) Combines visible and hidden test cases into a single array for comprehensive testing
+// 8) Validates that at least one test case exists, returns 400 error if no test cases found
+// 9) Prepares batch submission payload for Judge0 API:
+//    - Maps each test case to a submission object with source_code, language_id, stdin (input), and expected_output
+//    - Creates array of submission objects for batch processing
+// 10) Sends batch request to Judge0 API using createJudge0Request helper with batch mode enabled
+// 11) Receives execution results for all test cases from Judge0 API
+// 12) Processes results sequentially to find first failure:
+//     - Checks each result's status.id (status 3 = "Accepted")
+//     - If any test case fails (status.id !== 3), immediately returns failure verdict with:
+//       * Test case name (Visible/Hidden Test Case number)
+//       * Status description (Wrong Answer, Time Limit Exceeded, etc.)
+//       * Execution time and memory usage
+//     - Short-circuits on first failure (doesn't check remaining test cases)
+// 13) If all test cases pass (status.id === 3 for all), returns success verdict with:
+//     - verdict: "Accepted"
+//     - Total test cases passed count
+//     - Congratulatory message
+// 14) In case of Judge0 API errors, network errors, or exceptions, uses handleJudge0Error helper to format and return error response
+// Note: This function does NOT save results to database - it only evaluates code and returns verdict
+// The frontend must call submitContest (studentController) separately to record the submission
 const handleSubmitCode = async (req, res) => {
   const { source_code, language_id, problem_id, question_number = '1' } = req.body;
 

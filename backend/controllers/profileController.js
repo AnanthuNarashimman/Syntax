@@ -5,9 +5,12 @@ const passwordUtil = require('../utils/passwordUtil');
 const cache = require('../utils/cache');
 
 
-// Controllers for Profiles
+// Controllers for Profile related operations
 
-// Profile Fetching
+// Admin profile fetching
+// 1) Retrieves token from cookies.
+// 2) Decodes the token and sends back username and mail back to the client.
+// 3) In case of missing token or any other errors, corresponding logs and errors will be thrown.
 const adminProfile = async (req, res) => {
     const token = req.cookies.auth_token;
 
@@ -42,7 +45,11 @@ const adminProfile = async (req, res) => {
     }
 }
 
-
+// Student Profile fetching
+// 1) Returns an error if user id is not in request body
+// 2) Collection "users" is searched if there is a document with matching userID
+// 3) If no document exists, corresponsing response will be sent back
+// 4) If exists, details are fetched and profile details is sent back to client
 const studentProfile = async (req, res) => {
     try {
         if (!req.user.userId) {
@@ -88,6 +95,11 @@ const studentProfile = async (req, res) => {
     }
 }
 
+
+// Super Admin Profile fetching
+// 1) Retrieves decoded token details from the request body
+// 2) Responds to the client with the retrieved details
+// 3) In case of errors or exceptions, appropriate message will be logged
 const superProfile = async (req, res) => {
     try {
         const { userName, email, isSuper } = req.user;
@@ -105,7 +117,13 @@ const superProfile = async (req, res) => {
 }
 
 
-// Admin Profile Updation
+// Admin Profile Verification
+// 1) Gets old password from request body
+// 2) Gets the token from cookies and decodes it in order to get the user id
+// 3) User id is used to get the hashed password of that user from firebase
+// 4) The current password is hashed and checked with the existing password in database
+// 5) If it matches, then 'passwordMatch' is set as true and sent back to the client, else false
+// 6) In case of errors or exceptions according logs will be displayed
 const adminPasswordVerify = async (req, res) => {
     try {
         const { currentPassword } = req.body;
@@ -185,8 +203,13 @@ const adminPasswordVerify = async (req, res) => {
     }
 }
 
-
-const adminPasswordUpdate = async (req, res) => {
+// Admin Password Updation (Happens after password verification process)
+// 1) Gets the new password from the request body
+// 2) Gets the token from cookies and decodes it to get the user id
+// 3) The user id is used to get the document reference of the current user from firebase
+// 4) The new password is hashed and updated as password in firebase
+// 5) In case of errors or exceptions, appropriate errors or logs will be shown
+const AdminPasswordUpdate = async (req, res) => {
     try {
         const { newPassword } = req.body;
 
@@ -240,7 +263,12 @@ const adminPasswordUpdate = async (req, res) => {
     }
 }
 
-// Student Profile Updation
+// Student Usernme Updation
+// 1) Gets the current user name from the request body
+// 2) Basic user name validation is done
+// 3) The 'users' collection of firebase is searched with the user name to make sure there is no duplicate user names
+// 4) Updates user name accordingly
+// 5) In case of errors the logs will be shown accordingly
 const studentNameUpdate = async (req, res) => {
     try {
         const { newUsername } = req.body;
@@ -287,6 +315,10 @@ const studentNameUpdate = async (req, res) => {
     }
 }
 
+// Student skill updation
+// 1) Gets the languages and skills from the user body
+// 2) Gets the user id from request and updates the skills accordingly
+// 3) In case of errors or exceptions, logs will be printed accordingly
 const studentSkillsUpdate = async (req, res) => {
     try {
         const { languages, skills } = req.body;
@@ -314,6 +346,12 @@ const studentSkillsUpdate = async (req, res) => {
     }
 }
 
+// Student side password updation(Verfication & validation)
+// 1) Gets the current password and new password from the request body
+// 2) Gets user id from request and finds the appropriate student account document from firebase
+// 3) Validate the entered password against the old password
+// 4) If the entered old password is correct, new password is updated and stored as new password
+// 5) In case of errors or exceptions, log will be printed accordingly
 const studentProfileUpdate = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -357,7 +395,7 @@ const studentProfileUpdate = async (req, res) => {
         }
 
         // Hash new password
-        const hashedNewPassword = await hashPassword(newPassword);
+        const hashedNewPassword = await passwordUtil.hashPasswords(newPassword);
 
         // Update password
         await userRef.update({
@@ -410,9 +448,15 @@ const superPasswordChange = async (req, res) => {
     }
 }
 
+// Get student specific submission details
+// 1) Gets the user id from the request
+// 2) Then the corresponding document containing the user submission details is fetched from the firebase collection 'userSubmissions'
+// 3) Submission counts and details are retrieved from the document
+// 4) The submission count and the total points is returned to the client
+// 5) In case of errors and exceptions, appropriate logs will be printed
 const getSubmissionDetails = async (req, res) => {
     try {
-        const userId = req.user.userId; // Fixed: removed destructuring
+        const userId = req.user.userId; 
 
         if (userId) {
             console.log("UserId:", userId);
@@ -455,7 +499,11 @@ const getSubmissionDetails = async (req, res) => {
     }
 }
 
-
+// Get student progress data
+// 1) Gets the user ID from the request
+// 2) Gets month wise submission data
+// 3) Returns to the client
+// 4) In case of errors or exceptions, appropriate logs are printed
 const getStudentProgressData = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -534,6 +582,20 @@ const getStudentProgressData = async (req, res) => {
     }
 }
 
+
+// Leader board Fetching (Optimized with Caching and Batch Queries)
+// 1) Gets the user id from the authenticated request
+// 2) Checks if leaderboard data is available in cache (30-second TTL) to reduce Firebase reads
+// 3) If cached, returns the cached leaderboard data immediately
+// 4) If not cached, fetches top 20 users from 'userSubmissions' collection ordered by totalScore (descending)
+// 5) Identifies entries missing userName/department and collects their userIds for batch lookup
+// 6) Performs batch queries (max 10 userIds per query using 'in' operator) to fetch missing user data from 'users' collection
+// 7) Merges user data (userName, department) with submission data to build complete leaderboard
+// 8) Stores the compiled leaderboard in cache for 30 seconds to optimize subsequent requests
+// 9) Checks if the current user is in the top 20; if yes, uses their data from leaderboard
+// 10) If current user is not in top 20, fetches their submission data and calculates position by counting users with higher scores
+// 11) Returns leaderboard array (top 20) and userPosition object (current user's rank and stats)
+// 12) In case of errors or exceptions, appropriate logs are printed and error response is sent
 const getLeaderboard = async (req, res) => {
     try {
         const userId = req.user.userId; // Get userId from authenticated middleware
@@ -705,7 +767,7 @@ module.exports = {
     studentProfileUpdate,
     studentSkillsUpdate,
     adminPasswordVerify,
-    adminPasswordUpdate,
+    AdminPasswordUpdate,
     getSubmissionDetails,
     getStudentProgressData,
     getLeaderboard

@@ -1,6 +1,10 @@
 const eventService = require("../services/eventService");
 const { db, admin } = require("../config/firebase");
 
+// Create contest (Quizzes (or) Coding contests)
+// 1) Gets required data from request
+// 2) Based on the type of contest (Quiz (or) Contest), corresponding services will be called
+// 3) In case of errors or exceptions, appropriate logs will be printed
 const createContest = async (req, res) => {
   try {
     const {
@@ -103,6 +107,13 @@ const createContest = async (req, res) => {
   }
 };
 
+
+// Upddating contests before starting
+// 1) Gets the eventID and the data to be updated from the request
+// 2) Delete the createdBy, createdAt and id from the data to be updated as these always needs to be same
+// 3) Checks if the event exists and is created by the requested user
+// 4) Updates the data in firebase
+// 5) In case of errors or exceptions appropriate logs are made
 const updateContest = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -148,9 +159,24 @@ const updateContest = async (req, res) => {
   }
 };
 
-// Event fetching
-
-// Admin Specific
+// Fetch Events for Admin Dashboard (Optimized with Parallel Participant Counting)
+// 1) Gets the authenticated admin's user ID from the request (set by auth middleware)
+// 2) Queries 'events' collection to fetch all events where 'createdBy' matches the admin's userId
+// 3) Extracts event IDs from the fetched events to prepare for participant count queries
+// 4) For each event, creates a parallel query to fetch participant counts from 'eventAttempts' collection:
+//    - Queries eventAttempts where eventId matches
+//    - Uses JavaScript Set to count UNIQUE participants (handles multiple submissions from same user)
+//    - Returns object with eventId and participantCount
+//    - Handles errors gracefully by returning 0 count if query fails
+// 5) Uses Promise.all to execute all participant count queries in parallel (optimization for speed)
+// 6) Creates a participantCountMap for O(1) lookup when merging data
+// 7) Merges participant counts with event data by mapping through events and adding 'participants' field
+// 8) Sorts events by 'createdAt' timestamp in descending order (newest events first)
+//    - Handles multiple Firebase timestamp formats (toDate(), _seconds)
+//    - Falls back to epoch (new Date(0)) if timestamp is missing
+// 9) Returns success response with events array containing participant counts
+// 10) In case of errors or exceptions, appropriate logs are printed and error response is sent
+// Note: Parallel processing significantly improves performance when admin has many events
 const fetchAdminEvents = async (req, res) => {
   try {
     const eventsSnapshot = await db
@@ -239,7 +265,11 @@ const fetchAdminEvents = async (req, res) => {
   }
 };
 
-// All events from all department
+// Fetches all eligible events for a student
+// 1) Collects events from firebase where the allowedDepartments matches the user department and has a status 'active'
+// 2) Removes the correst answer from the results and sorts it based in upload time
+// 3) Sends it back to the student
+// 4) In case of errors or exceptions, appropriate logs are made
 const fetchEvents = async (req, res) => {
   try {
     const eventsSnapShot = await db
@@ -296,7 +326,12 @@ const fetchEvents = async (req, res) => {
   }
 };
 
-// OPTIMIZED: Fetch a single event by ID for students (avoids fetching all events)
+
+// Fetch a single event with event ID
+// 1) Gets event id from request
+// 2) Find corresponsing event from firebase
+// 3) Checks department restrictions and sends it back to the user
+// 4) In case of errors or exceptions, appropriate logs are made
 const fetchStudentEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -354,7 +389,12 @@ const fetchStudentEvent = async (req, res) => {
   }
 };
 
-// Specific events for admin view
+// Specific events for admin 
+// 1) Gets the user id from the request
+// 2) Fetches events from 'events' collection with matching eventId
+// 3) Checks if the user created it, if not neglects it
+// 4) Returns back to the client
+// 5) In case of errors or exceptions, appropriate logs are made
 const fetchEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -391,7 +431,10 @@ const fetchEvent = async (req, res) => {
   }
 };
 
-// Super Admin Fetching events
+// Fethces all events (For super admins)
+// 1) Fetches all datas from 'events' collection in descending order
+// 2) Sends it back to the user
+// 3) In case of errors or exceptions, appropriate logs are made
 const fetchSuperEvent = async (req, res) => {
   try {
     const snapshot = await db
@@ -425,6 +468,11 @@ const fetchSuperEvent = async (req, res) => {
   }
 };
 
+// Deletes an event (By super admin)
+// 1) Gets the contest id from the request
+// 2) Checks if the event exists
+// 3) Deletes the event
+// 4) In case of errors or exceptions appropriate logs are made
 const deleteSuperEvent = async (req, res) => {
   try {
     const { contestId } = req.params;
@@ -447,22 +495,28 @@ const deleteSuperEvent = async (req, res) => {
   }
 };
 
+// Get Event Results
+// 1) Gets the event id from the request 
+// 2) Calls 'fetchResultsForEvent' service
+// 3) Handle response from service
+// 4) Sends back response to the client
+// 5) In case of errors or exceptions appropriate logs are made
 const getEventResults = async (req, res) => {
   try {
-    // 1. Get the eventId from the URL parameters
+    // Get the eventId from the URL parameters
     const { eventId } = req.params;
 
-    // 2. Call the service function to get the data from Firestore
+    // Call the service function to get the data from Firestore
     const results = await eventService.fetchResultsForEvent(eventId);
 
-    // 3. Handle case where no results are found
+    // Handle case where no results are found
     if (!results || results.length === 0) {
       return res
         .status(404)
         .json({ message: "No results found for this event." });
     }
 
-    // 4. Send the results back as a JSON response
+    // Send the results back as a JSON response
     res.status(200).json(results);
   } catch (error) {
     console.error("Error fetching event results:", error);
