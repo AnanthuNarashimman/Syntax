@@ -42,5 +42,10 @@ router.get(
   middleware.requireAdminAuth,
   articleController.getAdminArticles
 );
+router.delete(
+  "/articles/:id",
+  middleware.requireAdminAuth,
+  articleController.deleteArticle
+);
 
 module.exports = router;

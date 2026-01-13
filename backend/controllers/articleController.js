@@ -133,8 +133,63 @@ const getStudentArticles = async(req, res) => {
     }
 }
 
+// Delete article
+// 1) Gets article ID from request parameters
+// 2) Verifies the article exists and was created by the current user (admin)
+// 3) Deletes the article from Firebase
+// 4) In case of errors or exceptions, appropriate logs are made
+const deleteArticle = async (req, res) => {
+    try {
+        const articleId = req.params.id;
+        const userId = req.user.userId;
+
+        console.log('Delete request received for article ID:', articleId);
+        console.log('Requesting user ID:', userId);
+
+        if (!articleId) {
+            return res.status(400).json({ message: "Article ID is required." });
+        }
+
+        // Check if article exists
+        const articleRef = db.collection("articles").doc(articleId);
+        const articleDoc = await articleRef.get();
+
+        if (!articleDoc.exists) {
+            console.log('Article not found:', articleId);
+            return res.status(404).json({ message: "Article not found." });
+        }
+
+        const articleData = articleDoc.data();
+        console.log('Article found, uploader:', articleData.uploader);
+
+        // Verify the current user is the uploader
+        if (articleData.uploader !== userId) {
+            console.log('Unauthorized delete attempt by user:', userId);
+            return res.status(403).json({ 
+                message: "You are not authorized to delete this article." 
+            });
+        }
+
+        // Delete the article
+        await articleRef.delete();
+        console.log('Article deleted successfully:', articleId);
+
+        res.status(200).json({ 
+            message: "Article deleted successfully!",
+            articleId: articleId
+        });
+    } catch (error) {
+        console.error("Error deleting article:", error);
+        res.status(500).json({ 
+            message: "Failed to delete article.", 
+            error: error.message 
+        });
+    }
+}
+
 module.exports = {
     createArticle,
     getAdminArticles,
-    getStudentArticles
+    getStudentArticles,
+    deleteArticle
 }

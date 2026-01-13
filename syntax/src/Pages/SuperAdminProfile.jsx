@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Save, X } from 'lucide-react';
+import { Shield, Save, X, Eye, EyeOff } from 'lucide-react';
 import SuperAdminNavbar from '../Components/SuperAdminNavbar';
 import '../Styles/PageStyles/SuperAdminProfile.css';
 import { useAlert } from '../contexts/AlertContext';
@@ -18,6 +18,11 @@ function SuperAdminProfile() {
   });
   const [actionLoading, setActionLoading] = useState(false);
   const [alert, setAlert] = useState(null);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
 
   useEffect(() => {
     fetchProfile();
@@ -56,6 +61,13 @@ function SuperAdminProfile() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
     }));
   };
 
@@ -99,6 +111,11 @@ function SuperAdminProfile() {
         newPassword: '',
         confirmPassword: ''
       }));
+      setShowPasswords({
+        current: false,
+        new: false,
+        confirm: false
+      });
       fetchProfile(); // Refresh profile data
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -116,6 +133,11 @@ function SuperAdminProfile() {
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
+    });
+    setShowPasswords({
+      current: false,
+      new: false,
+      confirm: false
     });
     setAlert(null);
   };
@@ -202,33 +224,99 @@ function SuperAdminProfile() {
                   <div className="PasswordFields">
                     <div className="FormGroup">
                       <label>Current Password</label>
-                      <input
-                        type="password"
-                        name="currentPassword"
-                        value={formData.currentPassword}
-                        onChange={handleInputChange}
-                        placeholder="Enter current password"
-                      />
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showPasswords.current ? "text" : "password"}
+                          name="currentPassword"
+                          value={formData.currentPassword}
+                          onChange={handleInputChange}
+                          placeholder="Enter current password"
+                          style={{ paddingRight: '45px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('current')}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '5px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#666'
+                          }}
+                        >
+                          {showPasswords.current ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
                     </div>
                     <div className="FormGroup">
                       <label>New Password</label>
-                      <input
-                        type="password"
-                        name="newPassword"
-                        value={formData.newPassword}
-                        onChange={handleInputChange}
-                        placeholder="Enter new password"
-                      />
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showPasswords.new ? "text" : "password"}
+                          name="newPassword"
+                          value={formData.newPassword}
+                          onChange={handleInputChange}
+                          placeholder="Enter new password"
+                          style={{ paddingRight: '45px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('new')}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '5px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#666'
+                          }}
+                        >
+                          {showPasswords.new ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
                     </div>
                     <div className="FormGroup">
                       <label>Confirm New Password</label>
-                      <input
-                        type="password"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        placeholder="Confirm new password"
-                      />
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showPasswords.confirm ? "text" : "password"}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          placeholder="Confirm new password"
+                          style={{ paddingRight: '45px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility('confirm')}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '5px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#666'
+                          }}
+                        >
+                          {showPasswords.confirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

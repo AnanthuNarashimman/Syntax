@@ -12,7 +12,6 @@ const createContest = async (req, res) => {
       contestDescription,
       duration,
       numberOfQuestions,
-      pointsPerProgram,
       questions,
       selectedLanguage,
       contestType,
@@ -26,7 +25,6 @@ const createContest = async (req, res) => {
       !contestDescription ||
       !duration ||
       !numberOfQuestions ||
-      !pointsPerProgram ||
       !contestType ||
       !contestMode ||
       !topicsCovered ||
@@ -34,7 +32,7 @@ const createContest = async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          "Missing required contest setup fields: title, description, duration, number of questions, points per program, contest type, contest mode, topics covered, or allowed departments.",
+          "Missing required contest setup fields: title, description, duration, number of questions, contest type, contest mode, topics covered, or allowed departments.",
       });
     }
 
@@ -52,6 +50,14 @@ const createContest = async (req, res) => {
         .json({ message: "Number of questions must be a positive integer." });
     }
 
+    // Auto-calculate points based on contest type
+    let pointsPerProgram;
+    if (contestType === "quiz") {
+      pointsPerProgram = 1; // Always 1 point per quiz question
+    } else if (contestType === "contest") {
+      pointsPerProgram = 100 / parsedNumberOfQuestions; // Distribute 100 points across all problems
+    }
+
     console.log("Received contest data:", {
       contestTitle,
       contestDescription,
@@ -60,6 +66,7 @@ const createContest = async (req, res) => {
       topicsCovered,
       allowedDepartments,
       numberOfQuestions: parsedNumberOfQuestions,
+      pointsPerProgram, // Auto-calculated
       selectedLanguage,
     });
 
@@ -370,6 +377,25 @@ const fetchStudentEvent = async (req, res) => {
       eventData.questions = eventData.questions.map((question) => {
         const { correctAnswer, ...questionWithoutAnswer } = question;
         return questionWithoutAnswer;
+      });
+    }
+
+    // Remove hidden test cases from coding contest problems (security measure)
+    // Students should not see hidden test case inputs/outputs
+    // Server will validate submissions using backend Judge0 API
+    if (eventData.problems && Array.isArray(eventData.problems)) {
+      eventData.problems = eventData.problems.map((problem) => {
+        const {
+          hiddenTestCases,
+          testCases, // Old format field
+          ...safeProblem
+        } = problem;
+
+        return {
+          ...safeProblem,
+          // Only include count of hidden tests, not the actual test cases
+          hiddenTestCount: hiddenTestCases?.length || testCases?.length || 0
+        };
       });
     }
 

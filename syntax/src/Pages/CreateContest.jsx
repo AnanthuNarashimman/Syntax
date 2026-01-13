@@ -28,9 +28,8 @@ function CreateContest() {
     title: '',
     description: '',
     topicsCovered: '',
-    duration: '', // Added
-    pointsPerProgram: '', // Added
-    allowedDepartments: '' // Added department field
+    duration: '',
+    allowedDepartments: ''
   });
 
   const [activeTab, setActiveTabState] = useState('create');
@@ -172,7 +171,7 @@ function CreateContest() {
       return;
     }
 
-    if (!formData.duration.trim() || !formData.pointsPerProgram.trim()) {
+    if (!formData.duration.trim()) {
       showError('Please fill in all required fields');
       return;
     }
@@ -341,32 +340,19 @@ function CreateContest() {
           ></textarea>
         </div>
 
-        {/* New fields for duration and pointsPerProgram */}
+        {/* Duration field for quizzes and contests */}
         {selectedType !== 'article' && (
-          <>
-            <div className="form-group">
-              <p htmlFor="duration">Duration (minutes)</p>
-              <input
-                type="number"
-                id="duration"
-                placeholder="Enter duration in minutes"
-                value={formData.duration}
-                onChange={(e) => handleInputChange('duration', e.target.value)}
-                min="1"
-              />
-            </div>
-            <div className="form-group">
-              <p htmlFor="pointsPerProgram">Points per Problem</p>
-              <input
-                type="number"
-                id="pointsPerProgram"
-                placeholder="Enter points per problem"
-                value={formData.pointsPerProgram}
-                onChange={(e) => handleInputChange('pointsPerProgram', e.target.value)}
-                min="1"
-              />
-            </div>
-          </>
+          <div className="form-group">
+            <p htmlFor="duration">Duration (minutes)</p>
+            <input
+              type="number"
+              id="duration"
+              placeholder="Enter duration in minutes"
+              value={formData.duration}
+              onChange={(e) => handleInputChange('duration', e.target.value)}
+              min="1"
+            />
+          </div>
         )}
 
         {selectedType === 'article' && (

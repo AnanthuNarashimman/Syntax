@@ -162,39 +162,54 @@ async function handleCodingContestCreation(req, res, data) {
     for (let i = 1; i <= numberOfQuestions; i++) {
       const questionData = questions[i];
 
-      // Support both old format (example/testCases) and new format (visibleTestCases/hiddenTestCases)
-      const visibleTestCases = questionData.visibleTestCases || (questionData.example ? [questionData.example] : []);
+      // Support both old and new field names for backward compatibility
+      // New format: exampleIO (always visible), openTestCases (run to see pass/fail), hiddenTestCases (hidden)
+      // Old format: examples/visibleTestCases, hiddenTestCases
+      const exampleIO = questionData.exampleIO || [];
+      const openTestCases = questionData.openTestCases || questionData.visibleTestCases || (questionData.example ? [questionData.example] : []);
       const hiddenTestCases = questionData.hiddenTestCases || questionData.testCases || [];
+
+      // Problem description: support both 'description' (new) and 'problem' (old)
+      const problemDescription = questionData.description || questionData.problem;
 
       if (
         !questionData ||
-        !questionData.problem ||
-        !Array.isArray(visibleTestCases) ||
-        visibleTestCases.length === 0 ||
+        !problemDescription ||
+        (!Array.isArray(openTestCases) || openTestCases.length === 0) &&
+        (!Array.isArray(exampleIO) || exampleIO.length === 0) ||
         !Array.isArray(hiddenTestCases) ||
         hiddenTestCases.length === 0
       ) {
         return res.status(400).json({
-          message: `Problem ${i} is incomplete. Missing problem statement, visible test cases, or hidden test cases.`,
+          message: `Problem ${i} is incomplete. Missing problem statement, test cases (examples/open), or hidden test cases.`,
         });
       }
 
-      // Validate visible test cases
-      for (let j = 0; j < visibleTestCases.length; j++) {
-        const vtc = visibleTestCases[j];
-        if (!vtc.input || !vtc.output) {
+      // Validate example test cases (exampleIO)
+      for (let j = 0; j < exampleIO.length; j++) {
+        const example = exampleIO[j];
+        if (!example.input || !example.output) {
           return res.status(400).json({
-            message: `Problem ${i}, Visible Test Case ${j + 1} is incomplete (missing input or output).`,
+            message: `Problem ${i}, Example ${j + 1} is incomplete (missing input or output).`,
           });
         }
       }
 
-      // Validate input/output formats
-      if (
-        !questionData.problemDetails ||
-        !questionData.problemDetails.inputFormat ||
-        !questionData.problemDetails.outputFormat
-      ) {
+      // Validate open test cases
+      for (let j = 0; j < openTestCases.length; j++) {
+        const otc = openTestCases[j];
+        if (!otc.input || !otc.output) {
+          return res.status(400).json({
+            message: `Problem ${i}, Open Test Case ${j + 1} is incomplete (missing input or output).`,
+          });
+        }
+      }
+
+      // Validate input/output formats - support both new (root level) and old (problemDetails) formats
+      const inputFormat = questionData.inputFormat || questionData.problemDetails?.inputFormat;
+      const outputFormat = questionData.outputFormat || questionData.problemDetails?.outputFormat;
+
+      if (!inputFormat || !outputFormat) {
         return res.status(400).json({
           message: `Problem ${i} is missing input or output format specifications.`,
         });
@@ -230,33 +245,64 @@ async function handleCodingContestCreation(req, res, data) {
           .replace(/\s/g, "_")
           .toLowerCase()}_${i}_${Date.now()}`,
 
-        title: `Problem ${String.fromCharCode(64 + i)}: ${questionData.problem
-          .split("\n")[0]
-          .substring(0, 50)}...`,
-        description: questionData.problem,
+        // New enhanced structure
+        title: questionData.title || `Problem ${String.fromCharCode(64 + i)}: ${problemDescription.split("\n")[0].substring(0, 50)}...`,
+        description: problemDescription,
         difficulty: "Undefined",
         topicsCovered: topicsCovered,
         estimatedTimeMinutes: 20,
         languagesSupported:
           selectedLanguage === "both" ? ["python", "java"] : [selectedLanguage],
 
+        // Input/Output formats at root level (new structure)
+        inputFormat: inputFormat,
+        outputFormat: outputFormat,
+
+        // Constraints as string (new structure)
+        constraints: questionData.constraints || "",
+
+        // Keep problemDetails for backward compatibility
         problemDetails: {
-          inputFormat: questionData.problemDetails.inputFormat,
-          outputFormat: questionData.problemDetails.outputFormat,
-          constraints: [],
-          hint: "",
+          inputFormat: inputFormat,
+          outputFormat: outputFormat,
+          constraints: questionData.constraints ? [questionData.constraints] : [],
+          hint: questionData.hint || "",
         },
+
         starterCode: {
           python: questionData.starterCode.python,
           java: questionData.starterCode.java,
-          javascript: "",
+          javascript: questionData.starterCode.javascript || "",
           cpp: "",
         },
 
-        examples: visibleTestCases.map((vtc, idx) => ({
+        // New three-tier test case structure
+        exampleIO: exampleIO.map((example, idx) => ({
+          input: example.input,
+          output: example.output,
+          explanation: example.explanation || "",
+        })),
+
+        openTestCases: openTestCases.map((otc, idx) => ({
+          testCaseId: `otc_${i}_${idx}`,
+          input: otc.input,
+          output: otc.output,
+        })),
+
+        hiddenTestCases: hiddenTestCases.map((htc, idx) => ({
+          testCaseId: `tc_${i}_${idx}`,
+          input: htc.input,
+          expectedOutput: htc.output,
+          output: htc.output, // Add both for compatibility
+          isHidden: true,
+          description: `Test Case ${idx + 1} for Problem ${String.fromCharCode(64 + i)}`,
+        })),
+
+        // Keep old field names for backward compatibility
+        examples: [...exampleIO, ...openTestCases].map((vtc, idx) => ({
           input: vtc.input,
           output: vtc.output,
-          explanation: "",
+          explanation: vtc.explanation || "",
         })),
 
         testCases: hiddenTestCases.map((htc, idx) => ({
@@ -264,9 +310,7 @@ async function handleCodingContestCreation(req, res, data) {
           input: htc.input,
           expectedOutput: htc.output,
           isHidden: true,
-          description: `Test Case ${idx + 1} for Problem ${String.fromCharCode(
-            64 + i
-          )}`,
+          description: `Test Case ${idx + 1} for Problem ${String.fromCharCode(64 + i)}`,
         })),
 
         timeLimitMs: 1000,
@@ -274,8 +318,12 @@ async function handleCodingContestCreation(req, res, data) {
       };
 
       console.log(`Problem ${i} created:`, {
-        inputFormat: problemObject.problemDetails.inputFormat,
-        outputFormat: problemObject.problemDetails.outputFormat,
+        title: problemObject.title,
+        inputFormat: problemObject.inputFormat,
+        outputFormat: problemObject.outputFormat,
+        exampleCount: problemObject.exampleIO.length,
+        openTestCount: problemObject.openTestCases.length,
+        hiddenTestCount: problemObject.hiddenTestCases.length,
         pythonStarterCode:
           problemObject.starterCode.python.substring(0, 50) + "...",
         javaStarterCode:

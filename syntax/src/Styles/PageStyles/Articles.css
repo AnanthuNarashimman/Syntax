@@ -677,3 +677,221 @@
     transform: none !important;
     box-shadow: none !important;
   }
+/* Admin Action Buttons */
+.Article_CardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.Article_CardActions {
+  flex: 1;
+}
+
+.Article_CardAdminActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.Article_BtnEdit,
+.Article_BtnDelete {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.Article_BtnEdit {
+  background-color: #3182ce;
+  color: white;
+}
+
+.Article_BtnEdit:hover {
+  background-color: #2c5aa0;
+  transform: translateY(-1px);
+}
+
+.Article_BtnDelete {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.Article_BtnDelete:hover {
+  background-color: #c53030;
+  transform: translateY(-1px);
+}
+
+.Article_BtnEdit:disabled,
+.Article_BtnDelete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Edit Modal Specific Styles */
+.Article_EditModal {
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.Article_FormContainer {
+  padding: 1rem 0;
+}
+
+.Article_FormGroup {
+  margin-bottom: 1.5rem;
+}
+
+.Article_FormGroup label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.Article_FormGroup input,
+.Article_FormGroup textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.Article_FormGroup input:focus,
+.Article_FormGroup textarea:focus {
+  outline: none;
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.Article_FormGroup input:disabled,
+.Article_FormGroup textarea:disabled {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.Article_FormGroup textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.Article_FormNote {
+  color: #718096;
+  font-size: 0.875rem;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+/* Delete Modal Specific Styles */
+.Article_DeleteModal {
+  max-width: 500px;
+}
+
+.Article_DeleteContent {
+  padding: 1rem 0 1.5rem 0;
+}
+
+.Article_DeleteContent p {
+  margin-bottom: 1rem;
+  color: #2d3748;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.Article_WarningText {
+  color: #e53e3e;
+  font-weight: 500;
+  padding: 0.75rem;
+  background-color: #fff5f5;
+  border-left: 4px solid #e53e3e;
+  border-radius: 4px;
+}
+
+/* Modal Actions */
+.Article_ModalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.Article_BtnSecondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e0;
+  background-color: white;
+  color: #2d3748;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.Article_BtnSecondary:hover {
+  background-color: #f7fafc;
+  border-color: #a0aec0;
+}
+
+.Article_BtnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.Article_BtnDanger {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #e53e3e;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.Article_BtnDanger:hover {
+  background-color: #c53030;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.Article_BtnDanger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments for admin actions */
+@media (max-width: 768px) {
+  .Article_CardFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .Article_CardActions {
+    width: 100%;
+  }
+
+  .Article_CardAdminActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .Article_BtnEdit,
+  .Article_BtnDelete {
+    flex: 1;
+  }
+}

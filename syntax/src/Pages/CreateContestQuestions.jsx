@@ -63,19 +63,28 @@ function CreateContestQuestions() {
       return;
     }
     
-    // Initialize questions object
+    // Initialize questions object with enhanced structure
     const initialQuestions = {};
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
       initialQuestions[i] = {
-        problem: '',
-        // --- MODIFIED DATA STRUCTURE ---
-        visibleTestCases: [{ input: '', output: '' }], // Replaced 'example'
-        hiddenTestCases: [{ input: '', output: '' }],  // Replaced 'testCases'
-        // --------------------------------
-        problemDetails: {
-          inputFormat: '',
-          outputFormat: ''
-        },
+        title: '',                    // NEW: Problem title
+        description: '',              // RENAMED from 'problem'
+        inputFormat: '',              // MOVED from problemDetails
+        outputFormat: '',             // MOVED from problemDetails
+        constraints: '',              // NEW: Problem constraints
+
+        exampleIO: [                  // NEW: Examples for understanding
+          { input: '', output: '', explanation: '' }
+        ],
+
+        openTestCases: [              // RENAMED from visibleTestCases
+          { input: '', output: '' }
+        ],
+
+        hiddenTestCases: [            // SAME: Hidden test cases
+          { input: '', output: '' }
+        ],
+
         starterCode: {
           python: 'print("hello world")',
           java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("hello world");\n    }\n}',
@@ -97,17 +106,39 @@ function CreateContestQuestions() {
     }));
   };
 
-  const handleProblemDetailsChange = (field, value) => {
+  // Handler for example I/O changes
+  const handleExampleIOChange = (index, field, value) => {
     setQuestions(prev => ({
       ...prev,
       [currentQuestion]: {
         ...prev[currentQuestion],
-        problemDetails: {
-          ...prev[currentQuestion]?.problemDetails,
-          [field]: value
-        }
+        exampleIO: prev[currentQuestion].exampleIO.map((example, i) =>
+          i === index ? { ...example, [field]: value } : example
+        )
       }
     }));
+  };
+
+  const addExampleIO = () => {
+    setQuestions(prev => ({
+      ...prev,
+      [currentQuestion]: {
+        ...prev[currentQuestion],
+        exampleIO: [...prev[currentQuestion].exampleIO, { input: '', output: '', explanation: '' }]
+      }
+    }));
+  };
+
+  const removeExampleIO = (index) => {
+    if (questions[currentQuestion].exampleIO.length > 1) {
+      setQuestions(prev => ({
+        ...prev,
+        [currentQuestion]: {
+          ...prev[currentQuestion],
+          exampleIO: prev[currentQuestion].exampleIO.filter((_, i) => i !== index)
+        }
+      }));
+    }
   };
 
   const handleStarterCodeChange = (lang, value) => {
@@ -123,36 +154,36 @@ function CreateContestQuestions() {
     }));
   };
 
-  // --- Handlers for VISIBLE Test Cases ---
-  const handleVisibleTestCaseChange = (index, field, value) => {
+  // --- Handlers for OPEN Test Cases (renamed from visible) ---
+  const handleOpenTestCaseChange = (index, field, value) => {
     setQuestions(prev => ({
       ...prev,
       [currentQuestion]: {
         ...prev[currentQuestion],
-        visibleTestCases: prev[currentQuestion].visibleTestCases.map((testCase, i) => 
+        openTestCases: prev[currentQuestion].openTestCases.map((testCase, i) =>
           i === index ? { ...testCase, [field]: value } : testCase
         )
       }
     }));
   };
 
-  const addVisibleTestCase = () => {
+  const addOpenTestCase = () => {
     setQuestions(prev => ({
       ...prev,
       [currentQuestion]: {
         ...prev[currentQuestion],
-        visibleTestCases: [...prev[currentQuestion].visibleTestCases, { input: '', output: '' }]
+        openTestCases: [...prev[currentQuestion].openTestCases, { input: '', output: '' }]
       }
     }));
   };
 
-  const removeVisibleTestCase = (index) => {
-    if (questions[currentQuestion].visibleTestCases.length > 1) {
+  const removeOpenTestCase = (index) => {
+    if (questions[currentQuestion].openTestCases.length > 1) {
       setQuestions(prev => ({
         ...prev,
         [currentQuestion]: {
           ...prev[currentQuestion],
-          visibleTestCases: prev[currentQuestion].visibleTestCases.filter((_, i) => i !== index)
+          openTestCases: prev[currentQuestion].openTestCases.filter((_, i) => i !== index)
         }
       }));
     }
@@ -194,21 +225,44 @@ function CreateContestQuestions() {
   };
 
   const handleNext = () => {
-    if (!questions[currentQuestion].problem.trim()) {
-      showError('Please enter the problem statement');
+    // Validate title
+    if (!questions[currentQuestion].title?.trim()) {
+      showError('Please enter the problem title');
       return;
     }
-    
-    if (!questions[currentQuestion].problemDetails?.inputFormat?.trim()) {
+
+    // Validate description
+    if (!questions[currentQuestion].description?.trim()) {
+      showError('Please enter the problem description');
+      return;
+    }
+
+    // Validate input format
+    if (!questions[currentQuestion].inputFormat?.trim()) {
       showError('Please enter the input format');
       return;
     }
-    
-    if (!questions[currentQuestion].problemDetails?.outputFormat?.trim()) {
+
+    // Validate output format
+    if (!questions[currentQuestion].outputFormat?.trim()) {
       showError('Please enter the output format');
       return;
     }
-    
+
+    // Validate constraints
+    if (!questions[currentQuestion].constraints?.trim()) {
+      showError('Please enter the constraints');
+      return;
+    }
+
+    // Validate example I/O
+    if (questions[currentQuestion].exampleIO.some(ex =>
+        !ex.input.trim() || !ex.output.trim() || !ex.explanation.trim())) {
+      showError('Please complete all example I/O fields (input, output, and explanation)');
+      return;
+    }
+
+    // Validate starter code
     if (!questions[currentQuestion].starterCode?.python?.trim()) {
       showError('Please enter Python starter code');
       return;
@@ -223,15 +277,17 @@ function CreateContestQuestions() {
       showError('Please enter JavaScript starter code');
       return;
     }
-    
-    // --- MODIFIED Validation ---
-    if (questions[currentQuestion].visibleTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
-        showError('Please complete all visible test cases');
-        return;
+
+    // Validate open test cases
+    if (questions[currentQuestion].openTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+      showError('Please complete all open test cases');
+      return;
     }
+
+    // Validate hidden test cases
     if (questions[currentQuestion].hiddenTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
-        showError('Please complete all hidden test cases');
-        return;
+      showError('Please complete all hidden test cases');
+      return;
     }
 
     if (currentQuestion < parseInt(numberOfQuestions)) {
@@ -246,26 +302,38 @@ function CreateContestQuestions() {
   };
 
   const handleSaveContest = async () => {
-    // --- MODIFIED Full Contest Validation ---
+    // Full Contest Validation - all new fields
     for (let i = 1; i <= parseInt(numberOfQuestions); i++) {
-        if (!questions[i].problem.trim()) {
-            showError(`Please complete problem statement for question ${i}`);
+        if (!questions[i].title?.trim()) {
+            showError(`Please complete problem title for question ${i}`);
             return;
         }
-        if (questions[i].visibleTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
-            showError(`Please complete all visible test cases for question ${i}`);
+        if (!questions[i].description?.trim()) {
+            showError(`Please complete problem description for question ${i}`);
+            return;
+        }
+        if (!questions[i].inputFormat?.trim()) {
+            showError(`Please complete input format for question ${i}`);
+            return;
+        }
+        if (!questions[i].outputFormat?.trim()) {
+            showError(`Please complete output format for question ${i}`);
+            return;
+        }
+        if (!questions[i].constraints?.trim()) {
+            showError(`Please complete constraints for question ${i}`);
+            return;
+        }
+        if (questions[i].exampleIO.some(ex => !ex.input.trim() || !ex.output.trim() || !ex.explanation.trim())) {
+            showError(`Please complete all example I/O fields for question ${i}`);
+            return;
+        }
+        if (questions[i].openTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
+            showError(`Please complete all open test cases for question ${i}`);
             return;
         }
         if (questions[i].hiddenTestCases.some(tc => !tc.input.trim() || !tc.output.trim())) {
             showError(`Please complete all hidden test cases for question ${i}`);
-            return;
-        }
-        if (!questions[i].problemDetails?.inputFormat?.trim()) {
-            showError(`Please complete input format for question ${i}`);
-            return;
-        }
-        if (!questions[i].problemDetails?.outputFormat?.trim()) {
-            showError(`Please complete output format for question ${i}`);
             return;
         }
         if (!questions[i].starterCode?.python?.trim()) {
@@ -305,9 +373,9 @@ function CreateContestQuestions() {
         contestTitle: contestGeneralData.title,
         contestDescription: contestGeneralData.description,
         duration: contestGeneralData.duration,
-        pointsPerProgram: contestGeneralData.pointsPerProgram,
-        contestMode: contestGeneralData.mode, 
-        contestType: contestGeneralData.type, 
+        pointsPerProgram: 100 / parseInt(numberOfQuestions), // Auto-calculate: distribute 100 points
+        contestMode: contestGeneralData.mode,
+        contestType: contestGeneralData.type,
         topicsCovered: contestGeneralData.topicsCovered,
         allowedDepartments: contestGeneralData.allowedDepartments,
         numberOfQuestions: parseInt(numberOfQuestions),
@@ -459,69 +527,32 @@ function CreateContestQuestions() {
       </div>
 
       <div className="question-form">
+        {/* Title */}
         <div className="form-group">
           <p className="label">
             <FileText size={16} />
-            Problem Statement
+            Problem Title
           </p>
-          <textarea
-            id="problem"
-            rows="6"
-            placeholder="Enter the problem statement..."
-            value={questions[currentQuestion]?.problem || ''}
-            onChange={(e) => handleQuestionChange('problem', e.target.value)}
+          <input
+            type="text"
+            placeholder="e.g., Two Sum, Palindrome Checker..."
+            value={questions[currentQuestion]?.title || ''}
+            onChange={(e) => handleQuestionChange('title', e.target.value)}
           />
         </div>
 
-        {/* --- MODIFIED JSX for Visible Test Cases --- */}
-        <div className="test-cases-section">
-          <div className="section-header">
-            <h3>
-              <Eye size={16} />
-              Visible Test Cases (Examples)
-            </h3>
-            <button className="add-test-case-btn" onClick={addVisibleTestCase}>
-              <Plus size={16} />
-              Add Visible Test Case
-            </button>
-          </div>
-          <p className="section-subtitle">These test cases will be visible to the student as examples.</p>
-          
-          {questions[currentQuestion]?.visibleTestCases?.map((testCase, index) => (
-            <div key={index} className="test-case-card">
-              <div className="test-case-header">
-                <span>Visible Case {index + 1}</span>
-                {questions[currentQuestion].visibleTestCases.length > 1 && (
-                  <button 
-                    className="remove-test-case-btn"
-                    onClick={() => removeVisibleTestCase(index)}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-              <div className="test-case-grid">
-                <div className="form-group">
-                  <p className="label">Input</p>
-                  <textarea
-                    rows="3"
-                    placeholder="Example input..."
-                    value={testCase.input}
-                    onChange={(e) => handleVisibleTestCaseChange(index, 'input', e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <p className="label">Expected Output</p>
-                  <textarea
-                    rows="3"
-                    placeholder="Expected output..."
-                    value={testCase.output}
-                    onChange={(e) => handleVisibleTestCaseChange(index, 'output', e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Description */}
+        <div className="form-group">
+          <p className="label">
+            <FileText size={16} />
+            Problem Description
+          </p>
+          <textarea
+            rows="6"
+            placeholder="Describe the problem statement in detail..."
+            value={questions[currentQuestion]?.description || ''}
+            onChange={(e) => handleQuestionChange('description', e.target.value)}
+          />
         </div>
 
         {/* Input/Output Format Section */}
@@ -536,8 +567,8 @@ function CreateContestQuestions() {
               <textarea
                 rows="2"
                 placeholder="Describe the input format..."
-                value={questions[currentQuestion]?.problemDetails?.inputFormat || ''}
-                onChange={e => handleProblemDetailsChange('inputFormat', e.target.value)}
+                value={questions[currentQuestion]?.inputFormat || ''}
+                onChange={(e) => handleQuestionChange('inputFormat', e.target.value)}
               />
             </div>
             <div className="form-group">
@@ -545,11 +576,136 @@ function CreateContestQuestions() {
               <textarea
                 rows="2"
                 placeholder="Describe the output format..."
-                value={questions[currentQuestion]?.problemDetails?.outputFormat || ''}
-                onChange={e => handleProblemDetailsChange('outputFormat', e.target.value)}
+                value={questions[currentQuestion]?.outputFormat || ''}
+                onChange={(e) => handleQuestionChange('outputFormat', e.target.value)}
               />
             </div>
           </div>
+        </div>
+
+        {/* Constraints */}
+        <div className="form-group">
+          <p className="label">
+            <FileText size={16} />
+            Constraints
+          </p>
+          <textarea
+            rows="3"
+            placeholder="e.g., 1 ≤ n ≤ 10^5, -10^9 ≤ arr[i] ≤ 10^9..."
+            value={questions[currentQuestion]?.constraints || ''}
+            onChange={(e) => handleQuestionChange('constraints', e.target.value)}
+          />
+        </div>
+
+        {/* Example I/O Section */}
+        <div className="test-cases-section">
+          <div className="section-header">
+            <h3>
+              <Eye size={16} />
+              Example Input/Output (For Understanding)
+            </h3>
+            <button className="add-test-case-btn" onClick={addExampleIO}>
+              <Plus size={16} />
+              Add Example
+            </button>
+          </div>
+          <p className="section-subtitle">These examples help students understand the problem. Always visible on the student side.</p>
+
+          {questions[currentQuestion]?.exampleIO?.map((example, index) => (
+            <div key={index} className="test-case-card">
+              <div className="test-case-header">
+                <span>Example {index + 1}</span>
+                {questions[currentQuestion].exampleIO.length > 1 && (
+                  <button
+                    className="remove-test-case-btn"
+                    onClick={() => removeExampleIO(index)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="test-case-grid">
+                <div className="form-group">
+                  <p className="label">Input</p>
+                  <textarea
+                    rows="2"
+                    placeholder="Example input..."
+                    value={example.input}
+                    onChange={(e) => handleExampleIOChange(index, 'input', e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <p className="label">Output</p>
+                  <textarea
+                    rows="2"
+                    placeholder="Expected output..."
+                    value={example.output}
+                    onChange={(e) => handleExampleIOChange(index, 'output', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <p className="label">Explanation (Optional)</p>
+                <textarea
+                  rows="2"
+                  placeholder="Explain why this output is correct..."
+                  value={example.explanation}
+                  onChange={(e) => handleExampleIOChange(index, 'explanation', e.target.value)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Open Test Cases Section */}
+        <div className="test-cases-section">
+          <div className="section-header">
+            <h3>
+              <Eye size={16} />
+              Open Test Cases
+            </h3>
+            <button className="add-test-case-btn" onClick={addOpenTestCase}>
+              <Plus size={16} />
+              Add Open Test Case
+            </button>
+          </div>
+          <p className="section-subtitle">Students can run their code against these test cases and see pass/fail status (not the actual input/output).</p>
+
+          {questions[currentQuestion]?.openTestCases?.map((testCase, index) => (
+            <div key={index} className="test-case-card">
+              <div className="test-case-header">
+                <span>Open Case {index + 1}</span>
+                {questions[currentQuestion].openTestCases.length > 1 && (
+                  <button
+                    className="remove-test-case-btn"
+                    onClick={() => removeOpenTestCase(index)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="test-case-grid">
+                <div className="form-group">
+                  <p className="label">Input</p>
+                  <textarea
+                    rows="3"
+                    placeholder="Test case input..."
+                    value={testCase.input}
+                    onChange={(e) => handleOpenTestCaseChange(index, 'input', e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <p className="label">Expected Output</p>
+                  <textarea
+                    rows="3"
+                    placeholder="Expected output..."
+                    value={testCase.output}
+                    onChange={(e) => handleOpenTestCaseChange(index, 'output', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
         
         {/* Starter Code Section */}

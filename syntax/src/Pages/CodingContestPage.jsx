@@ -14,6 +14,11 @@ import StudentNavbar from '../Components/StudentNavbar';
 import Loader from '../Components/Loader';
 import { useAlert } from '../contexts/AlertContext';
 import styles from '../Styles/PageStyles/CodingContestPage.module.css';
+import {
+  getAllSubmissionSummaries,
+  saveSubmissionSummary,
+  clearAllSubmissions
+} from '../utils/encryption';
 
 // Language Configuration with Judge0 IDs
 const languageOptions = {
@@ -134,6 +139,9 @@ function CodingContestPage() {
               }
             }
           }
+
+          // Backend handles all validation - no client-side encryption needed
+          console.log('✓ Contest loaded - ready for secure backend-validated submissions');
         } else {
           showError('No problems found in this contest');
           navigate('/student-contests');
@@ -149,6 +157,17 @@ function CodingContestPage() {
 
     fetchContest();
   }, [problemId, navigate, showError]);
+
+  // Load submission summaries from localStorage to restore progress after refresh
+  useEffect(() => {
+    if (problems.length > 0 && problemId) {
+      const summaries = getAllSubmissionSummaries(problemId, problems.length);
+      if (Object.keys(summaries).length > 0) {
+        setProblemResults(summaries);
+        console.log(`✓ Loaded ${Object.keys(summaries).length} submission summaries from storage`);
+      }
+    }
+  }, [problems.length, problemId]);
 
   // Load Code from localStorage or starter code
   useEffect(() => {
@@ -262,6 +281,8 @@ function CodingContestPage() {
       return;
     }
 
+    const problem = problems[currentProblemIndex];
+
     startTimer();
     setIsExecuting(true);
     setExecutionType('run');
@@ -269,28 +290,163 @@ function CodingContestPage() {
     setOutput(null);
 
     try {
-      const response = await axios.post('/api/judge/run', {
-        source_code: code,
-        language_id: languageOptions[selectedLang].id,
-        stdin: customInput
-      });
+      // If custom input is provided, run against custom input only
+      if (customInput.trim()) {
+        const response = await axios.post('/api/judge/run', {
+          source_code: code,
+          language_id: languageOptions[selectedLang].id,
+          stdin: customInput
+        });
 
-      setOutput(response.data);
+        setOutput(response.data);
 
-      if (response.data.status?.id === 3) {
-        showSuccess('Code executed successfully');
+        // Log to console instead of showing alert
+        if (response.data.status?.id === 3) {
+          console.log('✓ Code executed successfully');
+        } else {
+          console.log('✗ Code execution completed with status:', response.data.status?.description);
+        }
+      } else {
+        // If no custom input, run against open test cases
+        const exampleTestCases = problem.exampleIO || problem.examples || [];
+        const openTestCases = problem.openTestCases || [];
+        const allOpenTests = [...exampleTestCases, ...openTestCases];
+
+        if (allOpenTests.length === 0) {
+          showError('No open test cases available. Please provide custom input.');
+          setIsExecuting(false);
+          return;
+        }
+
+        // Run against all open test cases
+        const submissions = allOpenTests.map(tc => ({
+          source_code: code,
+          language_id: languageOptions[selectedLang].id,
+          stdin: tc.input,
+          expected_output: tc.output
+        }));
+
+        // Submit batch and get tokens
+        const batchResponse = await axios.post('https://judge0-ce.p.rapidapi.com/submissions/batch',
+          { submissions },
+          {
+            params: { base64_encoded: 'false' },
+            headers: {
+              'content-type': 'application/json',
+              'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
+              'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
+            }
+          }
+        );
+
+        const tokens = batchResponse.data;
+
+        if (!Array.isArray(tokens)) {
+          throw new Error('Invalid response from Judge0 API');
+        }
+
+        const tokenList = tokens.map(t => t.token).join(',');
+
+        // Poll for results
+        let results = [];
+        let attempts = 0;
+        const maxAttempts = 30;
+
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          const resultsResponse = await axios.get(`https://judge0-ce.p.rapidapi.com/submissions/batch`,
+            {
+              params: {
+                tokens: tokenList,
+                base64_encoded: 'false',
+                fields: 'stdout,stderr,status,time,memory,compile_output'
+              },
+              headers: {
+                'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
+                'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
+              }
+            }
+          );
+
+          results = resultsResponse.data.submissions;
+          const allComplete = results.every(r => r.status && r.status.id !== 1 && r.status.id !== 2);
+
+          if (allComplete) {
+            break;
+          }
+
+          attempts++;
+        }
+
+        if (attempts >= maxAttempts) {
+          throw new Error('Timeout waiting for Judge0 results');
+        }
+
+        // Process results
+        const testResults = results.map((result, index) => {
+          const testCase = allOpenTests[index];
+          const statusId = result.status?.id || 0;
+          const actualOutput = (result.stdout || '').trim();
+          const expectedOutput = (testCase.output || '').trim();
+          const executedSuccessfully = statusId === 3;
+          const outputMatches = actualOutput === expectedOutput;
+          const passed = executedSuccessfully && outputMatches;
+
+          return {
+            index: index + 1,
+            passed,
+            status: passed ? 'Passed' : (executedSuccessfully ? 'Failed' : result.status?.description || 'Error'),
+            input: testCase.input,
+            expectedOutput: testCase.output,
+            actualOutput: result.stdout || '',
+            stderr: result.stderr || '',
+            compile_output: result.compile_output || ''
+          };
+        });
+
+        const passedCount = testResults.filter(r => r.passed).length;
+        const totalCount = testResults.length;
+
+        // Log results to console
+        console.log(`\n=== Open Test Cases Results ===`);
+        console.log(`Total: ${totalCount} | Passed: ${passedCount} | Failed: ${totalCount - passedCount}`);
+
+        testResults.forEach((testResult) => {
+          if (testResult.passed) {
+            console.log(`✓ Open Test Case ${testResult.index}: Passed`);
+          } else {
+            console.log(`\n✗ Open Test Case ${testResult.index}: ${testResult.status}`);
+            console.log(`  Input: ${testResult.input}`);
+            console.log(`  Expected: ${testResult.expectedOutput}`);
+            console.log(`  Got: ${testResult.actualOutput || '(empty)'}`);
+            if (testResult.stderr) {
+              console.log(`  Error: ${testResult.stderr}`);
+            }
+            if (testResult.compile_output) {
+              console.log(`  Compilation: ${testResult.compile_output}`);
+            }
+          }
+        });
+        console.log(`================================\n`);
+
+        setOutput({
+          isOpenTestRun: true,
+          passedCount,
+          totalCount,
+          testResults
+        });
       }
     } catch (error) {
       console.error('Error running code:', error);
       const errorData = error.response?.data;
       setOutput(errorData || { stderr: 'An unexpected error occurred' });
-      showError('Failed to run code');
     }
 
     setIsExecuting(false);
   };
 
-  // Handle Submit Solution
+  // Handle Submit Solution - Uses secure backend API
   const handleSubmit = async () => {
     if (!code.trim()) {
       showError('Please write some code first');
@@ -311,155 +467,47 @@ function CodingContestPage() {
     setOutput(null);
 
     try {
-      // Run against all test cases
-      const visibleTestCases = problem.examples || [];
-      const hiddenTestCases = (problem.testCases || []).map(tc => ({
-        ...tc,
-        output: tc.expectedOutput || tc.output // Normalize field name
-      }));
-      const allTestCases = [...visibleTestCases, ...hiddenTestCases];
-
-      console.log('Test Cases:', {
-        visible: visibleTestCases,
-        hidden: hiddenTestCases,
-        all: allTestCases
-      });
-
-      if (allTestCases.length === 0) {
-        showError('No test cases available for this problem');
-        setIsExecuting(false);
-        return;
-      }
-
-      // Execute against all test cases using batch submission
-      const submissions = allTestCases.map(tc => ({
+      // Call secure backend API - backend will fetch hidden test cases and run all tests
+      const response = await axios.post('/api/judge/contest-submit', {
         source_code: code,
         language_id: languageOptions[selectedLang].id,
-        stdin: tc.input,
-        expected_output: tc.output
-      }));
-
-      // Step 1: Submit batch and get tokens
-      const batchResponse = await axios.post('https://judge0-ce.p.rapidapi.com/submissions/batch',
-        { submissions },
-        {
-          params: { base64_encoded: 'false' },
-          headers: {
-            'content-type': 'application/json',
-            'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
-            'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
-          }
-        }
-      );
-
-      const tokens = batchResponse.data;
-      console.log('Judge0 Tokens:', tokens);
-
-      // Validate tokens
-      if (!Array.isArray(tokens)) {
-        throw new Error('Invalid response from Judge0 API: Expected array of tokens');
-      }
-
-      // Step 2: Get the tokens and fetch results
-      const tokenList = tokens.map(t => t.token).join(',');
-
-      // Step 3: Poll for results until all are complete
-      let results = [];
-      let attempts = 0;
-      const maxAttempts = 30; // 30 seconds max
-
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between polls
-
-        const resultsResponse = await axios.get(`https://judge0-ce.p.rapidapi.com/submissions/batch`,
-          {
-            params: {
-              tokens: tokenList,
-              base64_encoded: 'false',
-              fields: 'stdout,stderr,status,time,memory,compile_output'
-            },
-            headers: {
-              'X-RapidAPI-Key': import.meta.env.VITE_JUDGE0_RAPIDAPI_KEY || 'fba00342ccmshd4915b90c833a20p1a34bcjsne81de2afa405',
-              'X-RapidAPI-Host': import.meta.env.VITE_JUDGE0_RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
-            }
-          }
-        );
-
-        results = resultsResponse.data.submissions;
-
-        // Check if all submissions are complete (status.id not in [1, 2] which are "In Queue" and "Processing")
-        const allComplete = results.every(r => r.status && r.status.id !== 1 && r.status.id !== 2);
-
-        if (allComplete) {
-          console.log(`Judge0 Results (attempt ${attempts + 1}):`, results);
-          break;
-        }
-
-        attempts++;
-      }
-
-      if (attempts >= maxAttempts) {
-        throw new Error('Timeout waiting for Judge0 results');
-      }
-
-      // Validate response structure
-      if (!Array.isArray(results)) {
-        throw new Error('Invalid response from Judge0 API: Expected array of results');
-      }
-
-      // Process results with error handling
-      const testResults = results.map((result, index) => {
-        const isVisible = index < visibleTestCases.length;
-        const testCase = allTestCases[index];
-
-        // Handle different response structures
-        const statusId = result.status?.id || result.statusId || 0;
-        const statusDesc = result.status?.description || result.statusDescription || 'Unknown';
-
-        // Get actual output and expected output
-        const actualOutput = (result.stdout || result.output || '').trim();
-        const expectedOutput = (testCase.output || '').trim();
-
-        // Check if code executed successfully AND output matches
-        const executedSuccessfully = statusId === 3; // Status 3 = Accepted (no runtime errors)
-        const outputMatches = actualOutput === expectedOutput;
-        const passed = executedSuccessfully && outputMatches;
-
-        return {
-          index: index + 1,
-          isVisible,
-          passed,
-          input: testCase.input,
-          expectedOutput: testCase.output,
-          actualOutput: result.stdout || result.output || '',
-          status: passed ? 'Accepted' : (executedSuccessfully ? 'Wrong Answer' : statusDesc),
-          time: result.time || 0,
-          memory: result.memory || 0,
-          stderr: result.stderr || result.error || '',
-          compile_output: result.compile_output || ''
-        };
+        event_id: problemId,
+        problem_index: currentProblemIndex
+      }, {
+        withCredentials: true
       });
 
-      const passedCount = testResults.filter(r => r.passed).length;
-      const totalCount = testResults.length;
-      const allPassed = passedCount === totalCount;
+      const { success, passedCount, totalCount, pointsEarned, maxPoints, testResults } = response.data;
+      const allPassed = success;
 
-      // Find first failed test case
-      const firstFailure = testResults.find(r => !r.passed);
+      // Find first failed test case from visible tests
+      const firstFailure = testResults.find(r => r.isVisible && !r.passed);
 
-      // Calculate score
-      const pointsEarned = allPassed ? problem.points : 0;
-
-      // Store submission in Firebase
-      await saveSubmission({
+      // Prepare submission record for local storage (no encryption needed - backend validates everything)
+      const submissionRecord = {
+        problemIndex: currentProblemIndex,
         problemId: problem.questionId,
+        problemCode: problem.contestProblemCode,
+        problemTitle: problem.title,
         code,
         language: selectedLang,
-        testResults,
-        score: pointsEarned,
+        pointsEarned,
+        maxPoints,
+        passedTests: passedCount,
         totalTests: totalCount,
-        passedTests: passedCount
-      });
+        testResults,
+        timestamp: Date.now(),
+        solved: allPassed
+      };
+
+      // Store submission locally (verified by backend, no encryption needed)
+      try {
+        saveSubmissionSummary(problemId, currentProblemIndex, submissionRecord);
+        console.log(`✓ Submission verified and stored for Problem ${currentProblemIndex + 1}`);
+      } catch (error) {
+        console.error('Failed to store submission:', error);
+        showError('Failed to save submission locally');
+      }
 
       setOutput({
         isSubmission: true,
@@ -468,27 +516,31 @@ function CodingContestPage() {
         totalCount,
         pointsEarned,
         maxPoints: problem.points,
-        testResults: firstFailure ? [firstFailure] : testResults.filter(r => r.isVisible),
+        testResults: testResults.filter(r => r.isVisible),
         firstFailure
       });
 
-      // Save result for this problem
+      // Update local state for UI (stored in memory, not accessible to user)
+      setProblemResults(prev => ({
+        ...prev,
+        [currentProblemIndex]: {
+          problemCode: problem.contestProblemCode,
+          problemTitle: problem.title,
+          pointsEarned,
+          maxPoints: problem.points,
+          passedTests: passedCount,
+          totalTests: totalCount,
+          solved: allPassed
+        }
+      }));
+
+      // Show appropriate message
       if (allPassed) {
-        setProblemResults(prev => ({
-          ...prev,
-          [currentProblemIndex]: {
-            problemCode: problem.contestProblemCode,
-            problemTitle: problem.title,
-            pointsEarned,
-            maxPoints: problem.points,
-            passedTests: passedCount,
-            totalTests: totalCount,
-            solved: true
-          }
-        }));
-        showSuccess(`All tests passed! You earned ${pointsEarned} points!`);
+        showSuccess(`Perfect! All ${totalCount} tests passed! You earned ${pointsEarned} points!`);
+      } else if (passedCount > 0) {
+        showInfo(`${passedCount}/${totalCount} tests passed. You earned ${pointsEarned} points. Keep trying!`);
       } else {
-        showError(`${passedCount}/${totalCount} tests passed. Keep trying!`);
+        showError(`No tests passed. Review your solution and try again.`);
       }
 
     } catch (error) {
@@ -518,62 +570,75 @@ function CodingContestPage() {
     setIsExecuting(false);
   };
 
-  // Save submission to Firebase
-  const saveSubmission = async (submissionData) => {
-    try {
-      await axios.post('/api/student/submit-contest', {
-        contestId: problemId,
-        ...submissionData,
-        submittedAt: new Date().toISOString()
-      }, {
-        withCredentials: true
-      });
-    } catch (error) {
-      console.error('Error saving submission:', error);
-      // Don't show error to user as this is background operation
+  // Auto-submit when timer expires
+  const handleAutoSubmit = async () => {
+    showInfo('Time expired! Auto-submitting your contest...');
+
+    // Save final results with all encrypted submissions
+    const saved = await saveFinalResults();
+
+    if (saved) {
+      setTimeout(() => {
+        navigate('/student-contests');
+      }, 2000);
+    } else {
+      showError('Failed to submit contest. Please try again.');
     }
   };
 
-  // Auto-submit when timer expires
-  const handleAutoSubmit = async () => {
-    showInfo('Time expired! Auto-submitting your solution...');
-    await handleSubmit();
-    setTimeout(() => {
-      navigate('/student-contests');
-    }, 3000);
-  };
-
-  // Save final contest results
+  // Save final contest results - Send all verified submissions to backend
   const saveFinalResults = async () => {
     try {
-      const totalScore = Object.values(problemResults).reduce(
-        (sum, result) => sum + (result?.pointsEarned || 0),
-        0
-      );
-      const totalPossible = problems.reduce((sum, prob) => sum + prob.points, 0);
-      const solvedCount = Object.keys(problemResults).length;
+      showInfo('Submitting your contest for evaluation...');
 
-      await axios.post('/api/student/finish-contest', {
+      // Retrieve all verified submissions from localStorage
+      // These were already validated by backend during each submission
+      const submissions = getAllSubmissionSummaries(problemId, problems.length);
+
+      // Convert to array and include problemIndex for each submission
+      const submissionArray = Object.entries(submissions).map(([index, submission]) => ({
+        ...submission,
+        problemIndex: parseInt(index)
+      }));
+
+      if (submissionArray.length === 0) {
+        showError('No submissions found. Please solve at least one problem.');
+        return false;
+      }
+
+      console.log(`Submitting ${submissionArray.length} verified problem(s) to backend for final storage...`);
+
+      // Send verified submissions to backend for final storage
+      const response = await axios.post('/api/student/finish-contest', {
         contestId: problemId,
-        totalScore,
-        totalPossible,
-        solvedProblems: solvedCount,
+        submissions: submissionArray,
         totalProblems: problems.length,
-        problemResults: Object.entries(problemResults).map(([idx, result]) => ({
-          problemId: problems[idx].questionId,
-          problemCode: problems[idx].contestProblemCode,
-          ...result
-        })),
         completedAt: new Date().toISOString()
       }, {
         withCredentials: true
       });
 
-      showSuccess('Contest results saved successfully!');
+      // Server returns final score confirmation
+      const { totalScore, totalPossible, message } = response.data;
+
+      // Clean up local data after successful submission
+      clearAllSubmissions(problemId, problems.length);
+
+      showSuccess(message || `Contest completed! Your score: ${totalScore}/${totalPossible}`);
+      console.log(`✓ Final score: ${totalScore}/${totalPossible}`);
+
       return true;
     } catch (error) {
       console.error('Error saving final results:', error);
-      showError('Failed to save results');
+
+      let errorMessage = 'Failed to save contest results';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      showError(errorMessage);
       return false;
     }
   };
@@ -604,6 +669,76 @@ function CodingContestPage() {
   const renderOutput = () => {
     if (!output) {
       return <div className={styles.outputPlaceholder}>Run your code or submit to see results here...</div>;
+    }
+
+    // Open test case run results
+    if (output.isOpenTestRun) {
+      const allPassed = output.passedCount === output.totalCount;
+      return (
+        <div className={styles.testResultsGrid}>
+          <div className={`${styles.verdictSection} ${allPassed ? styles.success : styles.error}`}>
+            <h3 className={`${styles.verdictTitle} ${allPassed ? styles.success : styles.error}`}>
+              {allPassed ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
+              Open Test Cases Results
+            </h3>
+            <div className={styles.verdictMessage}>
+              <p>Tests Passed: {output.passedCount} / {output.totalCount}</p>
+              {allPassed ? (
+                <p>All open test cases passed! Try submitting your solution.</p>
+              ) : (
+                <p>Some test cases failed. Review the results below.</p>
+              )}
+            </div>
+          </div>
+
+          {output.testResults && output.testResults.length > 0 && (
+            <div className={styles.openTestResults}>
+              {output.testResults.map((testResult, idx) => (
+                <div
+                  key={idx}
+                  className={`${styles.testCaseResult} ${testResult.passed ? styles.passed : styles.failed}`}
+                >
+                  <div className={styles.testCaseHeader}>
+                    <span className={styles.testCaseName}>
+                      {testResult.passed ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                      Open Test Case {testResult.index}
+                    </span>
+                    <span className={`${styles.statusBadge} ${testResult.passed ? styles.passed : styles.failed}`}>
+                      {testResult.status}
+                    </span>
+                  </div>
+                  <div className={styles.testCaseDetails}>
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Input</span>
+                      <pre className={styles.detailValue}>{testResult.input}</pre>
+                    </div>
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Expected Output</span>
+                      <pre className={styles.detailValue}>{testResult.expectedOutput}</pre>
+                    </div>
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>Your Output</span>
+                      <pre className={styles.detailValue}>{testResult.actualOutput || '(empty)'}</pre>
+                    </div>
+                    {testResult.stderr && (
+                      <div className={styles.detailRow}>
+                        <span className={styles.detailLabel}>Error</span>
+                        <pre className={styles.detailValue}>{testResult.stderr}</pre>
+                      </div>
+                    )}
+                    {testResult.compile_output && (
+                      <div className={styles.detailRow}>
+                        <span className={styles.detailLabel}>Compilation Output</span>
+                        <pre className={styles.detailValue}>{testResult.compile_output}</pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
     }
 
     // Submission results
@@ -657,7 +792,7 @@ function CodingContestPage() {
       );
     }
 
-    // Run results
+    // Run results (custom input)
     return (
       <div className={styles.outputContent}>
         {output.status && (
@@ -765,16 +900,6 @@ function CodingContestPage() {
               </div>
             )}
 
-            <div className={styles.scoreCard}>
-              <Trophy className={styles.scoreIcon} />
-              <div className={styles.scoreInfo}>
-                <span className={styles.scoreLabel}>Total Score</span>
-                <span className={styles.scoreValue}>
-                  {Object.values(problemResults).reduce((sum, result) => sum + (result?.pointsEarned || 0), 0)} / {problems.reduce((sum, prob) => sum + prob.points, 0)}
-                </span>
-              </div>
-            </div>
-
             <button
               className={styles.viewResultsBtn}
               onClick={() => setShowResults(true)}
@@ -839,13 +964,21 @@ function CodingContestPage() {
             <div className={styles.problemContent}>
               {activeTab === 'problem' && (
                 <>
+                  {/* Problem Title */}
+                  {currentProblem.title && (
+                    <div className={styles.problemSection}>
+                      <h2 className={styles.sectionTitle}>
+                        <FileText size={20} />
+                        {currentProblem.title}
+                      </h2>
+                    </div>
+                  )}
+
+                  {/* Problem Description */}
                   <div className={styles.problemSection}>
-                    <h2 className={styles.sectionTitle}>
-                      <FileText size={20} />
-                      Description
-                    </h2>
+                    <h3 className={styles.sectionTitle}>Description</h3>
                     <div className={styles.sectionContent}>
-                      <pre className={styles.problemDescription}>{currentProblem.description}</pre>
+                      <pre className={styles.problemDescription}>{currentProblem.description || currentProblem.problem}</pre>
                     </div>
                   </div>
 
@@ -855,26 +988,35 @@ function CodingContestPage() {
                       <div className={styles.formatCard}>
                         <div className={styles.formatLabel}>Input Format</div>
                         <div className={styles.formatText}>
-                          {currentProblem.problemDetails?.inputFormat || 'Not specified'}
+                          {currentProblem.inputFormat || currentProblem.problemDetails?.inputFormat || 'Not specified'}
                         </div>
                       </div>
                       <div className={styles.formatCard}>
                         <div className={styles.formatLabel}>Output Format</div>
                         <div className={styles.formatText}>
-                          {currentProblem.problemDetails?.outputFormat || 'Not specified'}
+                          {currentProblem.outputFormat || currentProblem.problemDetails?.outputFormat || 'Not specified'}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {currentProblem.problemDetails?.constraints && currentProblem.problemDetails.constraints.length > 0 && (
+                  {/* Constraints - supports both string (new) and array (old) formats */}
+                  {(currentProblem.constraints || currentProblem.problemDetails?.constraints) && (
                     <div className={styles.problemSection}>
                       <h3 className={styles.sectionTitle}>Constraints</h3>
-                      <ul className={styles.constraintsList}>
-                        {currentProblem.problemDetails.constraints.map((constraint, idx) => (
-                          <li key={idx} className={styles.constraintItem}>{constraint}</li>
-                        ))}
-                      </ul>
+                      {typeof currentProblem.constraints === 'string' ? (
+                        <div className={styles.sectionContent}>
+                          <pre className={styles.problemDescription}>{currentProblem.constraints}</pre>
+                        </div>
+                      ) : Array.isArray(currentProblem.problemDetails?.constraints) && currentProblem.problemDetails.constraints.length > 0 ? (
+                        <ul className={styles.constraintsList}>
+                          {currentProblem.problemDetails.constraints.map((constraint, idx) => (
+                            <li key={idx} className={styles.constraintItem}>{constraint}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className={styles.sectionContent}>Not specified</div>
+                      )}
                     </div>
                   )}
 
@@ -899,8 +1041,9 @@ function CodingContestPage() {
                     Example Test Cases
                   </h2>
                   <div className={styles.examplesList}>
-                    {currentProblem.examples && currentProblem.examples.length > 0 ? (
-                      currentProblem.examples.map((example, idx) => (
+                    {/* Support both exampleIO (new) and examples (old) formats */}
+                    {(currentProblem.exampleIO || currentProblem.examples) && (currentProblem.exampleIO || currentProblem.examples).length > 0 ? (
+                      (currentProblem.exampleIO || currentProblem.examples).map((example, idx) => (
                         <div key={idx} className={styles.exampleCard}>
                           <div className={styles.exampleTitle}>
                             <CheckCircle size={16} />
@@ -1088,39 +1231,36 @@ function CodingContestPage() {
 
             <div className={styles.resultsBody}>
               <div className={styles.totalScoreCard}>
-                <div className={styles.totalScoreLabel}>Total Score</div>
+                <div className={styles.totalScoreLabel}>Contest Progress</div>
                 <div className={styles.totalScoreValue}>
-                  {Object.values(problemResults).reduce((sum, result) => sum + (result?.pointsEarned || 0), 0)} / {problems.reduce((sum, prob) => sum + prob.points, 0)}
+                  {Object.keys(problemResults).length} / {problems.length}
                 </div>
                 <div className={styles.totalScoreSubtext}>
-                  {Object.keys(problemResults).length} of {problems.length} problems solved
+                  Problems Attempted
                 </div>
               </div>
 
               <div className={styles.problemResultsList}>
                 {problems.map((problem, idx) => {
                   const result = problemResults[idx];
+                  const isAttempted = result !== undefined;
                   const isSolved = result?.solved || false;
 
                   return (
                     <div
                       key={idx}
-                      className={`${styles.problemResultCard} ${isSolved ? styles.solved : styles.unsolved}`}
+                      className={`${styles.problemResultCard} ${isAttempted ? (isSolved ? styles.solved : styles.attempted) : styles.unsolved}`}
                     >
                       <div className={styles.problemResultHeader}>
                         <div className={styles.problemResultCode}>
                           Problem {problem.contestProblemCode}
                         </div>
-                        <div className={`${styles.problemResultStatus} ${isSolved ? styles.solved : styles.unsolved}`}>
-                          {isSolved ? '✓ Solved' : '✗ Unsolved'}
+                        <div className={`${styles.problemResultStatus} ${isAttempted ? (isSolved ? styles.solved : styles.attempted) : styles.unsolved}`}>
+                          {isSolved ? '✓ Perfect' : isAttempted ? '◐ Attempted' : '✗ Not Attempted'}
                         </div>
                       </div>
                       <div className={styles.problemResultTitle}>
                         {problem.title}
-                      </div>
-                      <div className={styles.problemResultScore}>
-                        <span className={styles.earnedPoints}>{result?.pointsEarned || 0}</span>
-                        <span className={styles.maxPoints}>/ {problem.points} points</span>
                       </div>
                       {result && (
                         <div className={styles.problemResultTests}>

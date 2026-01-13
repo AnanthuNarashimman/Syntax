@@ -11,7 +11,7 @@ const cache = require('../utils/cache');
 // 6) Calculates total points earned (pointsPerQuestion × correctAnswerCount)
 // 7) Fetches user document from 'users' collection to get userName and department for denormalization
 // 8) Updates user document with cumulative stats using Firestore atomic operations:
-//    - Increments totalScores by points earned
+//    - Increments totalScore by points earned
 //    - Increments contestsParticipated count by 1
 // 9) Queries 'userSubmissions' collection to check if user has existing submission record
 // 10) If no existing record (first quiz ever):
@@ -60,7 +60,7 @@ const validateQuiz = async (req, res) => {
                 department = userData.department || 'Unknown';
 
                 await userDocRef.update({
-                    totalScores: admin.firestore.FieldValue.increment(totalPoints),
+                    totalScore: admin.firestore.FieldValue.increment(totalPoints),
                     contestsParticipated: admin.firestore.FieldValue.increment(1)
                 });
             }

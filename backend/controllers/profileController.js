@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const passwordUtil = require('../utils/passwordUtil');
 const cache = require('../utils/cache');
+const keyManager = require('../utils/cryptoKeys');
 
 
 // Controllers for Profile related operations
@@ -757,6 +758,313 @@ const getLeaderboard = async (req, res) => {
     }
 }
 
+// Get Public Key - Provides RSA public key for frontend encryption
+// Frontend uses this key to encrypt submissions
+// Only backend can decrypt with private key
+const getPublicKey = async (req, res) => {
+    try {
+        const publicKey = keyManager.getPublicKey();
+
+        console.log('✓ Public key requested by client');
+
+        res.status(200).json({
+            success: true,
+            publicKey: publicKey
+        });
+    } catch (error) {
+        console.error('Error getting public key:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve public key'
+        });
+    }
+};
+
+// Finish Contest - Server-side verification of all submissions
+// Now receives ENCRYPTED submissions and decrypts them server-side
+// This prevents client-side score manipulation
+const finishContest = async (req, res) => {
+    try {
+        const { contestId, submissions, totalProblems, completedAt } = req.body;
+        const token = req.cookies.auth_token;
+
+        if (!token) {
+            return res.status(401).json({ message: "Unauthorized: Please log in." });
+        }
+
+        // Decode JWT to get student ID
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            throw new Error("JWT_SECRET is not configured on the server.");
+        }
+        const decoded = jwt.verify(token, jwtSecret);
+        const studentId = decoded.userId;
+
+        if (!studentId || !contestId || !submissions || !Array.isArray(submissions)) {
+            return res.status(400).json({
+                message: "Invalid request. Missing required fields."
+            });
+        }
+
+        console.log(`Processing contest finish for student ${studentId}, contest ${contestId}`);
+        console.log(`Received ${submissions.length} submissions (already verified by backend)`);
+
+        // Fetch contest details
+        const contestRef = db.collection('events').doc(contestId);
+        const contestDoc = await contestRef.get();
+
+        if (!contestDoc.exists) {
+            return res.status(404).json({ message: "Contest not found" });
+        }
+
+        const contest = contestDoc.data();
+        const problems = contest.problems || [];
+
+        // Process verified submissions (already validated during submission via /api/judge/contest-submit)
+        const results = [];
+        let totalScore = 0;
+        let totalPossible = 0;
+
+        for (const submission of submissions) {
+            const problemIndex = submission.problemIndex;
+            console.log(`Processing submission for problem index: ${problemIndex}, pointsEarned: ${submission.pointsEarned}`);
+
+            const problem = problems[problemIndex];
+
+            if (!problem) {
+                console.error(`❌ Problem at index ${problemIndex} not found in problems array (length: ${problems.length})`);
+                continue;
+            }
+
+            const pointsEarned = submission.pointsEarned || 0;
+            totalPossible += problem.points;
+            totalScore += pointsEarned;
+
+            console.log(`✓ Problem ${problemIndex + 1}: ${submission.passedTests}/${submission.totalTests} tests passed, Score: ${pointsEarned}/${problem.points}`);
+
+            // Create result object, filtering out undefined values
+            const resultData = {
+                problemId: submission.problemId || problem.id || `problem_${problemIndex}`,
+                problemCode: submission.problemCode || problem.code || '',
+                problemTitle: submission.problemTitle || problem.title || 'Untitled Problem',
+                language: submission.language || 'unknown',
+                passedTests: submission.passedTests || 0,
+                totalTests: submission.totalTests || 0,
+                score: pointsEarned,
+                maxScore: submission.maxPoints || problem.points,
+                solved: submission.solved || false,
+                timestamp: submission.timestamp || admin.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Remove any remaining undefined values
+            Object.keys(resultData).forEach(key => {
+                if (resultData[key] === undefined) {
+                    delete resultData[key];
+                }
+            });
+
+            results.push(resultData);
+        }
+
+        console.log(`📊 Total Score Calculation: ${totalScore}/${totalPossible}`);
+
+        // Store contest result in Firestore
+        const contestResultRef = db.collection('users')
+            .doc(studentId)
+            .collection('contestResults')
+            .doc(contestId);
+
+        await contestResultRef.set({
+            contestId,
+            contestTitle: contest.eventTitle,
+            studentId,
+            totalScore: totalScore,
+            totalPossible: totalPossible,
+            problemsAttempted: submissions.length,
+            totalProblems,
+            submissions: results,
+            completedAt: completedAt || admin.firestore.FieldValue.serverTimestamp(),
+            verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 1) Update user's total scores and contests participated
+        let userName = 'Unknown';
+        let department = 'Unknown';
+
+        try {
+            const userDocRef = db.collection("users").doc(studentId);
+            const userSnapshot = await userDocRef.get();
+
+            if (userSnapshot.exists) {
+                const userData = userSnapshot.data();
+                userName = userData.userName || 'Unknown';
+                department = userData.department || 'Unknown';
+
+                await userDocRef.update({
+                    totalScore: admin.firestore.FieldValue.increment(totalScore),
+                    contestsParticipated: admin.firestore.FieldValue.increment(1)
+                });
+
+                console.log(`✓ Updated user ${studentId} total scores (+${totalScore})`);
+            }
+        } catch (e) {
+            console.error('Error updating user scores:', e);
+        }
+
+        // 2) Update userSubmissions collection
+        try {
+            const userSubmissionSnapshot = await db.collection("userSubmissions")
+                .where("userId", "==", studentId)
+                .get();
+
+            if (userSubmissionSnapshot.empty) {
+                // Create new submission record
+                await db.collection('userSubmissions').add({
+                    userId: studentId,
+                    userName: userName,
+                    department: department,
+                    totalScore: totalScore,
+                    submissions: [contestId],
+                    submissionCount: 1
+                });
+                console.log(`✓ Created new userSubmissions record for ${studentId}`);
+            } else {
+                // Update existing submission record
+                const submissionRef = userSubmissionSnapshot.docs[0].ref;
+                await submissionRef.update({
+                    userName: userName,
+                    department: department,
+                    submissions: admin.firestore.FieldValue.arrayUnion(contestId),
+                    totalScore: admin.firestore.FieldValue.increment(totalScore),
+                    submissionCount: admin.firestore.FieldValue.increment(1)
+                });
+                console.log(`✓ Updated userSubmissions for ${studentId}`);
+            }
+        } catch (e) {
+            console.error('Error updating userSubmissions:', e);
+        }
+
+        // 3) Update eventAttempts and eventResults
+        try {
+            // Find the event attempt
+            const eventSnapshot = await db.collection('eventAttempts')
+                .where('userId', '==', studentId)
+                .where('eventId', '==', contestId)
+                .get();
+
+            if (!eventSnapshot.empty) {
+                const attemptDoc = eventSnapshot.docs[0];
+
+                // Update attempt status
+                await attemptDoc.ref.update({
+                    status: 'completed',
+                    completed_at: admin.firestore.FieldValue.serverTimestamp(),
+                    points: totalScore
+                });
+
+                console.log(`✓ Updated eventAttempt ${attemptDoc.id}: status=completed, points=${totalScore}`);
+
+                // Create result record in eventResults
+                const resultData = {
+                    userId: studentId,
+                    userName: userName,
+                    department: department,
+                    eventId: contestId,
+                    eventTitle: contest.eventTitle || 'Unknown',
+                    points: totalScore,
+                    maxPoints: totalPossible,
+                    problemsAttempted: submissions.length,
+                    totalProblems: totalProblems,
+                    submittedAt: admin.firestore.FieldValue.serverTimestamp()
+                };
+
+                const resultRef = await db.collection('eventResults').add(resultData);
+
+                // Update attempt with result reference
+                await attemptDoc.ref.update({
+                    result_ref: resultRef.id
+                });
+
+                console.log(`✓ Created eventResult ${resultRef.id} with points=${totalScore}`);
+            } else {
+                console.warn(`⚠ No eventAttempt found for student ${studentId} and contest ${contestId}`);
+                console.log(`Creating new eventAttempt and eventResult...`);
+
+                // Create new eventAttempt if it doesn't exist
+                const newAttemptData = {
+                    userId: studentId,
+                    userName: userName,
+                    department: department,
+                    eventId: contestId,
+                    eventTitle: contest.eventTitle || 'Unknown',
+                    status: 'completed',
+                    started_at: admin.firestore.FieldValue.serverTimestamp(),
+                    completed_at: admin.firestore.FieldValue.serverTimestamp(),
+                    points: totalScore
+                };
+
+                const attemptRef = await db.collection('eventAttempts').add(newAttemptData);
+                console.log(`✓ Created new eventAttempt ${attemptRef.id} with points=${totalScore}`);
+
+                // Create result record in eventResults
+                const resultData = {
+                    userId: studentId,
+                    userName: userName,
+                    department: department,
+                    eventId: contestId,
+                    eventTitle: contest.eventTitle || 'Unknown',
+                    points: totalScore,
+                    maxPoints: totalPossible,
+                    problemsAttempted: submissions.length,
+                    totalProblems: totalProblems,
+                    submittedAt: admin.firestore.FieldValue.serverTimestamp()
+                };
+
+                const resultRef = await db.collection('eventResults').add(resultData);
+
+                // Update attempt with result reference
+                await attemptRef.update({
+                    result_ref: resultRef.id
+                });
+
+                console.log(`✓ Created eventResult ${resultRef.id} with points=${totalScore}`);
+            }
+
+            // Invalidate leaderboard cache
+            cache.delete('leaderboard:top20');
+        } catch (e) {
+            console.error('Error updating eventAttempts/eventResults:', e);
+            console.error('Error details:', e.message);
+        }
+
+        console.log(`✓ Contest ${contestId} completed by student ${studentId}. Final score: ${totalScore}/${totalPossible}`);
+
+        res.status(200).json({
+            success: true,
+            message: `Contest submitted successfully! Your final score: ${totalScore}/${totalPossible}`,
+            totalScore: totalScore,
+            totalPossible: totalPossible,
+            problemsAttempted: submissions.length,
+            totalProblems
+        });
+
+    } catch (error) {
+        console.error('Error in finishContest:', error);
+
+        let errorMessage = 'Failed to submit contest';
+        if (error.name === 'JsonWebTokenError') {
+            errorMessage = 'Invalid authentication token';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        res.status(500).json({
+            success: false,
+            message: errorMessage
+        });
+    }
+};
+
 
 module.exports = {
     adminProfile,
@@ -770,5 +1078,7 @@ module.exports = {
     AdminPasswordUpdate,
     getSubmissionDetails,
     getStudentProgressData,
-    getLeaderboard
+    getLeaderboard,
+    getPublicKey,
+    finishContest
 }

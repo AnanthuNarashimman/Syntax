@@ -47,11 +47,16 @@ export const AlertProvider = ({ children }) => {
     showAlert(message, 'warning', duration);
   }, [showAlert]);
 
+  const showInfo = useCallback((message, duration = 5000) => {
+    showAlert(message, 'info', duration);
+  }, [showAlert]);
+
   const value = {
     showAlert,
     showSuccess,
     showError,
     showWarning,
+    showInfo,
     hideAlert,
     alert
   };

@@ -1,16 +1,23 @@
 import { useEffect, useState } from 'react';
 import AdminNavbar from '../Components/AdminNavbar';
-import { BookOpen, X, ExternalLink, FileText, Tag, Users } from 'lucide-react';
+import { BookOpen, X, ExternalLink, FileText, Tag, Users, Trash2 } from 'lucide-react';
 import '../Styles/PageStyles/Articles.css'; // Import the new CSS file
 import { marked } from 'marked';
+import { useAlert } from '../contexts/AlertContext';
 
 function Articles() {
+  const { showSuccess, showError } = useAlert();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState('');
   const [modalTitle, setModalTitle] = useState('');
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchArticles();
@@ -27,7 +34,17 @@ function Articles() {
         setError(data.message || 'Failed to fetch articles.');
         setArticles([]);
       } else {
-        setArticles(data.articles || []);
+        const fetchedArticles = data.articles || [];
+        console.log('Fetched articles count:', fetchedArticles.length);
+        console.log('Sample article IDs:', fetchedArticles.slice(0, 3).map(a => ({ id: a.id, title: a.title })));
+
+        // Verify all articles have IDs
+        const articlesWithoutIds = fetchedArticles.filter(a => !a.id);
+        if (articlesWithoutIds.length > 0) {
+          console.error(`WARNING: ${articlesWithoutIds.length} articles missing IDs:`, articlesWithoutIds);
+        }
+
+        setArticles(fetchedArticles);
       }
     } catch (err) {
       setError('Failed to fetch articles.');
@@ -47,6 +64,78 @@ function Articles() {
     setModalOpen(false);
     setModalContent('');
     setModalTitle('');
+  }
+
+  function openDeleteModal(article) {
+    setArticleToDelete(article);
+    setDeleteModalOpen(true);
+  }
+
+  function closeDeleteModal() {
+    setDeleteModalOpen(false);
+    setArticleToDelete(null);
+  }
+
+  async function handleDeleteArticle() {
+    console.log('=== handleDeleteArticle called ===');
+    console.log('articleToDelete:', articleToDelete);
+    console.log('articleToDelete type:', typeof articleToDelete);
+    console.log('articleToDelete.id:', articleToDelete?.id);
+    console.log('articleToDelete.id type:', typeof articleToDelete?.id);
+    console.log('articleToDelete keys:', Object.keys(articleToDelete || {}));
+
+    if (!articleToDelete || !articleToDelete.id) {
+      console.error('ERROR: Invalid article - no ID found');
+      showError('Invalid article selected');
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      console.log('Deleting article with ID:', articleToDelete.id);
+      console.log('Full article object:', JSON.stringify(articleToDelete, null, 2));
+
+      const url = `/api/articles/${articleToDelete.id}`;
+      console.log('DELETE request URL:', url);
+      console.log('Encoded URL:', encodeURI(url));
+
+      const response = await fetch(url, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response content-type:', response.headers.get('content-type'));
+
+      // Read response as text first (only reads stream once)
+      const responseText = await response.text();
+      console.log('Response text:', responseText.substring(0, 200));
+
+      // Check if response is OK
+      if (!response.ok) {
+        let errorMessage = 'Failed to delete article';
+        try {
+          const data = JSON.parse(responseText);
+          errorMessage = data.message || errorMessage;
+        } catch (e) {
+          // Response is not JSON (might be HTML error page)
+          console.error('Non-JSON response:', responseText.substring(0, 200));
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse the text as JSON for success case
+      const data = JSON.parse(responseText);
+      showSuccess(data.message || 'Article deleted successfully!');
+      closeDeleteModal();
+      fetchArticles(); // Refresh the list
+    } catch (err) {
+      console.error('Error deleting article:', err);
+      showError(err.message || 'Failed to delete article');
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   return (
@@ -140,18 +229,18 @@ function Articles() {
                   
                   <div className="Article_CardFooter">
                     {article.articleLink ? (
-                      <a 
-                        href={article.articleLink} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={article.articleLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="Article_BtnPrimary"
                       >
                         <ExternalLink size={16} />
                         View Article
                       </a>
                     ) : article.articleContent ? (
-                      <button 
-                        className="Article_BtnPrimary" 
+                      <button
+                        className="Article_BtnPrimary"
                         onClick={() => openModal(article.title, article.articleContent)}
                       >
                         <FileText size={16} />
@@ -163,6 +252,14 @@ function Articles() {
                         No content available
                       </span>
                     )}
+                    <button
+                      className="Article_BtnDelete"
+                      onClick={() => openDeleteModal(article)}
+                      title="Delete Article"
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
@@ -183,10 +280,49 @@ function Articles() {
               <X size={28} />
             </button>
             <h2 className="Article_ModalTitle">{modalTitle}</h2>
-            <div 
+            <div
               className="Article_ModalArticleContent"
-              dangerouslySetInnerHTML={{ __html: marked.parse(modalContent) }} 
+              dangerouslySetInnerHTML={{ __html: marked.parse(modalContent) }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && articleToDelete && (
+        <div className="Article_ModalOverlay" onClick={closeDeleteModal}>
+          <div className="Article_ModalContent Article_DeleteModal" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={closeDeleteModal}
+              className="Article_ModalCloseBtn"
+              aria-label="Close"
+              disabled={deleteLoading}
+            >
+              <X size={28} />
+            </button>
+            <h2 className="Article_ModalTitle">Delete Article</h2>
+
+            <div className="Article_DeleteContent">
+              <p>Are you sure you want to delete the article <strong>"{articleToDelete.title}"</strong>?</p>
+              <p className="Article_WarningText">This action cannot be undone and will permanently remove the article.</p>
+            </div>
+
+            <div className="Article_ModalActions">
+              <button
+                className="Article_BtnSecondary"
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button
+                className="Article_BtnDanger"
+                onClick={handleDeleteArticle}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete Article'}
+              </button>
+            </div>
           </div>
         </div>
       )}

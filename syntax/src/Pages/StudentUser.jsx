@@ -161,6 +161,7 @@ const StudentUser = () => {
   const [skillsData, setSkillsData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [showSettingsTooltip, setShowSettingsTooltip] = useState(false);
 
   useEffect(() => {
     const fetchStudentProfile = async () => {
@@ -384,10 +385,22 @@ const StudentUser = () => {
                 <Edit3 size={16} />
                 Edit Profile
               </button>
-              <button className={styles.settingsButton}>
-                <Settings size={16} />
-                Settings
-              </button>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <button 
+                  className={styles.settingsButton}
+                  onMouseEnter={() => setShowSettingsTooltip(true)}
+                  onMouseLeave={() => setShowSettingsTooltip(false)}
+                  onClick={() => setShowSettingsTooltip(!showSettingsTooltip)}
+                >
+                  <Settings size={16} />
+                  Settings
+                </button>
+                {showSettingsTooltip && (
+                  <div className={styles.tooltip}>
+                    Theme customization and accessibility settings are coming soon.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </aside>

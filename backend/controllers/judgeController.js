@@ -205,7 +205,195 @@ const handleSubmitCode = async (req, res) => {
   }
 };
 
+// Submit Code for Contest Event (Tests Against All Test Cases in Event's Problems Array)
+// This is specifically for contest events where problems are stored in events collection
+// 1) Extracts submission details: source_code, language_id, event_id, problem_index
+// 2) Validates that all required fields are present
+// 3) Fetches the event document from 'events' collection
+// 4) Validates event exists and gets the specific problem from problems array using problem_index
+// 5) Combines visible test cases (exampleIO + openTestCases) and hidden test cases
+// 6) Validates at least one test case exists
+// 7) Prepares batch submission payload for Judge0 with all test cases
+// 8) Submits batch to Judge0 and gets execution tokens
+// 9) Polls Judge0 API until all submissions complete (max 30 seconds)
+// 10) Processes results and calculates:
+//     - How many tests passed vs total
+//     - Partial score based on percentage passed
+//     - Detailed results for each test (marked as visible/hidden)
+// 11) Returns comprehensive results including verdict, score, and test details
+// 12) Handles errors from Judge0 API or validation failures
+const handleContestSubmit = async (req, res) => {
+  const { source_code, language_id, event_id, problem_index } = req.body;
+
+  // Validate required fields
+  if (!source_code || !language_id || !event_id || problem_index === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: 'Source code, language ID, event ID, and problem index are required.'
+    });
+  }
+
+  try {
+    // Step 1: Fetch the event and its problems
+    const eventRef = db.collection('events').doc(event_id);
+    const eventDoc = await eventRef.get();
+
+    if (!eventDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contest event not found.'
+      });
+    }
+
+    const event = eventDoc.data();
+    const problem = event.problems?.[problem_index];
+
+    if (!problem) {
+      return res.status(404).json({
+        success: false,
+        message: `Problem at index ${problem_index} not found in contest.`
+      });
+    }
+
+    // Step 2: Get all test cases (visible + hidden)
+    const exampleTestCases = problem.exampleIO || problem.examples || [];
+    const openTestCases = problem.openTestCases || problem.visibleTestCases || [];
+    const hiddenTestCases = problem.hiddenTestCases || problem.testCases || [];
+
+    const visibleTestCases = [...exampleTestCases, ...openTestCases];
+    const allTestCases = [...visibleTestCases, ...hiddenTestCases];
+
+    if (allTestCases.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'This problem has no test cases.'
+      });
+    }
+
+    // Step 3: Prepare batch submission for Judge0
+    const submissions = allTestCases.map(testCase => ({
+      source_code: source_code.trim(),
+      language_id: parseInt(language_id),
+      stdin: testCase.input,
+      expected_output: testCase.output || testCase.expectedOutput,
+    }));
+
+    // Step 4: Submit batch to Judge0 (without wait - we'll poll for results)
+    const batchSubmitResponse = await axios.post(
+      `https://${process.env.JUDGE0_RAPIDAPI_HOST}/submissions/batch`,
+      { submissions },
+      {
+        params: { base64_encoded: 'false' },
+        headers: {
+          'content-type': 'application/json',
+          'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
+          'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
+        }
+      }
+    );
+
+    const tokens = batchSubmitResponse.data;
+    if (!Array.isArray(tokens)) {
+      throw new Error('Invalid response from Judge0 API');
+    }
+
+    const tokenList = tokens.map(t => t.token).join(',');
+
+    // Step 5: Poll for results until all submissions complete
+    let results = [];
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds max
+
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+
+      const resultsResponse = await axios.get(
+        `https://${process.env.JUDGE0_RAPIDAPI_HOST}/submissions/batch`,
+        {
+          params: {
+            tokens: tokenList,
+            base64_encoded: 'false',
+            fields: 'stdout,stderr,status,time,memory,compile_output'
+          },
+          headers: {
+            'X-RapidAPI-Key': process.env.JUDGE0_RAPIDAPI_KEY,
+            'X-RapidAPI-Host': process.env.JUDGE0_RAPIDAPI_HOST,
+          }
+        }
+      );
+
+      results = resultsResponse.data.submissions;
+
+      // Check if all submissions are complete (status.id not 1 or 2 = In Queue/Processing)
+      const allComplete = results.every(r => r.status && r.status.id !== 1 && r.status.id !== 2);
+
+      if (allComplete) {
+        break;
+      }
+
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      throw new Error('Timeout waiting for Judge0 results');
+    }
+
+    // Step 6: Process results
+    const testResults = results.map((result, index) => {
+      const isVisible = index < visibleTestCases.length;
+      const testCase = allTestCases[index];
+      const statusId = result.status?.id || 0;
+      const actualOutput = (result.stdout || '').trim();
+      const expectedOutput = (testCase.output || testCase.expectedOutput || '').trim();
+      const passed = statusId === 3 && actualOutput === expectedOutput;
+
+      return {
+        index: index + 1,
+        isVisible,
+        passed,
+        status: passed ? 'Accepted' : (statusId === 3 ? 'Wrong Answer' : result.status?.description || 'Error'),
+        time: result.time || 0,
+        memory: result.memory || 0,
+        // Only include input/output for visible test cases (security)
+        ...(isVisible ? {
+          input: testCase.input,
+          expectedOutput: testCase.output || testCase.expectedOutput,
+          actualOutput: result.stdout || ''
+        } : {})
+      };
+    });
+
+    const passedCount = testResults.filter(r => r.passed).length;
+    const totalCount = testResults.length;
+    const allPassed = passedCount === totalCount;
+    const pointsEarned = Math.round((passedCount / totalCount) * problem.points);
+
+    // Step 7: Return comprehensive results
+    return res.status(200).json({
+      success: allPassed,
+      verdict: allPassed ? 'Accepted' : 'Failed',
+      passedCount,
+      totalCount,
+      pointsEarned,
+      maxPoints: problem.points,
+      testResults,
+      message: allPassed
+        ? `Congratulations! Passed all ${totalCount} test cases.`
+        : `Passed ${passedCount} out of ${totalCount} test cases.`
+    });
+
+  } catch (error) {
+    const errorInfo = handleJudge0Error(error);
+    return res.status(errorInfo.statusCode).json({
+      success: false,
+      message: errorInfo.message,
+      error: errorInfo.details
+    });
+  }
+};
+
 module.exports = {
   handleRunCode,
   handleSubmitCode,
+  handleContestSubmit,
 };

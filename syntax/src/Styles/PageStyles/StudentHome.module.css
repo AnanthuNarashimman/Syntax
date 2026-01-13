@@ -1059,3 +1059,31 @@
     justify-content: center;
   }
 }
+
+/* Empty State Styles */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  gap: 1rem;
+}
+
+.emptyStateText {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.emptyStateSubtext {
+  font-size: 0.95rem;
+  color: #718096;
+  margin: 0;
+}

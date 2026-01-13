@@ -14,6 +14,7 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const multer = require("multer");
 const XLSX = require("xlsx");
+const { handleRunCode, handleSubmitCode, handleContestSubmit } = require("./controllers/judgeController");
 
 const security_key = process.env.SECURITY_KEY;
 
@@ -1710,6 +1711,61 @@ app.get("/api/articles", requireAdminAuth, async (req, res) => {
   }
 });
 
+// Article Delete API
+// 1) Executes function "requireAdminAuth" to check if the requested user is admin.
+// 2) Validates article ID
+// 3) Deletes the article from "articles" collection
+// 4) Returns success message
+// 5) If any errors, appropriate messages will be logged.
+app.delete("/api/articles/:articleId", requireAdminAuth, async (req, res) => {
+  console.log("=== DELETE /api/articles/:articleId called ===");
+  console.log("Full request URL:", req.originalUrl);
+  console.log("Request params:", req.params);
+  console.log("User:", req.user);
+
+  try {
+    const { articleId } = req.params;
+    console.log("Extracted articleId:", articleId);
+    console.log("Article ID type:", typeof articleId);
+    console.log("Article ID length:", articleId?.length);
+
+    if (!articleId) {
+      console.log("ERROR: Article ID is missing");
+      return res.status(400).json({ message: "Article ID is required." });
+    }
+
+    // Check if article exists
+    const articleRef = db.collection("articles").doc(articleId);
+    console.log("Fetching article from Firestore with ID:", articleId);
+    const articleDoc = await articleRef.get();
+    console.log("Article exists:", articleDoc.exists);
+
+    if (!articleDoc.exists) {
+      console.log("ERROR: Article not found in database");
+      console.log("Attempted to find article with ID:", articleId);
+
+      // List all articles to help debug
+      const allArticles = await db.collection("articles").limit(5).get();
+      console.log("Sample of existing article IDs in database:");
+      allArticles.forEach(doc => console.log("  -", doc.id));
+
+      return res.status(404).json({ message: "Article not found." });
+    }
+
+    console.log("Article found, proceeding to delete");
+    // Delete the article
+    await articleRef.delete();
+    console.log("Article deleted successfully");
+
+    res.status(200).json({ message: "Article deleted successfully!" });
+  } catch (error) {
+    console.error("Error deleting article:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to delete article.", error: error.message });
+  }
+});
+
 // Super Admin API for fetching Admins
 
 // 1) Gets a bodyless request from frontend.
@@ -1726,13 +1782,29 @@ app.get("/api/super-admin/admins", requireSuperAdminAuth, async (req, res) => {
     const admins = [];
     snapshot.forEach((doc) => {
       const adminData = doc.data();
+
+      // Serialize Firestore Timestamp to a format the frontend can parse
+      let createdAtSerialized = null;
+      if (adminData.createdAt) {
+        if (adminData.createdAt.toDate) {
+          // Firestore Timestamp object - convert to ISO string
+          createdAtSerialized = adminData.createdAt.toDate().toISOString();
+        } else if (adminData.createdAt._seconds) {
+          // Already serialized timestamp with _seconds
+          createdAtSerialized = adminData.createdAt;
+        } else {
+          // Unknown format, pass as-is
+          createdAtSerialized = adminData.createdAt;
+        }
+      }
+
       admins.push({
         id: doc.id,
         userName: adminData.userName,
         email: adminData.email,
         isAdmin: adminData.isAdmin,
         isSuper: adminData.isSuper || false,
-        createdAt: adminData.createdAt,
+        createdAt: createdAtSerialized,
       });
     });
     res.status(200).json({ admins });
@@ -2473,6 +2545,14 @@ app.get('/api/student/articles', requireStudentAuth, async (req, res) => {
     }
 });
 
+// Judge0 Code Execution Routes
+// These routes handle secure server-side code execution for contests
+// 1) /api/judge/run - Public route for code playground (run code with custom input)
+// 2) /api/judge/submit - Protected route for contest submissions (validates against test cases)
+// 3) /api/judge/contest-submit - Protected route for contest event submissions
+app.post('/api/judge/run', handleRunCode);
+app.post('/api/judge/submit', requireStudentAuth, handleSubmitCode);
+app.post('/api/judge/contest-submit', requireStudentAuth, handleContestSubmit);
 
 
 // Starting up Express Server

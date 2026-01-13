@@ -169,28 +169,56 @@ function SuperManageUsers() {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
-    
-    let date;
-    if (timestamp.toDate) {
-      // Firestore Timestamp object (client-side)
-      date = timestamp.toDate();
-    } else if (timestamp._seconds) {
-      // Serialized Firestore timestamp from API
-      date = new Date(timestamp._seconds * 1000);
-    } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-      // ISO string or Unix timestamp
-      date = new Date(timestamp);
-    } else {
+
+    try {
+      let date;
+
+      // Handle Firestore Timestamp object (client-side)
+      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+      }
+      // Handle serialized Firestore timestamp from API (_seconds property)
+      else if (timestamp._seconds !== undefined) {
+        date = new Date(timestamp._seconds * 1000);
+      }
+      // Handle objects with seconds property (alternative format)
+      else if (timestamp.seconds !== undefined) {
+        date = new Date(timestamp.seconds * 1000);
+      }
+      // Handle ISO string or Unix timestamp (milliseconds)
+      else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+      }
+      // Handle Unix timestamp (milliseconds)
+      else if (typeof timestamp === 'number') {
+        // If number is less than year 2000 in milliseconds, it's likely in seconds
+        date = new Date(timestamp < 10000000000 ? timestamp * 1000 : timestamp);
+      }
+      // Handle plain Date object
+      else if (timestamp instanceof Date) {
+        date = timestamp;
+      }
+      // Unknown format
+      else {
+        console.warn('Unknown timestamp format:', timestamp);
+        return 'N/A';
+      }
+
+      // Validate the date
+      if (!date || isNaN(date.getTime())) {
+        console.warn('Invalid date after parsing:', timestamp);
+        return 'N/A';
+      }
+
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, timestamp);
       return 'N/A';
     }
-    
-    if (isNaN(date.getTime())) return 'N/A';
-    
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   };
 
   if (loading) {

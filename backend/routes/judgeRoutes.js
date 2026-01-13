@@ -4,7 +4,8 @@ const router = express.Router();
 
 const {
   handleRunCode,
-  handleSubmitCode
+  handleSubmitCode,
+  handleContestSubmit
 } = require('../controllers/judgeController');
 
 const { requireStudentAuth } = require('../middleware/authMiddleware');
@@ -14,5 +15,8 @@ router.post('/run', handleRunCode);
 
 // Protected route - only authenticated students can submit for grading
 router.post('/submit', requireStudentAuth, handleSubmitCode);
+
+// Protected route - for contest event submissions
+router.post('/contest-submit', requireStudentAuth, handleContestSubmit);
 
 module.exports = router;
