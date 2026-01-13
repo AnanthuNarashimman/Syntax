@@ -15,6 +15,7 @@ const cors = require("cors");
 const multer = require("multer");
 const XLSX = require("xlsx");
 const { handleRunCode, handleSubmitCode, handleContestSubmit } = require("./controllers/judgeController");
+const { logViolation, getContestViolations, getStudentViolations } = require("./controllers/proctoringController");
 
 const security_key = process.env.SECURITY_KEY;
 
@@ -2553,6 +2554,16 @@ app.get('/api/student/articles', requireStudentAuth, async (req, res) => {
 app.post('/api/judge/run', handleRunCode);
 app.post('/api/judge/submit', requireStudentAuth, handleSubmitCode);
 app.post('/api/judge/contest-submit', requireStudentAuth, handleContestSubmit);
+
+// Proctoring Routes
+// These routes handle proctoring violation logging and retrieval
+// 1) /api/proctoring/log-violation - Student route to log violations during strict mode contests
+// 2) /api/proctoring/contest/:contestId/violations - Admin route to view all violations for a contest
+// 3) /api/proctoring/student/:studentId/violations - Admin route to view violations for a student
+app.post('/api/proctoring/log-violation', requireStudentAuth, logViolation);
+app.get('/api/proctoring/contest/:contestId/violations', requireAdminAuth, getContestViolations);
+app.get('/api/proctoring/student/:studentId/violations', requireAdminAuth, getStudentViolations);
+app.get('/api/proctoring/student/:studentId/contest/:contestId/violations', requireAdminAuth, getStudentViolations);
 
 
 // Starting up Express Server

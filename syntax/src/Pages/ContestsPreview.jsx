@@ -340,7 +340,7 @@ const ContestsPreview = () => {
       <>
         <StudentNavbar />
         <div className={styles.studentContests}>
-          <div className={styles.contestsContainer} style={{marginTop: '100px !important'}}>
+          <div className={styles.loadingContainer}>
             <Loader />
           </div>
         </div>
@@ -501,7 +501,7 @@ const ContestsPreview = () => {
               {/* Results Display for Completed Events */}
               {eventStatus === 'completed' && (
                 <div className={styles.resultsCard}>
-                  <h3 className={styles.resultsTitle}>
+                  <h3 className={styles.contestPreviewResultsTitle}>
                     <Trophy size={24} />
                     Your Results
                   </h3>
@@ -510,31 +510,28 @@ const ContestsPreview = () => {
                       {/* Check if it's API data (from eventResults collection) or localStorage data */}
                       {eventResults.points !== undefined ? (
                         // API data format
-                        <div className={styles.apiResultsLayout}>
-                          <div className={styles.leftResultsPanel}>
-                            <div className={styles.pointsSection}>
-                              <div className={styles.pointsDisplay}>
-                                <div className={styles.pointsIcon}>
-                                  <Trophy size={32} />
-                                </div>
-                                <div className={styles.pointsInfo}>
-                                  <div className={styles.pointsValue}>{eventResults.points}</div>
-                                  <div className={styles.pointsLabel}>Points Earned</div>
-                                </div>
+                        <div className={styles.contestPreviewApiResultsLayout}>
+                          <div className={styles.contestPreviewResultsMainCard}>
+                            <div className={styles.contestPreviewScoreSection}>
+                              <div className={styles.contestPreviewScoreIconWrapper}>
+                                <Trophy size={40} />
+                              </div>
+                              <div className={styles.contestPreviewScoreContent}>
+                                <div className={styles.contestPreviewScoreValue}>{eventResults.points}</div>
+                                <div className={styles.contestPreviewScoreLabel}>Points Earned</div>
                               </div>
                             </div>
                             
-                            <div className={styles.submissionSection}>
-                              <div className={styles.submissionHeader}>
-                                <CheckCircle size={20} />
+                            <div className={styles.contestPreviewSubmissionInfo}>
+                              <div className={styles.contestPreviewSubmissionHeader}>
+                                <CheckCircle size={18} />
                                 <span>Successfully Submitted</span>
                               </div>
-                              <div className={styles.submissionDetails}>
-                                <div className={styles.submissionItem}>
-                                  <Calendar size={16} />
-                                  <div className={styles.submissionInfo}>
-                                    <span className={styles.submissionLabel}>Submitted on</span>
-                                    <span className={styles.submissionValue}>
+                              <div className={styles.contestPreviewSubmissionTimeWrapper}>
+                                <Calendar size={18} />
+                                <div className={styles.contestPreviewSubmissionTimeContent}>
+                                  <span className={styles.contestPreviewTimeLabel}>Submitted on</span>
+                                  <span className={styles.contestPreviewTimeValue}>
                                       {(() => {
                                         try {
                                           let date;
@@ -583,15 +580,7 @@ const ContestsPreview = () => {
                                           return 'Date parsing error';
                                         }
                                       })()}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className={styles.submissionItem}>
-                                  <Target size={16} />
-                                  <div className={styles.submissionInfo}>
-                                    <span className={styles.submissionLabel}>Event ID</span>
-                                    <span className={styles.submissionValue}>{eventResults.eventId}</span>
-                                  </div>
+                                  </span>
                                 </div>
                               </div>
                             </div>

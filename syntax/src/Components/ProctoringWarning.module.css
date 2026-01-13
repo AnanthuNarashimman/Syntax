@@ -1,0 +1,357 @@
+/* Proctoring Warning Modal Styles */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.warningIcon {
+  color: #ff9800;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.violationBox {
+  background: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.violationLabel {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.violationType {
+  font-size: 16px;
+  color: #e65100;
+  font-weight: 600;
+}
+
+.countBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.countLabel {
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.currentCount {
+  color: #ff5252;
+}
+
+.separator {
+  color: #999;
+  font-size: 20px;
+}
+
+.maxCount {
+  color: #666;
+  font-size: 20px;
+}
+
+.dangerMessage {
+  background: #ffebee;
+  border-left: 4px solid #f44336;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.dangerText {
+  color: #c62828;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.dangerSubtext {
+  color: #d32f2f;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.infoMessage {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.infoText {
+  color: #1565c0;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.infoSubtext {
+  color: #1976d2;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.rulesBox {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.rulesTitle {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.rulesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rulesList li {
+  font-size: 13px;
+  color: #666;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.acknowledgeButton {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.acknowledgeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+}
+
+.acknowledgeButton:active {
+  transform: translateY(0);
+}
+
+.acknowledgeButtonDanger {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.acknowledgeButtonDanger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+}
+
+.acknowledgeButtonDanger:active {
+  transform: translateY(0);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modal {
+    background: #1e1e1e;
+  }
+
+  .title {
+    color: #ffffff;
+  }
+
+  .closeButton {
+    color: #aaa;
+  }
+
+  .closeButton:hover {
+    background: #333;
+    color: #fff;
+  }
+
+  .countBox {
+    background: #2a2a2a;
+  }
+
+  .rulesBox {
+    background: #2a2a2a;
+  }
+
+  .rulesTitle {
+    color: #ffffff;
+  }
+
+  .rulesList li {
+    color: #aaa;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .modal {
+    padding: 24px;
+    width: 95%;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .count {
+    font-size: 24px;
+  }
+
+  .acknowledgeButton,
+  .acknowledgeButtonDanger {
+    width: 100%;
+  }
+}

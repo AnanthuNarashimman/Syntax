@@ -48,16 +48,18 @@ const studentRoutes = require('./routes/studentRoutes');
 const superRoutes = require('./routes/superRoutes');
 const validationRoutes = require('./routes/validationRoutes');
 const judgeRoutes = require('./routes/judgeRoutes');
+const proctoringRoutes = require('./routes/proctoringRoutes');
 
 
-app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', eventRoutes);
-app.use('/api/admin', adminRoutes); 
+app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/super-admin', superRoutes);
 app.use('/api/student', validationRoutes);
 app.use('/api/judge', judgeRoutes);
+app.use('/api/proctoring', proctoringRoutes);
 
 
 // Starting up Express Server

@@ -19,6 +19,9 @@ import {
   saveSubmissionSummary,
   clearAllSubmissions
 } from '../utils/encryption';
+import useProctoring from '../hooks/useProctoring';
+import ProctoringWarning from '../Components/ProctoringWarning';
+import StartProctoringModal from '../Components/StartProctoringModal';
 
 // Language Configuration with Judge0 IDs
 const languageOptions = {
@@ -89,9 +92,78 @@ function CodingContestPage() {
   const [problemResults, setProblemResults] = useState({});
   const [showResults, setShowResults] = useState(false);
 
+  // Proctoring State
+  const [showStartProctoringModal, setShowStartProctoringModal] = useState(false);
+
   // Refs
   const autoSaveTimer = useRef(null);
   const editorRef = useRef(null);
+
+  // Proctoring - Only active for strict mode contests
+  const isStrictMode = contest?.eventMode === 'strict';
+
+  // Auto-submit handler for proctoring violations
+  const handleProctoringAutoSubmit = useCallback(async (reason) => {
+    showError(`Contest auto-submitted: ${reason}`);
+    console.warn(`⚠️ Auto-submitting contest: ${reason}`);
+
+    // Submit whatever the user has completed so far (even if nothing)
+    try {
+      showInfo('Submitting your contest due to proctoring violations...');
+
+      const submissions = getAllSubmissionSummaries(problemId, problems.length);
+      const submissionArray = Object.entries(submissions).map(([index, submission]) => ({
+        ...submission,
+        problemIndex: parseInt(index)
+      }));
+
+      // Submit to backend - even if no submissions (to record the disqualification)
+      await axios.post('/api/student/finish-contest', {
+        contestId: problemId,
+        submissions: submissionArray,
+        totalProblems: problems.length,
+        completedAt: new Date().toISOString(),
+        disqualified: true,
+        disqualificationReason: reason
+      }, {
+        withCredentials: true
+      });
+
+      // Clear all local data
+      clearAllSubmissions(problemId, problems.length);
+      
+      const message = submissionArray.length > 0 
+        ? `Contest submitted with ${submissionArray.length} problem(s) completed. You were disqualified due to proctoring violations.`
+        : 'Contest submitted with 0 score due to proctoring violations.';
+      
+      showInfo(message);
+      console.log(`✓ ${message}`);
+
+    } catch (error) {
+      console.error('Error during proctoring auto-submit:', error);
+      showError('Failed to submit contest. Please contact support.');
+    }
+
+    // Clear proctoring data
+    localStorage.removeItem(`proctoring_violations_${problemId}`);
+    localStorage.removeItem(`proctoring_log_${problemId}`);
+
+    // Navigate away
+    setTimeout(() => {
+      navigate('/student-contests');
+    }, 2000);
+  }, [problemId, problems, navigate, showError, showInfo]);
+
+  // Initialize proctoring hook
+  const {
+    violations,
+    maxViolations,
+    showWarning,
+    setShowWarning,
+    violationType,
+    isProctoringActive,
+    startProctoring
+  } = useProctoring(problemId, isStrictMode, handleProctoringAutoSubmit);
 
   // OPTIMIZED: Fetch Contest Data - fetch single contest instead of all
   useEffect(() => {
@@ -157,6 +229,43 @@ function CodingContestPage() {
 
     fetchContest();
   }, [problemId, navigate, showError]);
+
+  // Show proctoring modal for strict mode contests
+  useEffect(() => {
+    if (contest && isStrictMode && !isProctoringActive) {
+      console.log('🔒 Strict mode detected - showing proctoring modal');
+      // Show modal that requires user click to start proctoring (fixes fullscreen issue)
+      setShowStartProctoringModal(true);
+    }
+  }, [contest, isStrictMode, isProctoringActive]);
+
+  // Handle proctoring start (called when user clicks "Start Exam" button)
+  const handleStartProctoring = useCallback(async () => {
+    console.log('User clicked Start Proctored Exam');
+    
+    // Enter fullscreen IMMEDIATELY with user gesture (before any async operations)
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        console.log('✅ Fullscreen activated successfully');
+        
+        // Close modal and activate proctoring ONLY after successful fullscreen
+        setShowStartProctoringModal(false);
+        showInfo('Proctoring activated! Stay in fullscreen mode and keep focus on the exam window.');
+        startProctoring();
+      } else {
+        // Browser doesn't support fullscreen API
+        console.error('❌ Fullscreen API not supported');
+        showError('Your browser does not support fullscreen mode. Please use Chrome, Firefox, or Edge for this exam.');
+        // Keep modal open - don't start contest
+      }
+    } catch (err) {
+      // User denied fullscreen permission or other error
+      console.error('❌ Failed to enter fullscreen:', err);
+      showError('Fullscreen mode is required for this proctored exam. Please click "Start Exam" again and allow fullscreen.');
+      // Keep modal open - don't start contest, don't close modal
+    }
+  }, [startProctoring, showInfo, showError]);
 
   // Load submission summaries from localStorage to restore progress after refresh
   useEffect(() => {
@@ -232,7 +341,7 @@ function CodingContestPage() {
   // Handle time expiry
   useEffect(() => {
     if (timeRemaining === 0 && timerStarted) {
-      handleAutoSubmit();
+      handleTimerAutoSubmit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining, timerStarted]);
@@ -571,7 +680,7 @@ function CodingContestPage() {
   };
 
   // Auto-submit when timer expires
-  const handleAutoSubmit = async () => {
+  const handleTimerAutoSubmit = async () => {
     showInfo('Time expired! Auto-submitting your contest...');
 
     // Save final results with all encrypted submissions
@@ -866,6 +975,26 @@ function CodingContestPage() {
     <div className={styles.codingContestPage}>
       <StudentNavbar />
 
+      {/* Start Proctoring Modal - Shows before exam starts */}
+      {isStrictMode && (
+        <StartProctoringModal
+          show={showStartProctoringModal}
+          onStart={handleStartProctoring}
+          contestTitle={contest?.eventTitle || 'Contest'}
+        />
+      )}
+
+      {/* Proctoring Warning Modal - Only shown for strict mode */}
+      {isStrictMode && (
+        <ProctoringWarning
+          show={showWarning}
+          violation={violationType}
+          count={violations}
+          maxViolations={maxViolations}
+          onClose={() => setShowWarning(false)}
+        />
+      )}
+
       <div className={styles.contestContainer}>
         {/* Header */}
         <div className={styles.contestHeader}>
@@ -891,13 +1020,24 @@ function CodingContestPage() {
 
           <div className={styles.headerRight}>
             {contest.eventMode === 'strict' && (
-              <div className={styles.timerCard}>
-                <Clock className={styles.timerIcon} />
-                <div className={styles.timerInfo}>
-                  <span className={styles.timerLabel}>Time Left</span>
-                  <span className={styles.timerValue}>{formatTime(timeRemaining)}</span>
+              <>
+                <div className={styles.timerCard}>
+                  <Clock className={styles.timerIcon} />
+                  <div className={styles.timerInfo}>
+                    <span className={styles.timerLabel}>Time Left</span>
+                    <span className={styles.timerValue}>{formatTime(timeRemaining)}</span>
+                  </div>
                 </div>
-              </div>
+
+                {/* Proctoring Indicator */}
+                <div className={styles.proctoringBadge} title={`${violations}/${maxViolations} violations`}>
+                  <AlertCircle size={16} />
+                  <span>Proctored</span>
+                  <span className={violations > 0 ? styles.violationCountActive : styles.violationCount}>
+                    {violations}/{maxViolations}
+                  </span>
+                </div>
+              </>
             )}
 
             <button

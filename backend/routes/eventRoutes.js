@@ -48,4 +48,6 @@ router.delete(
   articleController.deleteArticle
 );
 
+router.post('/student/finish-contest', middleware.requireStudentAuth, eventController.finishContest);
+
 module.exports = router;

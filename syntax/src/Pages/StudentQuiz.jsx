@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, CheckCircle, Home } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, Home, AlertCircle } from 'lucide-react';
 import StudentNavbar from '../Components/StudentNavbar';
 import styles from '../Styles/PageStyles/StudentQuiz.module.css';
 import axios from 'axios';
+import { useAlert } from '../contexts/AlertContext';
+import useProctoring from '../hooks/useProctoring';
+import ProctoringWarning from '../Components/ProctoringWarning';
+import StartProctoringModal from '../Components/StartProctoringModal';
 
 const StudentQuiz = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showError, showSuccess, showInfo } = useAlert();
 
   // Get quiz data from navigation state
   const quizData = location.state?.quizData;
@@ -20,6 +25,52 @@ const StudentQuiz = () => {
   const [quizStartTime] = useState(Date.now());
   const [quizResults, setQuizResults] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Proctoring State
+  const [showStartProctoringModal, setShowStartProctoringModal] = useState(false);
+
+  // Proctoring - Only active for strict mode quizzes
+  const isStrictMode = quizData?.eventMode === 'strict';
+
+  // Auto-submit handler for proctoring violations
+  const handleProctoringAutoSubmit = useCallback(async (reason) => {
+    showError(`Quiz auto-submitted: ${reason}`);
+    console.warn(`⚠️ Auto-submitting quiz: ${reason}`);
+
+    // Submit quiz with current answers (even if incomplete)
+    try {
+      showInfo('Submitting your quiz due to proctoring violations...');
+      
+      // Call the existing handleSubmit but mark as disqualified
+      await handleSubmitInternal(true, reason);
+      
+    } catch (error) {
+      console.error('Error during proctoring auto-submit:', error);
+      showError('Failed to submit quiz. Please contact support.');
+    }
+
+    // Clear proctoring data
+    if (quizData?.id) {
+      localStorage.removeItem(`proctoring_violations_${quizData.id}`);
+      localStorage.removeItem(`proctoring_log_${quizData.id}`);
+    }
+
+    // Navigate away
+    setTimeout(() => {
+      navigate('/student-contests');
+    }, 2000);
+  }, [quizData, navigate, showError, showInfo]);
+
+  // Initialize proctoring hook
+  const {
+    violations,
+    maxViolations,
+    showWarning,
+    setShowWarning,
+    violationType,
+    isProctoringActive,
+    startProctoring
+  } = useProctoring(quizData?.id, isStrictMode, handleProctoringAutoSubmit);
 
   // Initialize timer and load saved answers
   useEffect(() => {
@@ -44,6 +95,42 @@ const StudentQuiz = () => {
       setCurrentQuestion(parseInt(savedQuestion));
     }
   }, [quizData, navigate]);
+
+  // Show proctoring modal for strict mode quizzes
+  useEffect(() => {
+    if (quizData && isStrictMode && !isProctoringActive && !showResults) {
+      console.log('🔒 Strict mode quiz detected - showing proctoring modal');
+      setShowStartProctoringModal(true);
+    }
+  }, [quizData, isStrictMode, isProctoringActive, showResults]);
+
+  // Handle proctoring start (called when user clicks "Start Exam" button)
+  const handleStartProctoring = useCallback(async () => {
+    console.log('User clicked Start Proctored Quiz');
+    
+    // Enter fullscreen IMMEDIATELY with user gesture
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        console.log('✅ Fullscreen activated successfully');
+        
+        // Close modal and activate proctoring ONLY after successful fullscreen
+        setShowStartProctoringModal(false);
+        showInfo('Proctoring activated! Stay in fullscreen mode and keep focus on the quiz window.');
+        startProctoring();
+      } else {
+        // Browser doesn't support fullscreen API
+        console.error('❌ Fullscreen API not supported');
+        showError('Your browser does not support fullscreen mode. Please use Chrome, Firefox, or Edge for this quiz.');
+        // Keep modal open - don't start quiz
+      }
+    } catch (err) {
+      // User denied fullscreen permission or other error
+      console.error('❌ Failed to enter fullscreen:', err);
+      showError('Fullscreen mode is required for this proctored quiz. Please click "Start Quiz" again and allow fullscreen.');
+      // Keep modal open - don't start quiz
+    }
+  }, [startProctoring, showInfo, showError]);
 
   // Timer countdown
   useEffect(() => {
@@ -104,7 +191,8 @@ const StudentQuiz = () => {
     setCurrentQuestion(questionIndex);
   };
 
-  const handleSubmit = async () => {
+  // Internal submit handler that can be called by both user and proctoring auto-submit
+  const handleSubmitInternal = async (isDisqualified = false, disqualificationReason = null) => {
     setIsSubmitting(true);
     
     try {
@@ -124,6 +212,8 @@ const StudentQuiz = () => {
         timeTaken: (quizData.durationMinutes || 30) * 60 - timeRemaining,
         totalQuestions: questions.length,
         answeredQuestions: Object.keys(selectedAnswers).length,
+        disqualified: isDisqualified,
+        disqualificationReason: disqualificationReason,
         questionDetails: questions.map((question, index) => ({
           questionIndex: index,
           question: question.question,
@@ -190,6 +280,11 @@ const StudentQuiz = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Public submit handler (called by user clicking submit button)
+  const handleSubmit = async () => {
+    await handleSubmitInternal(false, null);
   };
 
   const handleRestart = () => {
@@ -362,6 +457,27 @@ const StudentQuiz = () => {
   return (
     <div className={styles.studentQuiz}>
       <StudentNavbar />
+
+      {/* Start Proctoring Modal - Shows before quiz starts */}
+      {isStrictMode && (
+        <StartProctoringModal
+          show={showStartProctoringModal}
+          onStart={handleStartProctoring}
+          contestTitle={quizData?.eventTitle || quizData?.title || 'Quiz'}
+        />
+      )}
+
+      {/* Proctoring Warning Modal - Only shown for strict mode */}
+      {isStrictMode && (
+        <ProctoringWarning
+          show={showWarning}
+          violation={violationType}
+          count={violations}
+          maxViolations={maxViolations}
+          onClose={() => setShowWarning(false)}
+        />
+      )}
+
       <div className={styles.quizContainer}>
         {/* Quiz Header */}
         <div className={styles.quizHeader}>
@@ -380,6 +496,17 @@ const StudentQuiz = () => {
               {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
             </span>
           </div>
+
+          {/* Proctoring Indicator */}
+          {isStrictMode && (
+            <div className={styles.proctoringBadge} title={`${violations}/${maxViolations} violations`}>
+              <AlertCircle size={16} />
+              <span>Proctored</span>
+              <span className={violations > 0 ? styles.violationCountActive : styles.violationCount}>
+                {violations}/{maxViolations}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Main Quiz Layout */}

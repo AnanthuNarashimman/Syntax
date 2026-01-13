@@ -13,9 +13,6 @@ const { requireStudentAuth } = require('../middleware/authMiddleware');
 // Public route - anyone can run code in the playground
 router.post('/run', handleRunCode);
 
-// Protected route - only authenticated students can submit for grading
-router.post('/submit', requireStudentAuth, handleSubmitCode);
-
 // Protected route - for contest event submissions
 router.post('/contest-submit', requireStudentAuth, handleContestSubmit);
 
