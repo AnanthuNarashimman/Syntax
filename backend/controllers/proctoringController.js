@@ -3,7 +3,7 @@ const { db, admin } = require("../config/firebase");
 // Log a proctoring violation
 // 1) Gets contest ID, violation type, and count from request
 // 2) Gets student ID from authenticated user
-// 3) Stores violation log in Firestore
+// 3) Stores violation in a single document per user-event using transaction
 // 4) Returns success response
 // 5) In case of errors or exceptions, appropriate logs are made
 const logViolation = async (req, res) => {
@@ -25,28 +25,57 @@ const logViolation = async (req, res) => {
       });
     }
 
-    // Get user details
+    // Get user details (outside transaction for efficiency)
     const userDoc = await db.collection("users").doc(userId).get();
     const userData = userDoc.exists ? userDoc.data() : {};
 
-    // Create proctoring log entry
-    const violationLog = {
-      userId,
-      userName: userData.userName || "Unknown",
-      userEmail: userData.email || "",
-      contestId,
-      violationType,
-      violationCount,
-      timestamp: timestamp || new Date().toISOString(),
-      userAgent: req.headers['user-agent'] || "Unknown",
-      ipAddress: req.ip || req.connection.remoteAddress || "Unknown",
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    };
+    // Document ID: userId_contestId (one document per user-contest pair)
+    const docId = `${userId}_${contestId}`;
+    const docRef = db.collection("proctoringLogs").doc(docId);
 
-    // Store in Firestore
-    await db.collection("proctoringLogs").add(violationLog);
+    // Use transaction to safely handle concurrent writes
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(docRef);
 
-    // Also update a summary in the contest result document
+      const violationEntry = {
+        type: violationType,
+        count: violationCount,
+        timestamp: timestamp || new Date().toISOString(),
+        userAgent: req.headers['user-agent'] || "Unknown",
+        ipAddress: req.ip || req.connection.remoteAddress || "Unknown"
+      };
+
+      if (doc.exists) {
+        // Document exists - append to violations array
+        const currentData = doc.data();
+        const violations = currentData.violations || [];
+        violations.push(violationEntry);
+
+        transaction.update(docRef, {
+          totalViolations: violations.length,
+          violations: violations,
+          lastViolationType: violationType,
+          lastViolationAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      } else {
+        // Document doesn't exist - create new document
+        transaction.set(docRef, {
+          userId,
+          userName: userData.userName || "Unknown",
+          userEmail: userData.email || "",
+          contestId,
+          totalViolations: 1,
+          violations: [violationEntry],
+          lastViolationType: violationType,
+          lastViolationAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+
+    // Also update summary in the contest result document
     const contestResultRef = db.collection("users")
       .doc(userId)
       .collection("contestResults")
@@ -55,14 +84,12 @@ const logViolation = async (req, res) => {
     const contestResultDoc = await contestResultRef.get();
 
     if (contestResultDoc.exists) {
-      // Update existing result with violation count
       await contestResultRef.update({
         proctoringViolations: admin.firestore.FieldValue.increment(1),
         lastViolationType: violationType,
         lastViolationAt: admin.firestore.FieldValue.serverTimestamp()
       });
     } else {
-      // Create summary document if it doesn't exist yet
       await contestResultRef.set({
         proctoringViolations: 1,
         lastViolationType: violationType,
@@ -89,8 +116,8 @@ const logViolation = async (req, res) => {
 
 // Get proctoring violations for a contest (Admin only)
 // 1) Gets contest ID from request
-// 2) Fetches all violation logs for that contest
-// 3) Returns violation logs grouped by student
+// 2) Fetches all violation documents for that contest
+// 3) Returns violation logs grouped by student with detailed violation arrays
 // 4) In case of errors or exceptions, appropriate logs are made
 const getContestViolations = async (req, res) => {
   try {
@@ -103,41 +130,46 @@ const getContestViolations = async (req, res) => {
       });
     }
 
-    // Fetch all violations for this contest
+    // Fetch all violation documents for this contest
     const violationsSnapshot = await db
       .collection("proctoringLogs")
       .where("contestId", "==", contestId)
-      .orderBy("createdAt", "desc")
       .get();
 
-    const violations = [];
+    if (violationsSnapshot.empty) {
+      return res.status(200).json({
+        success: true,
+        contestId,
+        totalViolations: 0,
+        totalStudents: 0,
+        violationsByUser: []
+      });
+    }
+
+    const violationsByUser = [];
+    let totalViolationCount = 0;
+
     violationsSnapshot.forEach(doc => {
-      violations.push({
-        id: doc.id,
-        ...doc.data()
+      const data = doc.data();
+      totalViolationCount += data.totalViolations || 0;
+
+      violationsByUser.push({
+        userId: data.userId,
+        userName: data.userName,
+        userEmail: data.userEmail,
+        totalViolations: data.totalViolations,
+        lastViolationType: data.lastViolationType,
+        lastViolationAt: data.lastViolationAt,
+        violations: data.violations || []
       });
     });
-
-    // Group by user
-    const violationsByUser = violations.reduce((acc, violation) => {
-      const userId = violation.userId;
-      if (!acc[userId]) {
-        acc[userId] = {
-          userId: violation.userId,
-          userName: violation.userName,
-          userEmail: violation.userEmail,
-          violations: []
-        };
-      }
-      acc[userId].violations.push(violation);
-      return acc;
-    }, {});
 
     res.status(200).json({
       success: true,
       contestId,
-      totalViolations: violations.length,
-      violationsByUser: Object.values(violationsByUser)
+      totalViolations: totalViolationCount,
+      totalStudents: violationsByUser.length,
+      violationsByUser
     });
 
   } catch (error) {
@@ -151,9 +183,9 @@ const getContestViolations = async (req, res) => {
 };
 
 // Get proctoring violations for a specific student (Admin only)
-// 1) Gets student ID and contest ID from request
-// 2) Fetches all violation logs for that student in that contest
-// 3) Returns violation logs
+// 1) Gets student ID and optional contest ID from request
+// 2) Fetches violation documents for that student
+// 3) Returns violation logs with detailed violation arrays
 // 4) In case of errors or exceptions, appropriate logs are made
 const getStudentViolations = async (req, res) => {
   try {
@@ -166,28 +198,45 @@ const getStudentViolations = async (req, res) => {
       });
     }
 
-    let query = db.collection("proctoringLogs").where("userId", "==", studentId);
+    let violationsData = [];
 
     if (contestId) {
-      query = query.where("contestId", "==", contestId);
+      // Get specific contest violations for this student
+      const docId = `${studentId}_${contestId}`;
+      const docRef = db.collection("proctoringLogs").doc(docId);
+      const doc = await docRef.get();
+
+      if (doc.exists) {
+        violationsData.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      }
+    } else {
+      // Get all violations for this student across all contests
+      const query = db.collection("proctoringLogs").where("userId", "==", studentId);
+      const violationsSnapshot = await query.get();
+
+      violationsSnapshot.forEach(doc => {
+        violationsData.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
     }
 
-    const violationsSnapshot = await query.orderBy("createdAt", "desc").get();
-
-    const violations = [];
-    violationsSnapshot.forEach(doc => {
-      violations.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
+    // Calculate total violations across all contests
+    const totalViolations = violationsData.reduce((sum, doc) => {
+      return sum + (doc.totalViolations || 0);
+    }, 0);
 
     res.status(200).json({
       success: true,
       studentId,
       contestId: contestId || "all",
-      totalViolations: violations.length,
-      violations
+      totalViolations,
+      totalContests: violationsData.length,
+      violations: violationsData
     });
 
   } catch (error) {

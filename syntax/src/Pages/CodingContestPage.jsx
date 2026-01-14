@@ -98,14 +98,24 @@ function CodingContestPage() {
   // Refs
   const autoSaveTimer = useRef(null);
   const editorRef = useRef(null);
+  const isAutoSubmitting = useRef(false); // Guard against duplicate auto-submit
+  const submissionTokenRef = useRef(null); // Idempotency token for contest submission
 
   // Proctoring - Only active for strict mode contests
   const isStrictMode = contest?.eventMode === 'strict';
 
   // Auto-submit handler for proctoring violations
   const handleProctoringAutoSubmit = useCallback(async (reason) => {
-    showError(`Contest auto-submitted: ${reason}`);
+    // Prevent duplicate submissions
+    if (isAutoSubmitting.current) {
+      console.log('⏭️ Auto-submit already in progress, skipping duplicate call');
+      return;
+    }
+
+    isAutoSubmitting.current = true;
     console.warn(`⚠️ Auto-submitting contest: ${reason}`);
+
+    showError(`Contest auto-submitted: ${reason}`);
 
     // Submit whatever the user has completed so far (even if nothing)
     try {
@@ -117,6 +127,9 @@ function CodingContestPage() {
         problemIndex: parseInt(index)
       }));
 
+      // Generate unique submission token to prevent backend duplicates
+      const submissionToken = `${problemId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
       // Submit to backend - even if no submissions (to record the disqualification)
       await axios.post('/api/student/finish-contest', {
         contestId: problemId,
@@ -124,29 +137,37 @@ function CodingContestPage() {
         totalProblems: problems.length,
         completedAt: new Date().toISOString(),
         disqualified: true,
-        disqualificationReason: reason
+        disqualificationReason: reason,
+        submissionToken // Idempotency token
       }, {
         withCredentials: true
       });
 
       // Clear all local data
       clearAllSubmissions(problemId, problems.length);
-      
-      const message = submissionArray.length > 0 
+
+      const message = submissionArray.length > 0
         ? `Contest submitted with ${submissionArray.length} problem(s) completed. You were disqualified due to proctoring violations.`
         : 'Contest submitted with 0 score due to proctoring violations.';
-      
+
       showInfo(message);
       console.log(`✓ ${message}`);
 
     } catch (error) {
       console.error('Error during proctoring auto-submit:', error);
-      showError('Failed to submit contest. Please contact support.');
+
+      // Don't show error if it's a duplicate submission (409 conflict)
+      if (error.response?.status === 409) {
+        console.log('ℹ️ Submission already processed (duplicate prevented)');
+      } else {
+        showError('Failed to submit contest. Please contact support.');
+      }
     }
 
     // Clear proctoring data
     localStorage.removeItem(`proctoring_violations_${problemId}`);
     localStorage.removeItem(`proctoring_log_${problemId}`);
+    localStorage.removeItem(`contest_start_${problemId}`);
 
     // Navigate away
     setTimeout(() => {
@@ -717,12 +738,18 @@ function CodingContestPage() {
 
       console.log(`Submitting ${submissionArray.length} verified problem(s) to backend for final storage...`);
 
+      // Generate unique submission token (only once per contest)
+      if (!submissionTokenRef.current) {
+        submissionTokenRef.current = `${problemId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+
       // Send verified submissions to backend for final storage
       const response = await axios.post('/api/student/finish-contest', {
         contestId: problemId,
         submissions: submissionArray,
         totalProblems: problems.length,
-        completedAt: new Date().toISOString()
+        completedAt: new Date().toISOString(),
+        submissionToken: submissionTokenRef.current // Idempotency token
       }, {
         withCredentials: true
       });
@@ -739,6 +766,14 @@ function CodingContestPage() {
       return true;
     } catch (error) {
       console.error('Error saving final results:', error);
+
+      // Handle duplicate submission (409) as success
+      if (error.response?.status === 409) {
+        console.log('ℹ️ Contest already submitted (duplicate prevented)');
+        const existingData = error.response?.data;
+        showInfo(`Contest already submitted. Your score: ${existingData.existingScore || 0}/${existingData.existingPossible || 0}`);
+        return true; // Treat as success so user can navigate away
+      }
 
       let errorMessage = 'Failed to save contest results';
       if (error.response?.data?.message) {
@@ -973,7 +1008,8 @@ function CodingContestPage() {
 
   return (
     <div className={styles.codingContestPage}>
-      <StudentNavbar />
+      {/* Hide navbar when proctoring is active */}
+      {!isProctoringActive && <StudentNavbar />}
 
       {/* Start Proctoring Modal - Shows before exam starts */}
       {isStrictMode && (

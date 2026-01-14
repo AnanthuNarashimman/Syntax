@@ -1,6 +1,7 @@
 const eventService = require("../services/eventService");
 const { db, admin } = require("../config/firebase");
 const jwt = require("jsonwebtoken");
+const cache = require("../utils/cache");
 
 // Create contest (Quizzes (or) Coding contests)
 // 1) Gets required data from request
@@ -556,7 +557,7 @@ const getEventResults = async (req, res) => {
 
 const finishContest = async (req, res) => {
     try {
-        const { contestId, submissions, totalProblems, completedAt } = req.body;
+        const { contestId, submissions, totalProblems, completedAt, submissionToken } = req.body;
         const token = req.cookies.auth_token;
 
         if (!token) {
@@ -579,6 +580,46 @@ const finishContest = async (req, res) => {
 
         console.log(`Processing contest finish for student ${studentId}, contest ${contestId}`);
         console.log(`Received ${submissions.length} submissions (already verified by backend)`);
+
+        // CRITICAL: Check if this contest has already been submitted by this student
+        // This prevents duplicate document creation from race conditions
+        const existingResultRef = db.collection('users')
+            .doc(studentId)
+            .collection('contestResults')
+            .doc(contestId);
+
+        const existingResult = await existingResultRef.get();
+
+        if (existingResult.exists) {
+            const existingData = existingResult.data();
+            console.log(`⚠️ Contest ${contestId} already submitted by student ${studentId}`);
+            console.log(`Existing submission timestamp: ${existingData.completedAt || existingData.verifiedAt}`);
+
+            // Check if submission token matches (if provided)
+            if (submissionToken && existingData.submissionToken === submissionToken) {
+                console.log('ℹ️ Exact duplicate request detected (same submission token) - returning existing result');
+                return res.status(200).json({
+                    success: true,
+                    message: `Contest already submitted. Your score: ${existingData.totalScore}/${existingData.totalPossible}`,
+                    totalScore: existingData.totalScore,
+                    totalPossible: existingData.totalPossible,
+                    problemsAttempted: existingData.problemsAttempted,
+                    totalProblems: existingData.totalProblems,
+                    duplicate: true
+                });
+            }
+
+            // Different submission token or no token - this is a duplicate submission attempt
+            return res.status(409).json({
+                success: false,
+                message: "Contest already submitted. Duplicate submission prevented.",
+                existingScore: existingData.totalScore,
+                existingPossible: existingData.totalPossible,
+                submittedAt: existingData.completedAt || existingData.verifiedAt
+            });
+        }
+
+        console.log(`✓ No existing submission found - proceeding with new submission`);
 
         // Fetch contest details
         const contestRef = db.collection('events').doc(contestId);
@@ -655,7 +696,8 @@ const finishContest = async (req, res) => {
             totalProblems,
             submissions: results,
             completedAt: completedAt || admin.firestore.FieldValue.serverTimestamp(),
-            verifiedAt: admin.firestore.FieldValue.serverTimestamp()
+            verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+            submissionToken: submissionToken || null // Store token for duplicate detection
         });
 
         // 1) Update user's total scores and contests participated
@@ -836,6 +878,151 @@ const finishContest = async (req, res) => {
     }
 };
 
+// Reopen contest for a specific user (Admin only)
+// 1) Gets userId and eventId from request body
+// 2) Deletes user's submission from eventResults collection
+// 3) Deletes user's attempt from eventAttempts collection
+// 4) Deletes user's contest result from users/{userId}/contestResults/{eventId} subcollection
+// 5) Decrements user's total score and contests participated count
+// 6) Updates userSubmissions collection
+// 7) Allows the user to retake the contest with a fresh start
+const reopenContest = async (req, res) => {
+    try {
+        const { userId, eventId } = req.body;
+
+        if (!userId || !eventId) {
+            return res.status(400).json({
+                success: false,
+                message: "userId and eventId are required"
+            });
+        }
+
+        console.log(`🔄 Reopening contest ${eventId} for user ${userId}`);
+
+        // Get user data before deletion (to restore scores)
+        const contestResultRef = db.collection('users')
+            .doc(userId)
+            .collection('contestResults')
+            .doc(eventId);
+
+        const contestResultDoc = await contestResultRef.get();
+        let scoresToRevert = 0;
+
+        if (contestResultDoc.exists) {
+            scoresToRevert = contestResultDoc.data().totalScore || 0;
+            console.log(`Reverting ${scoresToRevert} points from user total score`);
+        }
+
+        // 1) Delete from eventResults collection
+        const eventResultsQuery = await db.collection('eventResults')
+            .where('userId', '==', userId)
+            .where('eventId', '==', eventId)
+            .get();
+
+        const deletePromises = [];
+
+        if (!eventResultsQuery.empty) {
+            eventResultsQuery.forEach(doc => {
+                deletePromises.push(doc.ref.delete());
+                console.log(`✓ Deleting eventResult document: ${doc.id}`);
+            });
+        }
+
+        // 2) Delete from eventAttempts collection
+        const eventAttemptsQuery = await db.collection('eventAttempts')
+            .where('userId', '==', userId)
+            .where('eventId', '==', eventId)
+            .get();
+
+        if (!eventAttemptsQuery.empty) {
+            eventAttemptsQuery.forEach(doc => {
+                deletePromises.push(doc.ref.delete());
+                console.log(`✓ Deleting eventAttempt document: ${doc.id}`);
+            });
+        }
+
+        // 3) Delete from users/{userId}/contestResults/{eventId} subcollection
+        if (contestResultDoc.exists) {
+            deletePromises.push(contestResultRef.delete());
+            console.log(`✓ Deleting contestResult from user subcollection`);
+        }
+
+        // Execute all deletions in parallel
+        await Promise.all(deletePromises);
+
+        // 4) Update user's total scores and contests participated count
+        if (scoresToRevert > 0) {
+            const userRef = db.collection('users').doc(userId);
+            await userRef.update({
+                totalScore: admin.firestore.FieldValue.increment(-scoresToRevert),
+                contestsParticipated: admin.firestore.FieldValue.increment(-1)
+            });
+            console.log(`✓ Reverted user scores: -${scoresToRevert} points, -1 contest`);
+        }
+
+        // 5) Update userSubmissions collection
+        try {
+            const userSubmissionQuery = await db.collection('userSubmissions')
+                .where('userId', '==', userId)
+                .get();
+
+            if (!userSubmissionQuery.empty) {
+                const submissionDoc = userSubmissionQuery.docs[0];
+                const submissionData = submissionDoc.data();
+
+                // Remove this contest from submissions array
+                const updatedSubmissions = (submissionData.submissions || []).filter(
+                    id => id !== eventId
+                );
+
+                await submissionDoc.ref.update({
+                    submissions: updatedSubmissions,
+                    totalScore: admin.firestore.FieldValue.increment(-scoresToRevert),
+                    submissionCount: admin.firestore.FieldValue.increment(-1)
+                });
+                console.log(`✓ Updated userSubmissions collection`);
+            }
+        } catch (err) {
+            console.error('Error updating userSubmissions:', err);
+            // Non-critical, continue
+        }
+
+        // 6) Clear proctoring logs for this user-event combination
+        try {
+            const proctoringLogId = `${userId}_${eventId}`;
+            const proctoringLogRef = db.collection('proctoringLogs').doc(proctoringLogId);
+            const proctoringLogDoc = await proctoringLogRef.get();
+
+            if (proctoringLogDoc.exists) {
+                await proctoringLogRef.delete();
+                console.log(`✓ Deleted proctoring logs`);
+            }
+        } catch (err) {
+            console.error('Error deleting proctoring logs:', err);
+            // Non-critical, continue
+        }
+
+        // Invalidate leaderboard cache
+        cache.delete('leaderboard:top20');
+
+        console.log(`✅ Successfully reopened contest ${eventId} for user ${userId}`);
+
+        res.status(200).json({
+            success: true,
+            message: "Contest reopened successfully. User can now retake the contest.",
+            revertedScore: scoresToRevert
+        });
+
+    } catch (error) {
+        console.error('Error reopening contest:', error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to reopen contest",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
   createContest,
   updateContest,
@@ -846,5 +1033,6 @@ module.exports = {
   fetchSuperEvent,
   deleteSuperEvent,
   getEventResults,
-  finishContest
+  finishContest,
+  reopenContest
 };

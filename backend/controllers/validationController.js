@@ -42,8 +42,9 @@ const validateQuiz = async (req, res) => {
         }
 
         const result = await validationService.validateQuizAnswers(quizId, studentAnswers);
-        console.log('Quiz validation result:', result.QuizResult);
+        console.log('Quiz validation result - Correct answers:', result.correctAnswerCount);
 
+        const totalQuestions = studentSubmission.totalQuestions || (result.QuizResult ? result.QuizResult.length : 0);
         const totalPoints = result.pointsPerQuestion * result.correctAnswerCount;
 
         // OPTIMIZED: Fetch user data once and use it for both updates
@@ -106,8 +107,8 @@ const validateQuiz = async (req, res) => {
             cache.delete('leaderboard:top20');
 
             res.status(200).json({
-                "QuizResult": result.QuizResult,
                 "CorrectAnswerCount": result.correctAnswerCount,
+                "TotalQuestions": totalQuestions,
                 "Points": totalPoints,
                 "message": "Quiz submitted successfully"
             });
@@ -115,8 +116,8 @@ const validateQuiz = async (req, res) => {
             res.status(500).json({
                 "message": "Quiz validated but submission failed",
                 "error": submissionResult.error,
-                "QuizResult": result.QuizResult,
                 "CorrectAnswerCount": result.correctAnswerCount,
+                "TotalQuestions": totalQuestions,
                 "Points": totalPoints
             });
         }

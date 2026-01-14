@@ -30,6 +30,11 @@ router.get(
   middleware.requireAdminAuth,
   eventController.getEventResults
 );
+router.post(
+  "/admin/reopen-contest",
+  middleware.requireAdminAuth,
+  eventController.reopenContest
+);
 
 // Article Routes
 router.post(

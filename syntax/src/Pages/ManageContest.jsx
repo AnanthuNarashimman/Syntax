@@ -16,7 +16,9 @@ import {
   BookOpen,
   Brain,
   Download,
-  Copy
+  Copy,
+  Eye,
+  AlertTriangle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import AdminNavbar from "../Components/AdminNavbar";
@@ -56,6 +58,16 @@ function ManageContest() {
     year: "all",
     section: "all",
   });
+
+  // Proctoring logs state
+  const [showProctoringLogsModal, setShowProctoringLogsModal] = useState(false);
+  const [proctoringLogs, setProctoringLogs] = useState(null);
+  const [isProctoringLogsLoading, setIsProctoringLogsLoading] = useState(false);
+  const [selectedStudentForLogs, setSelectedStudentForLogs] = useState(null);
+
+  // Reopen contest confirmation state
+  const [showReopenConfirm, setShowReopenConfirm] = useState(false);
+  const [reopenData, setReopenData] = useState(null);
 
   // Use ContestContext
   const {
@@ -207,6 +219,7 @@ function ManageContest() {
   const handleViewParticipants = async (eventId, eventTitle) => {
     try {
       setIsLeaderboardLoading(true);
+      setSelectedEventId(eventId);
       // We pass eventTitle to show in the modal header
       setSelectedEvent({ eventTitle: eventTitle });
       setShowLeaderboardModal(true);
@@ -540,6 +553,88 @@ function ManageContest() {
     }
   };
 
+  // Fetch proctoring logs for a specific student
+  const handleViewProctoringLogs = async (studentId, studentName, contestId) => {
+    try {
+      setIsProctoringLogsLoading(true);
+      setSelectedStudentForLogs({ id: studentId, name: studentName });
+      setShowProctoringLogsModal(true);
+
+      const response = await fetch(
+        `/api/proctoring/student/${studentId}/contest/${contestId}/violations`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch proctoring logs");
+      }
+
+      const data = await response.json();
+      setProctoringLogs(data);
+    } catch (err) {
+      showError(`Error fetching proctoring logs: ${err.message}`);
+      setProctoringLogs(null);
+    } finally {
+      setIsProctoringLogsLoading(false);
+    }
+  };
+
+  const closeProctoringLogsModal = () => {
+    setShowProctoringLogsModal(false);
+    setProctoringLogs(null);
+    setSelectedStudentForLogs(null);
+  };
+
+  // Reopen contest for a specific user
+  const handleReopenForUser = (userId, userName, contestId) => {
+    setReopenData({ userId, userName, contestId });
+    setShowReopenConfirm(true);
+  };
+
+  const confirmReopenContest = async () => {
+    if (!reopenData) return;
+
+    const { userId, userName, contestId } = reopenData;
+
+    try {
+      setShowReopenConfirm(false);
+      const response = await fetch('/api/admin/reopen-contest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId,
+          eventId: contestId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to reopen contest');
+      }
+
+      const data = await response.json();
+      showSuccess(`Contest reopened for ${userName}. They can now retake it.`);
+
+      // Refresh the leaderboard data to remove the reopened user
+      handleViewParticipants(contestId, selectedEvent?.eventTitle);
+    } catch (error) {
+      console.error('Error reopening contest:', error);
+      showError(`Failed to reopen contest: ${error.message}`);
+    } finally {
+      setReopenData(null);
+    }
+  };
+
+  const cancelReopenContest = () => {
+    setShowReopenConfirm(false);
+    setReopenData(null);
+  };
+
   return (
     <>
       <AdminNavbar />
@@ -750,6 +845,51 @@ function ManageContest() {
           </div>
         )}
 
+        {/* Reopen Contest Confirmation Modal */}
+        {showReopenConfirm && reopenData && (
+          <div className="modal-overlay reopen-modal-overlay">
+            <div className="modal-content reopen-confirm-modal">
+              <div className="modal-header">
+                <h3>
+                  <Activity size={20} style={{ marginRight: '8px' }} />
+                  Reopen Contest
+                </h3>
+              </div>
+              <div className="reopen-confirm-content">
+                <p className="confirm-message">
+                  Are you sure you want to reopen this contest for{' '}
+                  <strong>{reopenData.userName}</strong>?
+                </p>
+                <div className="warning-box">
+                  <AlertTriangle size={18} />
+                  <div className="warning-content">
+                    <p className="warning-title">This action will:</p>
+                    <ul>
+                      <li>Delete their previous submission</li>
+                      <li>Reset their attempt status to "not started"</li>
+                      <li>Revert their score from this contest</li>
+                      <li>Clear their proctoring logs</li>
+                      <li>Allow them to retake the contest</li>
+                    </ul>
+                    <p className="warning-note">
+                      <strong>Note:</strong> This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={cancelReopenContest}>
+                  Cancel
+                </button>
+                <button className="btn-primary" onClick={confirmReopenContest}>
+                  <Activity size={16} style={{ marginRight: '6px' }} />
+                  Yes, Reopen Contest
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Leaderboard / Participants Modal */}
         {showLeaderboardModal && (
           <div className="modal-overlay">
@@ -921,6 +1061,8 @@ function ManageContest() {
                                   : "⇅"}
                               </button>
                             </th>
+                            <th>Proctoring</th>
+                            <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -937,6 +1079,38 @@ function ManageContest() {
                               </td>
                               <td className="date-cell">
                                 {new Date(user.submittedAt).toLocaleString()}
+                              </td>
+                              <td className="actions-cell">
+                                <button
+                                  className="btn-view-logs"
+                                  onClick={() =>
+                                    handleViewProctoringLogs(
+                                      user.userId,
+                                      user.userName,
+                                      selectedEventId
+                                    )
+                                  }
+                                  title="View proctoring logs"
+                                >
+                                  <Eye size={16} />
+                                  Logs
+                                </button>
+                              </td>
+                              <td className="actions-cell">
+                                <button
+                                  className="btn-reopen"
+                                  onClick={() =>
+                                    handleReopenForUser(
+                                      user.userId,
+                                      user.userName,
+                                      selectedEventId
+                                    )
+                                  }
+                                  title="Reopen contest for this student"
+                                >
+                                  <Activity size={16} />
+                                  Reopen
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -984,6 +1158,138 @@ function ManageContest() {
                 <button
                   className="btn-secondary"
                   onClick={closeLeaderboardModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Proctoring Logs Modal */}
+        {showProctoringLogsModal && (
+          <div className="modal-overlay">
+            <div className="modal-content proctoring-logs-modal">
+              <div className="modal-header">
+                <h3>
+                  <AlertTriangle size={20} style={{ marginRight: "8px" }} />
+                  Proctoring Logs - {selectedStudentForLogs?.name}
+                </h3>
+                <button
+                  className="close-button"
+                  onClick={closeProctoringLogsModal}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="proctoring-logs-content">
+                {isProctoringLogsLoading ? (
+                  <div className="loading-state">
+                    Loading proctoring logs...
+                  </div>
+                ) : proctoringLogs && proctoringLogs.violations && proctoringLogs.violations.length > 0 ? (
+                  <>
+                    {(() => {
+                      // Calculate total unique violations across all documents
+                      const totalUniqueViolations = proctoringLogs.violations.reduce((total, logDoc) => {
+                        const uniqueViolations = logDoc.violations.filter((violation, index, self) =>
+                          index === self.findIndex((v) =>
+                            v.timestamp === violation.timestamp &&
+                            v.type === violation.type &&
+                            v.count === violation.count
+                          )
+                        );
+                        return total + uniqueViolations.length;
+                      }, 0);
+
+                      return (
+                        <div className="logs-summary">
+                          <div className="summary-card">
+                            <span className="summary-label">Total Violations:</span>
+                            <span className="summary-value">
+                              {totalUniqueViolations}
+                            </span>
+                          </div>
+                          <div className="summary-card">
+                            <span className="summary-label">Student:</span>
+                            <span className="summary-value">
+                              {selectedStudentForLogs?.name}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {proctoringLogs.violations.map((logDoc, docIndex) => {
+                      // Deduplicate violations based on timestamp + type + count
+                      const uniqueViolations = logDoc.violations.filter((violation, index, self) =>
+                        index === self.findIndex((v) =>
+                          v.timestamp === violation.timestamp &&
+                          v.type === violation.type &&
+                          v.count === violation.count
+                        )
+                      );
+
+                      return (
+                        <div key={docIndex} className="logs-section">
+                          <h4 className="logs-section-title">
+                            Contest Session (Total: {uniqueViolations.length}{" "}
+                            violations)
+                          </h4>
+                          <div className="violations-list">
+                            {uniqueViolations.map((violation, vIndex) => (
+                              <div key={vIndex} className="violation-item">
+                                <div className="violation-header">
+                                  <span className="violation-number">
+                                    Violation #{vIndex + 1}
+                                  </span>
+                                  <span className="violation-time">
+                                    {new Date(
+                                      violation.timestamp
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="violation-details">
+                                  <div className="detail-row">
+                                    <span className="detail-label">Type:</span>
+                                    <span className="detail-value violation-type">
+                                      {violation.type}
+                                    </span>
+                                  </div>
+                                  <div className="detail-row">
+                                    <span className="detail-label">User Agent:</span>
+                                    <span
+                                      className="detail-value user-agent"
+                                      title={violation.userAgent}
+                                    >
+                                      {violation.userAgent?.substring(0, 50)}...
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="empty-state">
+                    <AlertTriangle size={56} style={{ strokeWidth: 2 }} />
+                    <p>No proctoring violations found for this student.</p>
+                    <p className="empty-subtext">
+                      This student completed the contest without any proctoring
+                      violations.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={closeProctoringLogsModal}
                 >
                   Close
                 </button>

@@ -32,15 +32,42 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
   const isCleaningUp = useRef(false);
   const lastViolationTime = useRef(0);
   const lastViolationType = useRef('');
+  const autoSubmitTriggered = useRef(false); // Prevent multiple auto-submit triggers
 
-  // Load existing violations from localStorage
+  // Load existing violations from localStorage (only if contest is active)
   useEffect(() => {
     if (!isStrictMode || !contestId) return;
 
-    const savedViolations = localStorage.getItem(`proctoring_violations_${contestId}`);
-    if (savedViolations) {
-      const count = parseInt(savedViolations, 10);
-      setViolations(count);
+    // Check if contest is currently active (has a start timestamp within reasonable time)
+    const contestStartTime = localStorage.getItem(`contest_start_${contestId}`);
+    const now = Date.now();
+    const CONTEST_MAX_DURATION = 4 * 60 * 60 * 1000; // 4 hours max
+
+    if (contestStartTime) {
+      const timeSinceStart = now - parseInt(contestStartTime, 10);
+
+      // Only load violations if contest started recently (within max duration)
+      if (timeSinceStart < CONTEST_MAX_DURATION) {
+        const savedViolations = localStorage.getItem(`proctoring_violations_${contestId}`);
+        if (savedViolations) {
+          const count = parseInt(savedViolations, 10);
+          console.log(`📋 Loading existing violations: ${count}`);
+          setViolations(count);
+        }
+      } else {
+        // Contest is stale, clear old violations
+        console.log('🧹 Clearing stale violations from previous session');
+        localStorage.removeItem(`proctoring_violations_${contestId}`);
+        localStorage.removeItem(`proctoring_log_${contestId}`);
+        localStorage.removeItem(`contest_start_${contestId}`);
+        setViolations(0);
+      }
+    } else {
+      // No start time means fresh contest, clear any old violations
+      console.log('🧹 Fresh contest start, clearing old violations');
+      localStorage.removeItem(`proctoring_violations_${contestId}`);
+      localStorage.removeItem(`proctoring_log_${contestId}`);
+      setViolations(0);
     }
   }, [contestId, isStrictMode]);
 
@@ -93,12 +120,24 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
 
       console.warn(`⚠️ Proctoring Violation [${newCount}/${MAX_VIOLATIONS}]: ${type}`);
 
-      // Auto-submit on 4th violation
-      if (newCount > MAX_VIOLATIONS) {
+      // Auto-submit on 4th violation (but only trigger once)
+      if (newCount > MAX_VIOLATIONS && !autoSubmitTriggered.current) {
+        autoSubmitTriggered.current = true; // Set flag immediately to prevent multiple triggers
         console.error(`❌ Max violations exceeded! Auto-submitting...`);
+
+        // Clear localStorage after a delay (after auto-submit completes)
+        setTimeout(() => {
+          localStorage.removeItem(`proctoring_violations_${contestId}`);
+          localStorage.removeItem(`proctoring_log_${contestId}`);
+          localStorage.removeItem(`contest_start_${contestId}`);
+          console.log('🧹 Cleared proctoring data after auto-submit');
+        }, 3000);
+
         setTimeout(() => {
           onAutoSubmit(`Too many proctoring violations (${newCount})`);
         }, 2000);
+      } else if (newCount > MAX_VIOLATIONS) {
+        console.log('⏭️ Auto-submit already triggered, ignoring duplicate violation');
       }
 
       return newCount;
@@ -135,6 +174,14 @@ const useProctoring = (contestId, isStrictMode, onAutoSubmit) => {
     if (!contestId) {
       console.log('⚠️ No contest ID, proctoring not activated');
       return;
+    }
+
+    // Set contest start timestamp for violation tracking
+    const existingStartTime = localStorage.getItem(`contest_start_${contestId}`);
+    if (!existingStartTime) {
+      const now = Date.now();
+      localStorage.setItem(`contest_start_${contestId}`, now.toString());
+      console.log('📅 Contest start time set:', new Date(now).toISOString());
     }
 
     console.log('✅ Activating proctoring event listeners...');

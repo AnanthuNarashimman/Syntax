@@ -25,15 +25,16 @@
 
 .modal {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 500px;
+  border-radius: 20px;
+  padding: 36px;
+  max-width: 540px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
   animation: slideUp 0.3s ease;
   position: relative;
+  border: 2px solid rgba(229, 62, 62, 0.1);
 }
 
 @keyframes slideUp {
@@ -75,8 +76,9 @@
 }
 
 .warningIcon {
-  color: #ff9800;
+  color: #e53e3e;
   animation: pulse 2s infinite;
+  filter: drop-shadow(0 4px 12px rgba(229, 62, 62, 0.3));
 }
 
 @keyframes pulse {
@@ -89,11 +91,13 @@
 }
 
 .title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
+  font-size: 26px;
+  font-weight: 800;
+  color: #1a202c;
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  letter-spacing: 0.3px;
+  line-height: 1.3;
 }
 
 .content {
@@ -103,64 +107,69 @@
 }
 
 .violationBox {
-  background: #fff3e0;
-  border: 2px solid #ff9800;
-  border-radius: 8px;
-  padding: 16px;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border: 2px solid #e53e3e;
+  border-radius: 12px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.15);
 }
 
 .violationLabel {
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: #c53030;
   text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .violationType {
-  font-size: 16px;
-  color: #e65100;
-  font-weight: 600;
+  font-size: 17px;
+  color: #c53030;
+  font-weight: 700;
 }
 
 .countBox {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f5f5f5;
-  border-radius: 8px;
-  padding: 16px;
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
 }
 
 .countLabel {
-  font-size: 14px;
-  color: #666;
-  font-weight: 600;
+  font-size: 15px;
+  color: #4a5568;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .count {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  font-size: 28px;
-  font-weight: 700;
+  gap: 6px;
+  font-size: 32px;
+  font-weight: 800;
 }
 
 .currentCount {
-  color: #ff5252;
+  color: #e53e3e;
+  text-shadow: 0 2px 4px rgba(229, 62, 62, 0.2);
 }
 
 .separator {
-  color: #999;
-  font-size: 20px;
+  color: #a0aec0;
+  font-size: 22px;
 }
 
 .maxCount {
-  color: #666;
-  font-size: 20px;
+  color: #718096;
+  font-size: 22px;
 }
 
 .dangerMessage {
@@ -185,37 +194,42 @@
 }
 
 .infoMessage {
-  background: #e3f2fd;
-  border-left: 4px solid #2196f3;
-  border-radius: 8px;
-  padding: 16px;
+  background: linear-gradient(135deg, #fff9e6 0%, #ffeaa7 100%);
+  border-left: 4px solid #f59e0b;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #fbbf24;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
 }
 
 .infoText {
-  color: #1565c0;
+  color: #b45309;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 8px 0;
 }
 
 .infoSubtext {
-  color: #1976d2;
+  color: #92400e;
   font-size: 14px;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .rulesBox {
-  background: #fafafa;
-  border-radius: 8px;
-  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
 }
 
 .rulesTitle {
   font-size: 14px;
-  color: #333;
-  font-weight: 600;
-  margin: 0 0 12px 0;
+  color: #2d3748;
+  font-weight: 700;
+  margin: 0 0 14px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .rulesList {
@@ -224,16 +238,17 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .rulesList li {
   font-size: 13px;
-  color: #666;
-  padding: 4px 0;
+  color: #4a5568;
+  padding: 6px 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  font-weight: 500;
 }
 
 .footer {
@@ -243,39 +258,45 @@
 }
 
 .acknowledgeButton {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
   border: none;
-  padding: 12px 32px;
-  border-radius: 8px;
+  padding: 14px 40px;
+  border-radius: 12px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .acknowledgeButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
 }
 
 .acknowledgeButton:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 .acknowledgeButtonDanger {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
   color: white;
   border: none;
-  padding: 12px 32px;
-  border-radius: 8px;
+  padding: 14px 40px;
+  border-radius: 12px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+  box-shadow: 0 4px 16px rgba(229, 62, 62, 0.4);
   animation: shake 0.5s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 @keyframes shake {
@@ -292,11 +313,13 @@
 
 .acknowledgeButtonDanger:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4);
+  box-shadow: 0 6px 24px rgba(229, 62, 62, 0.5);
+  background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
 }
 
 .acknowledgeButtonDanger:active {
   transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(229, 62, 62, 0.35);
 }
 
 /* Dark mode support */

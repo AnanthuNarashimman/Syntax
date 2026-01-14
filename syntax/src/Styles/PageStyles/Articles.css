@@ -194,7 +194,7 @@
     justify-content: center;
     gap: 0.5rem;
     width: 100%;
-    background: #e53e3e;
+    background: #718096;
     color: white;
     border: none;
     border-radius: 8px;
@@ -208,7 +208,7 @@
   }
 
   .Article_BtnPrimary:hover {
-    background: #c53030;
+    background: #4a5568;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
@@ -722,6 +722,11 @@
 .Article_BtnDelete {
   background-color: #e53e3e;
   color: white;
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
 }
 
 .Article_BtnDelete:hover {

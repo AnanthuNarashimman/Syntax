@@ -314,8 +314,8 @@ const StudentQuiz = () => {
     return (
       <div className={styles.studentQuiz}>
         <StudentNavbar />
-        <div className={styles.quizContainer}>
-          <div className={styles.quizCard}>
+        <div className={styles.resultsContainer}>
+          <div className={styles.resultsQuizCard}>
             <h2>No Quiz Data Found</h2>
             <p>Please select a quiz from the contests page.</p>
             <button className={styles.homeButton} onClick={handleBackToContests}>
@@ -331,9 +331,12 @@ const StudentQuiz = () => {
   const calculateScore = () => {
     // Use API results if available
     if (quizResults) {
-      return quizResults.CorrectAnswerCount;
+      return {
+        correct: quizResults.CorrectAnswerCount,
+        total: quizResults.TotalQuestions
+      };
     }
-    
+
     // Fallback to local calculation
     let correct = 0;
     questions.forEach((question, index) => {
@@ -341,21 +344,24 @@ const StudentQuiz = () => {
         correct++;
       }
     });
-    return correct;
+    return {
+      correct: correct,
+      total: questions.length
+    };
   };
 
   // Results view
   if (showResults) {
-    const score = calculateScore();
-    const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
+    const scoreData = calculateScore();
+    const percentage = scoreData.total > 0 ? (scoreData.correct / scoreData.total) * 100 : 0;
     const scoreMessage = getScoreMessage(percentage);
     const scoreColor = getScoreColor(percentage);
 
     return (
       <div className={styles.studentQuiz}>
         <StudentNavbar />
-        <div className={styles.quizContainer}>
-          <div className={styles.quizCard}>
+        <div className={styles.resultsContainer}>
+          <div className={styles.resultsQuizCard}>
             <div className={styles.resultsSection}>
               <h1 className={styles.resultsTitle}>Quiz Completed!</h1>
 
@@ -365,59 +371,20 @@ const StudentQuiz = () => {
                   style={{ borderColor: scoreColor }}
                 >
                   <div className={styles.scoreText} style={{ color: scoreColor }}>
-                    {score}/{questions.length}
+                    {scoreData.correct}/{scoreData.total}
                   </div>
                 </div>
                 <div className={styles.scorePercentage}>
-                  {percentage.toFixed(1)}% Score
+                  {percentage.toFixed(1)}%
                 </div>
                 {quizResults && (
                   <div className={styles.pointsDisplay}>
-                    <strong>Total Points: {quizResults.Points}</strong>
+                    <strong>{quizResults.Points} Points</strong>
                   </div>
                 )}
                 <div className={`${styles.scoreMessage} ${styles[scoreMessage.class]}`}>
                   {scoreMessage.text}
                 </div>
-              </div>
-
-              <div className={styles.answerReview}>
-                <h3 className={styles.reviewTitle}>Answer Review</h3>
-                {questions.map((question, index) => {
-                  const userAnswer = selectedAnswers[index];
-                  let isCorrect;
-                  let correctAnswerIndex;
-                  
-                  // Use API results if available
-                  if (quizResults && quizResults.QuizResult && quizResults.QuizResult[index]) {
-                    const apiResult = quizResults.QuizResult[index];
-                    isCorrect = apiResult.studentAnswer === apiResult.correctAnswer;
-                    correctAnswerIndex = question.options.indexOf(apiResult.correctAnswer);
-                  } else {
-                    // Fallback to local calculation
-                    isCorrect = userAnswer === question.correctAnswer;
-                    correctAnswerIndex = question.correctAnswer;
-                  }
-
-                  return (
-                    <div
-                      key={index}
-                      className={`${styles.reviewItem} ${isCorrect ? styles.correct : styles.incorrect}`}
-                    >
-                      <div className={styles.reviewQuestion}>
-                        Q{index + 1}: {question.question}
-                      </div>
-                      <div className={`${styles.reviewAnswer} ${isCorrect ? styles.correct : styles.incorrect}`}>
-                        Your answer: {userAnswer !== undefined ? question.options[userAnswer] : 'Not answered'}
-                      </div>
-                      {!isCorrect && (
-                        <div className={styles.reviewCorrect}>
-                          Correct answer: {question.options[correctAnswerIndex]}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
 
               <div className={styles.actionButtons}>
@@ -438,8 +405,8 @@ const StudentQuiz = () => {
     return (
       <div className={styles.studentQuiz}>
         <StudentNavbar />
-        <div className={styles.quizContainer}>
-          <div className={styles.quizCard}>
+        <div className={styles.resultsContainer}>
+          <div className={styles.resultsQuizCard}>
             <h2>No Questions Available</h2>
             <p>This quiz doesn't have any questions yet.</p>
             <button className={styles.homeButton} onClick={handleBackToContests}>
@@ -456,7 +423,8 @@ const StudentQuiz = () => {
 
   return (
     <div className={styles.studentQuiz}>
-      <StudentNavbar />
+      {/* Hide navbar when proctoring is active */}
+      {!isProctoringActive && <StudentNavbar />}
 
       {/* Start Proctoring Modal - Shows before quiz starts */}
       {isStrictMode && (
@@ -528,11 +496,11 @@ const StudentQuiz = () => {
               </div>
             </div>
 
-            {/* Quiz Card */}
+            {/* Quiz Content - No Card Wrapper */}
             <div className={styles.quizCard}>
               <div className={styles.questionSection}>
                 <div className={styles.questionNumber}>
-                  Question {currentQuestion + 1}
+                  Q{currentQuestion + 1}
                 </div>
                 <div className={styles.questionText}>
                   {currentQ.question}
@@ -572,23 +540,14 @@ const StudentQuiz = () => {
                   Previous
                 </button>
 
-                {currentQuestion === questions.length - 1 ? (
-                  <button
-                    className={styles.submitButton}
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
-                  </button>
-                ) : (
-                  <button
-                    className={`${styles.navButton} ${styles.primary}`}
-                    onClick={handleNext}
-                  >
-                    Next
-                    <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
-                  </button>
-                )}
+                <button
+                  className={`${styles.navButton} ${styles.primary}`}
+                  onClick={handleNext}
+                  disabled={currentQuestion === questions.length - 1}
+                >
+                  Next
+                  <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
+                </button>
               </div>
             </div>
           </div>
@@ -647,6 +606,15 @@ const StudentQuiz = () => {
                   <span className={styles.summaryValue}>{questions.length - Object.keys(selectedAnswers).length}</span>
                 </div>
               </div>
+
+              {/* Submit Button */}
+              <button
+                className={styles.rightPanelSubmitButton}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+              </button>
             </div>
           </div>
         </div>
